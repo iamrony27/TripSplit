@@ -115,7 +115,7 @@ export default function ScanQrScreen() {
   return (
     <View style={styles.container}>
       <CameraView
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         facing="back"
         enableTorch={torch}
         barcodeScannerSettings={{

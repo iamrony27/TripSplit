@@ -97,7 +97,7 @@ export default function RootLayout() {
         <PaperProvider theme={paperTheme}>
           <AuthProvider>
             <TripProvider>
-              <StatusBar style="dark" backgroundColor={M3Colors.surface} />
+              <StatusBar style="dark" />
               <RootNavigation />
             </TripProvider>
           </AuthProvider>

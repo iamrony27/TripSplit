@@ -26,7 +26,7 @@ export default function TabLayout() {
               <MaterialCommunityIcons
                 name={focused ? 'home' : 'home-outline'}
                 size={22}
-                color={focused ? M3Colors.primary : color}
+                color={focused ? M3Colors.primary : ((color as string) || M3Colors.onSurfaceVariant)}
               />
             </View>
           ),
@@ -41,7 +41,7 @@ export default function TabLayout() {
               <MaterialCommunityIcons
                 name={focused ? 'wallet-travel' : 'wallet-travel'}
                 size={22}
-                color={focused ? M3Colors.primary : color}
+                color={focused ? M3Colors.primary : ((color as string) || M3Colors.onSurfaceVariant)}
               />
             </View>
           ),
@@ -56,7 +56,7 @@ export default function TabLayout() {
               <MaterialCommunityIcons
                 name={focused ? 'chart-box' : 'chart-box-outline'}
                 size={22}
-                color={focused ? M3Colors.primary : color}
+                color={focused ? M3Colors.primary : ((color as string) || M3Colors.onSurfaceVariant)}
               />
             </View>
           ),
@@ -71,7 +71,7 @@ export default function TabLayout() {
               <MaterialCommunityIcons
                 name={focused ? 'history' : 'history'}
                 size={22}
-                color={focused ? M3Colors.primary : color}
+                color={focused ? M3Colors.primary : ((color as string) || M3Colors.onSurfaceVariant)}
               />
             </View>
           ),
@@ -86,7 +86,7 @@ export default function TabLayout() {
               <MaterialCommunityIcons
                 name={focused ? 'account-circle' : 'account-circle-outline'}
                 size={22}
-                color={focused ? M3Colors.primary : color}
+                color={focused ? M3Colors.primary : ((color as string) || M3Colors.onSurfaceVariant)}
               />
             </View>
           ),
