@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SettlementSuggestion } from '../../types/settlement';
+import { PaymentRecord, SettlementSuggestion } from '../../types/settlement';
 import { M3Colors } from '../../theme/colors';
 import { M3Typography } from '../../theme/typography';
 import { M3Shapes } from '../../theme/shapes';
@@ -13,6 +13,10 @@ interface SettlementCardProps {
   suggestion: SettlementSuggestion;
   currentMemberId?: string;
   currentUserId?: string;
+  pendingDeclaration?: PaymentRecord | null;
+  onPayViaUpi?: (suggestion: SettlementSuggestion) => void;
+  onDeclarePaid?: (suggestion: SettlementSuggestion) => void;
+  onCancelDeclaration?: (paymentId: string) => void;
   onConfirmPaid?: (suggestion: SettlementSuggestion) => void;
   onOpenQrModal?: (suggestion: SettlementSuggestion) => void;
 }
@@ -21,6 +25,10 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
   suggestion,
   currentMemberId,
   currentUserId,
+  pendingDeclaration,
+  onPayViaUpi,
+  onDeclarePaid,
+  onCancelDeclaration,
   onConfirmPaid,
   onOpenQrModal,
 }) => {
@@ -47,6 +55,20 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
     currency: suggestion.currency || 'INR',
     note: `TripSplit to ${suggestion.toName}`,
   });
+
+  const handleLaunchUpi = () => {
+    if (onPayViaUpi) {
+      onPayViaUpi(suggestion);
+    } else {
+      launchUpiPayment({
+        upiId,
+        payeeName: suggestion.toName,
+        amount: suggestion.amount,
+        currency: suggestion.currency || 'INR',
+        note: `TripSplit to ${suggestion.toName}`,
+      });
+    }
+  };
 
   const handleTogglePaid = () => {
     if (onConfirmPaid) {
@@ -98,17 +120,37 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
 
         <View style={styles.pendingBadge}>
           <MaterialCommunityIcons
-            name={isPaidLocally ? 'check-circle' : 'clock-outline'}
+            name={
+              pendingDeclaration
+                ? 'clock-alert-outline'
+                : isPaidLocally
+                ? 'check-circle'
+                : 'clock-outline'
+            }
             size={14}
-            color={isPaidLocally ? M3Colors.primary : M3Colors.outline}
+            color={
+              pendingDeclaration
+                ? '#E65100'
+                : isPaidLocally
+                ? M3Colors.primary
+                : M3Colors.outline
+            }
           />
           <Text
             style={[
               styles.pendingText,
-              isPaidLocally ? { color: M3Colors.primary, fontWeight: '700' } : null,
+              pendingDeclaration
+                ? { color: '#E65100', fontWeight: '700' }
+                : isPaidLocally
+                ? { color: M3Colors.primary, fontWeight: '700' }
+                : null,
             ]}
           >
-            {isPaidLocally ? 'Paid & Verified' : 'Pending Transfer'}
+            {pendingDeclaration
+              ? 'Pending Approval'
+              : isPaidLocally
+              ? 'Paid & Verified'
+              : 'Pending Transfer'}
           </Text>
         </View>
       </View>
@@ -170,6 +212,30 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
         </Text>
       </View>
 
+      {/* Pending Declaration Banner if already declared */}
+      {pendingDeclaration && (
+        <View style={styles.pendingDeclarationBox}>
+          <View style={styles.pendingDeclarationHeader}>
+            <MaterialCommunityIcons name="clock-time-four-outline" size={18} color="#E65100" />
+            <Text style={styles.pendingDeclarationTitle}>Payment Declared - Waiting for Admin</Text>
+          </View>
+          <Text style={styles.pendingDeclarationSubtext}>
+            Declared {formatCurrency(pendingDeclaration.amount, pendingDeclaration.currency)} on{' '}
+            {new Date(pendingDeclaration.createdAt).toLocaleDateString()}
+            {pendingDeclaration.upiTransactionReference ? ` • UTR: ${pendingDeclaration.upiTransactionReference}` : ''}
+          </Text>
+          {isPayer && onCancelDeclaration && (
+            <TouchableOpacity
+              style={styles.cancelDeclarationBtn}
+              onPress={() => onCancelDeclaration(pendingDeclaration.id)}
+            >
+              <MaterialCommunityIcons name="close-circle-outline" size={14} color={M3Colors.error} />
+              <Text style={styles.cancelDeclarationText}>Cancel Declaration</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
       {/* 4. Payee UPI Info & QR Code Drawer */}
       <TouchableOpacity
         style={styles.qrDrawer}
@@ -202,60 +268,100 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
         </View>
       </TouchableOpacity>
 
-      {/* 5. 1-Tap UPI Launchers (for Payer) */}
+      {/* 5. UPI Actions & I HAVE PAID Declaration (for Payer) */}
       {isPayer && (
-        <View style={styles.launchersRow}>
+        <View style={styles.actionsContainer}>
+          {/* Main PAY VIA UPI Button */}
           <TouchableOpacity
-            style={styles.gpayBtn}
-            onPress={() =>
-              launchUpiPayment({
-                upiId,
-                payeeName: suggestion.toName,
-                amount: suggestion.amount,
-              }, 'GPAY')
-            }
+            style={styles.payViaUpiBtn}
+            onPress={handleLaunchUpi}
+            activeOpacity={0.85}
           >
-            <MaterialCommunityIcons name="google" size={16} color="#4285F4" />
-            <Text style={styles.launcherBtnText}>Google Pay</Text>
+            <MaterialCommunityIcons name="lightning-bolt" size={18} color="#FFFFFF" />
+            <Text style={styles.payViaUpiText}>PAY VIA UPI</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.phonepeBtn}
-            onPress={() =>
-              launchUpiPayment({
-                upiId,
-                payeeName: suggestion.toName,
-                amount: suggestion.amount,
-              }, 'PHONEPE')
-            }
-          >
-            <MaterialCommunityIcons name="cellphone" size={16} color={M3Colors.onSecondaryFixed} />
-            <Text style={[styles.launcherBtnText, { color: M3Colors.onSecondaryFixed }]}>
-              PhonePe
-            </Text>
-          </TouchableOpacity>
+          {/* I HAVE PAID / Pending state button */}
+          {!pendingDeclaration ? (
+            <TouchableOpacity
+              style={styles.havePaidBtn}
+              onPress={() => onDeclarePaid && onDeclarePaid(suggestion)}
+              activeOpacity={0.85}
+            >
+              <MaterialCommunityIcons name="check-circle-outline" size={18} color={M3Colors.primary} />
+              <Text style={styles.havePaidText}>I HAVE PAID</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.awaitingApprovalBadge}>
+              <MaterialCommunityIcons name="timer-sand" size={16} color="#E65100" />
+              <Text style={styles.awaitingApprovalText}>Awaiting Admin Approval</Text>
+            </View>
+          )}
+
+          {/* Quick Launchers */}
+          <View style={styles.launchersRow}>
+            <TouchableOpacity
+              style={styles.gpayBtn}
+              onPress={() =>
+                launchUpiPayment(
+                  {
+                    upiId,
+                    payeeName: suggestion.toName,
+                    amount: suggestion.amount,
+                    currency: suggestion.currency || 'INR',
+                    note: `TripSplit to ${suggestion.toName}`,
+                  },
+                  'GPAY'
+                )
+              }
+            >
+              <MaterialCommunityIcons name="google" size={16} color="#4285F4" />
+              <Text style={styles.launcherBtnText}>Google Pay</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.phonepeBtn}
+              onPress={() =>
+                launchUpiPayment(
+                  {
+                    upiId,
+                    payeeName: suggestion.toName,
+                    amount: suggestion.amount,
+                    currency: suggestion.currency || 'INR',
+                    note: `TripSplit to ${suggestion.toName}`,
+                  },
+                  'PHONEPE'
+                )
+              }
+            >
+              <MaterialCommunityIcons name="cellphone" size={16} color={M3Colors.onSecondaryFixed} />
+              <Text style={[styles.launcherBtnText, { color: M3Colors.onSecondaryFixed }]}>
+                PhonePe
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
-      {/* 6. Mark as Paid / Settled Confirmation Checkbox */}
-      <TouchableOpacity
-        style={styles.markPaidRow}
-        onPress={handleTogglePaid}
-        activeOpacity={0.7}
-      >
-        <MaterialCommunityIcons
-          name={isPaidLocally ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline'}
-          size={20}
-          color={isPaidLocally ? M3Colors.primary : M3Colors.outline}
-        />
-        <Text style={styles.markPaidLabel}>
-          {isPayer
-            ? `Mark as Paid to ${suggestion.toName}`
-            : isReceiver
-            ? `Mark as Received from ${suggestion.fromName}`
-            : 'Mark as Settled'}
-        </Text>
-      </TouchableOpacity>
+      {/* 6. Admin or direct confirmation fallback */}
+      {!isPayer && (
+        <TouchableOpacity
+          style={styles.markPaidRow}
+          onPress={handleTogglePaid}
+          activeOpacity={0.7}
+        >
+          <MaterialCommunityIcons
+            name={isPaidLocally ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline'}
+            size={20}
+            color={isPaidLocally ? M3Colors.primary : M3Colors.outline}
+          />
+          <Text style={styles.markPaidLabel}>
+            {isReceiver
+              ? `Confirm Payment Received from ${suggestion.fromName}`
+              : 'Direct Settle (Admin)'}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -507,5 +613,103 @@ const styles = StyleSheet.create({
     ...M3Typography.bodySm,
     color: M3Colors.onSurface,
     fontWeight: '600',
+  },
+  pendingDeclarationBox: {
+    backgroundColor: '#FFF3E0',
+    borderRadius: M3Shapes.cardMedium,
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+    padding: 10,
+    marginBottom: 8,
+    gap: 4,
+  },
+  pendingDeclarationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pendingDeclarationTitle: {
+    ...M3Typography.labelMd,
+    color: '#E65100',
+    fontWeight: '800',
+  },
+  pendingDeclarationSubtext: {
+    ...M3Typography.bodySm,
+    color: '#BF360C',
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  cancelDeclarationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 4,
+    backgroundColor: '#FFEBEE',
+  },
+  cancelDeclarationText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: M3Colors.error,
+  },
+  actionsContainer: {
+    gap: 8,
+    marginBottom: 8,
+  },
+  payViaUpiBtn: {
+    height: 44,
+    borderRadius: M3Shapes.pill,
+    backgroundColor: M3Colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+  },
+  payViaUpiText: {
+    ...M3Typography.labelLarge,
+    color: '#FFFFFF',
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  havePaidBtn: {
+    height: 42,
+    borderRadius: M3Shapes.pill,
+    backgroundColor: M3Colors.surfaceContainerHigh,
+    borderWidth: 1.5,
+    borderColor: M3Colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  havePaidText: {
+    ...M3Typography.labelLarge,
+    color: M3Colors.primary,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  awaitingApprovalBadge: {
+    height: 38,
+    borderRadius: M3Shapes.pill,
+    backgroundColor: '#FFF8E1',
+    borderWidth: 1,
+    borderColor: '#FFE082',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  awaitingApprovalText: {
+    ...M3Typography.labelMd,
+    color: '#E65100',
+    fontWeight: '700',
   },
 });

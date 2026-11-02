@@ -30,6 +30,8 @@ export default function HomeScreen() {
     expenses,
     totalTripSpend,
     memberBalances,
+    settlementSuggestions,
+    payments,
     loading,
   } = useTrips();
 
@@ -48,6 +50,28 @@ export default function HomeScreen() {
     (b) => b.memberId === currentMember?.id
   );
   const myNetBalance = currentMemberBalance ? currentMemberBalance.netBalance : 0;
+
+  const totalOwed = settlementSuggestions
+    .filter((s) => s.fromMemberId === currentMember?.id)
+    .reduce((acc, s) => acc + s.amount, 0);
+
+  const totalReceivable = settlementSuggestions
+    .filter((s) => s.toMemberId === currentMember?.id)
+    .reduce((acc, s) => acc + s.amount, 0);
+
+  const myPendingDeclarations = payments.filter(
+    (p) =>
+      (p.status === 'PENDING_ADMIN_APPROVAL' || p.status === 'PENDING') &&
+      (p.fromMemberId === currentMember?.id ||
+        p.toMemberId === currentMember?.id ||
+        p.payerUid === user?.id)
+  );
+
+  const myApprovedPaymentsCount = payments.filter(
+    (p) =>
+      (p.status === 'APPROVED' || p.status === 'PAID') &&
+      (p.fromMemberId === currentMember?.id || p.toMemberId === currentMember?.id)
+  ).length;
 
   const baseCurrency = activeTrip?.baseCurrency || user?.defaultCurrency || 'INR';
 
@@ -156,6 +180,71 @@ export default function HomeScreen() {
                 <MaterialCommunityIcons name="qrcode-scan" size={18} color={M3Colors.onTertiary} />
                 <Text style={styles.actionPillTextTertiary}>Scan QR</Text>
               </TouchableOpacity>
+            </View>
+
+            {/* Personal Settlement Summary Card */}
+            <View style={styles.settlementCard}>
+              <View style={styles.settlementHeader}>
+                <View style={styles.settlementHeaderLeft}>
+                  <MaterialCommunityIcons name="shield-sync-outline" size={18} color={M3Colors.primary} />
+                  <Text style={styles.settlementTitle}>Settlement & UPI</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => router.push('/trip/settle')}
+                  style={styles.settlementLinkBtn}
+                >
+                  <Text style={styles.settlementLinkText}>Settle Up</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={16} color={M3Colors.primary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.settlementGrid}>
+                <View style={styles.settlementGridCol}>
+                  <Text style={styles.settlementGridLabel}>TOTAL OWED</Text>
+                  <Text style={[styles.settlementGridValue, { color: M3Colors.error }]}>
+                    {formatCurrency(totalOwed, baseCurrency)}
+                  </Text>
+                </View>
+
+                <View style={styles.settlementDivider} />
+
+                <View style={styles.settlementGridCol}>
+                  <Text style={styles.settlementGridLabel}>RECEIVABLE</Text>
+                  <Text style={[styles.settlementGridValue, { color: M3Colors.primary }]}>
+                    {formatCurrency(totalReceivable, baseCurrency)}
+                  </Text>
+                </View>
+
+                <View style={styles.settlementDivider} />
+
+                <View style={styles.settlementGridCol}>
+                  <Text style={styles.settlementGridLabel}>PENDING</Text>
+                  <Text style={[styles.settlementGridValue, { color: '#E65100' }]}>
+                    {myPendingDeclarations.length}
+                  </Text>
+                </View>
+
+                <View style={styles.settlementDivider} />
+
+                <View style={styles.settlementGridCol}>
+                  <Text style={styles.settlementGridLabel}>APPROVED</Text>
+                  <Text style={[styles.settlementGridValue, { color: M3Colors.onSurface }]}>
+                    {myApprovedPaymentsCount}
+                  </Text>
+                </View>
+              </View>
+
+              {myPendingDeclarations.length > 0 && (
+                <TouchableOpacity
+                  style={styles.pendingAlertBar}
+                  onPress={() => router.push('/trip/settle')}
+                >
+                  <MaterialCommunityIcons name="clock-alert-outline" size={15} color="#E65100" />
+                  <Text style={styles.pendingAlertText}>
+                    {myPendingDeclarations.length} payment awaiting Admin approval • Tap to view
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Active Trip Overview Card */}
@@ -500,5 +589,88 @@ const styles = StyleSheet.create({
     color: M3Colors.onSurfaceVariant,
     textAlign: 'center',
     paddingHorizontal: 16,
+  },
+  settlementCard: {
+    backgroundColor: M3Colors.surfaceContainerLowest,
+    borderRadius: M3Shapes.cardMedium,
+    padding: M3Shapes.spacing.md,
+    marginBottom: M3Shapes.spacing.md,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    gap: 12,
+  },
+  settlementHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  settlementHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  settlementTitle: {
+    ...M3Typography.titleSm,
+    color: M3Colors.onSurface,
+    fontWeight: '800',
+  },
+  settlementLinkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  settlementLinkText: {
+    ...M3Typography.labelSm,
+    color: M3Colors.primary,
+    fontWeight: '700',
+  },
+  settlementGrid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: M3Colors.surfaceContainerLow,
+    borderRadius: M3Shapes.card,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+  },
+  settlementGridCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  settlementGridLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: M3Colors.onSurfaceVariant,
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  settlementGridValue: {
+    ...M3Typography.labelLarge,
+    fontWeight: '800',
+  },
+  settlementDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: M3Colors.outlineVariant,
+    opacity: 0.5,
+  },
+  pendingAlertBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: M3Shapes.pill,
+    gap: 6,
+  },
+  pendingAlertText: {
+    ...M3Typography.labelSm,
+    color: '#E65100',
+    fontWeight: '700',
+    flex: 1,
+    fontSize: 11,
   },
 });

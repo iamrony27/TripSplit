@@ -170,3 +170,28 @@ export async function removeMemberFromTrip(trip: Trip, memberId: string): Promis
     memberIds: updatedMemberIds,
   });
 }
+
+/**
+ * Syncs updated or removed UPI ID across all trips where the user is a member.
+ */
+export async function updateMemberUpiInTrips(userId: string, upiId: string): Promise<void> {
+  const allTrips = await getLocalTrips();
+  for (const trip of allTrips) {
+    let changed = false;
+    const updatedMembers = trip.members.map((m) => {
+      if (m.userId === userId || m.id === userId || m.id === `member_${userId}`) {
+        changed = true;
+        return {
+          ...m,
+          upiId: upiId ? upiId.trim() : undefined,
+        };
+      }
+      return m;
+    });
+
+    if (changed) {
+      await updateTripInFirestore(trip.id, { members: updatedMembers });
+    }
+  }
+}
+

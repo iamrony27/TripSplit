@@ -26,6 +26,12 @@ function getActivityIcon(action: ActivityAction): { icon: any; color: string; bg
     case 'PAYMENT_RECORDED':
     case 'SETTLEMENT_UPDATED':
       return { icon: 'hand-coin', color: M3Colors.tertiary, bg: M3Colors.tertiaryContainer };
+    case 'PAYMENT_DECLARED':
+      return { icon: 'clock-alert-outline', color: '#E65100', bg: '#FFE0B2' };
+    case 'PAYMENT_APPROVED':
+      return { icon: 'check-decagram', color: M3Colors.primary, bg: M3Colors.primaryContainer };
+    case 'PAYMENT_REJECTED':
+      return { icon: 'close-circle-outline', color: M3Colors.error, bg: M3Colors.errorContainer };
     case 'MEMBER_ADDED':
       return { icon: 'account-plus', color: M3Colors.secondary, bg: M3Colors.secondaryContainer };
     case 'MEMBER_REMOVED':

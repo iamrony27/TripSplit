@@ -20,6 +20,10 @@ import {
 } from '../services/firebase/expenseService';
 import {
   recordPaymentInFirestore,
+  declarePaymentInFirestore,
+  approvePaymentInFirestore,
+  rejectPaymentInFirestore,
+  cancelPaymentDeclaration,
   updatePaymentStatusInFirestore,
   subscribeTripPayments,
 } from '../services/firebase/settlementService';
@@ -47,6 +51,9 @@ interface TripContextType {
   memberBalances: MemberBalance[];
   settlementSuggestions: SettlementSuggestion[];
   totalTripSpend: number;
+  isTripAdmin: boolean;
+  currentMember: TripMember | null;
+  pendingApprovalsCount: number;
   createNewTrip: (
     title: string,
     description?: string,
@@ -65,6 +72,12 @@ interface TripContextType {
   ) => Promise<void>;
   updateExpense: (expenseId: string, updates: Partial<Expense>) => Promise<void>;
   deleteExpense: (expenseId: string) => Promise<void>;
+  declarePayment: (
+    declaration: Omit<PaymentRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'>
+  ) => Promise<void>;
+  approvePayment: (paymentId: string) => Promise<void>;
+  rejectPayment: (paymentId: string, reason?: string) => Promise<void>;
+  cancelPayment: (paymentId: string) => Promise<void>;
   recordPayment: (
     payment: Omit<PaymentRecord, 'id' | 'createdAt' | 'updatedAt'>
   ) => Promise<void>;
@@ -158,6 +171,34 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const totalTripSpend = useMemo(() => {
     return round2(expenses.reduce((sum, e) => sum + (e.convertedAmount ?? e.amount), 0));
   }, [expenses]);
+
+  const currentMember = useMemo(() => {
+    if (!activeTrip || !user) return null;
+    return (
+      activeTrip.members.find(
+        (m) =>
+          m.id === user.id ||
+          m.userId === user.id ||
+          m.id === `member_${user.id}` ||
+          (user.fullName && m.name.toLowerCase() === user.fullName.toLowerCase())
+      ) || null
+    );
+  }, [activeTrip, user]);
+
+  const isTripAdmin = useMemo(() => {
+    if (!activeTrip || !user) return false;
+    return Boolean(
+      activeTrip.createdBy === user.id ||
+      activeTrip.createdBy === `member_${user.id}` ||
+      (currentMember && activeTrip.createdBy === currentMember.id)
+    );
+  }, [activeTrip, user, currentMember]);
+
+  const pendingApprovalsCount = useMemo(() => {
+    return payments.filter(
+      (p) => p.status === 'PENDING_ADMIN_APPROVAL' || p.status === 'PENDING'
+    ).length;
+  }, [payments]);
 
   // 4. Operations
   const createNewTrip = async (
@@ -371,6 +412,110 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const declarePayment = async (
+    declarationData: Omit<PaymentRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'>
+  ) => {
+    if (!activeTrip || !user) throw new Error('No active trip or user');
+
+    const paymentId = `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const fromName =
+      declarationData.payerName ||
+      activeTrip.members.find((m) => m.id === declarationData.fromMemberId)?.name ||
+      user.fullName ||
+      'Member';
+    const toName =
+      declarationData.receiverName ||
+      activeTrip.members.find((m) => m.id === declarationData.toMemberId)?.name ||
+      'Member';
+
+    const declaration: PaymentRecord = {
+      ...declarationData,
+      id: paymentId,
+      paymentId,
+      tripId: activeTrip.id,
+      groupId: activeTrip.id,
+      payerUid: declarationData.payerUid || user.id,
+      payerName: fromName,
+      receiverName: toName,
+      status: 'PENDING_ADMIN_APPROVAL',
+      paidDate: declarationData.paidDate || new Date().toISOString(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    await declarePaymentInFirestore(declaration);
+
+    await logActivityInFirestore({
+      id: `act_${Date.now()}`,
+      tripId: activeTrip.id,
+      tripTitle: activeTrip.title,
+      userId: user.id,
+      userName: user.fullName,
+      action: 'PAYMENT_DECLARED',
+      details: `${fromName} declared a payment of ${declaration.currency} ${declaration.amount.toFixed(2)} to ${toName}${declaration.upiTxnId ? ` (Ref: ${declaration.upiTxnId})` : ''}`,
+      amount: declaration.amount,
+      currency: declaration.currency,
+      timestamp: Date.now(),
+    });
+  };
+
+  const approvePayment = async (paymentId: string) => {
+    if (!activeTrip || !user) throw new Error('No active trip or user');
+
+    const approved = await approvePaymentInFirestore({
+      paymentId,
+      tripId: activeTrip.id,
+      adminUserId: user.id,
+      adminName: user.fullName || 'Admin',
+      isTripAdmin,
+      currentMemberId: currentMember?.id,
+    });
+
+    await logActivityInFirestore({
+      id: `act_${Date.now()}`,
+      tripId: activeTrip.id,
+      tripTitle: activeTrip.title,
+      userId: user.id,
+      userName: user.fullName,
+      action: 'PAYMENT_APPROVED',
+      details: `Admin ${user.fullName} approved payment of ${approved.currency} ${approved.amount.toFixed(2)} from ${approved.payerName || 'Member'} to ${approved.receiverName || 'Member'}`,
+      amount: approved.amount,
+      currency: approved.currency,
+      timestamp: Date.now(),
+    });
+  };
+
+  const rejectPayment = async (paymentId: string, reason?: string) => {
+    if (!activeTrip || !user) throw new Error('No active trip or user');
+
+    const rejected = await rejectPaymentInFirestore({
+      paymentId,
+      tripId: activeTrip.id,
+      adminUserId: user.id,
+      adminName: user.fullName || 'Admin',
+      isTripAdmin,
+      reason,
+    });
+
+    await logActivityInFirestore({
+      id: `act_${Date.now()}`,
+      tripId: activeTrip.id,
+      tripTitle: activeTrip.title,
+      userId: user.id,
+      userName: user.fullName,
+      action: 'PAYMENT_REJECTED',
+      details: `Admin ${user.fullName} rejected payment declaration of ${rejected.currency} ${rejected.amount.toFixed(2)} from ${rejected.payerName || 'Member'}${reason ? ` (${reason})` : ''}`,
+      amount: rejected.amount,
+      currency: rejected.currency,
+      timestamp: Date.now(),
+    });
+  };
+
+  const cancelPayment = async (paymentId: string) => {
+    if (!activeTrip || !user) throw new Error('No active trip or user');
+    await cancelPaymentDeclaration(paymentId, activeTrip.id, user.id, currentMember?.id);
+  };
+
   const recordPayment = async (
     paymentData: Omit<PaymentRecord, 'id' | 'createdAt' | 'updatedAt'>
   ) => {
@@ -425,6 +570,9 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         memberBalances,
         settlementSuggestions,
         totalTripSpend,
+        isTripAdmin,
+        currentMember,
+        pendingApprovalsCount,
         createNewTrip,
         updateTrip,
         deleteTrip,
@@ -433,6 +581,10 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addExpense,
         updateExpense,
         deleteExpense,
+        declarePayment,
+        approvePayment,
+        rejectPayment,
+        cancelPayment,
         recordPayment,
         updatePaymentStatus,
       }}

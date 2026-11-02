@@ -62,15 +62,31 @@ rules_version = '2';
 // Document ID: {paymentId}
 // Fields:
 //   - id: string (required, 1-100 chars, immutable, matches document ID)
+//   - paymentId: string (optional, max 100 chars, alias to id)
 //   - tripId: string (required, 1-100 chars, parent trip ID, immutable)
+//   - groupId: string (optional, max 100 chars, alias to tripId)
+//   - settlementId: string (optional, max 100 chars)
 //   - fromMemberId: string (required, 1-100 chars)
+//   - payerUid: string (optional, max 128 chars)
+//   - payerName: string (optional, max 100 chars)
 //   - toMemberId: string (required, 1-100 chars)
+//   - receiverUid: string (optional, max 128 chars)
+//   - receiverName: string (optional, max 100 chars)
 //   - amount: number (required, > 0, max 10^8)
 //   - currency: string (required, 2-10 chars)
-//   - status: string (required, enum: 'PENDING', 'PAID', 'PARTIALLY_PAID')
+//   - status: string (required, enum: 'PENDING_DECLARATION', 'PENDING_ADMIN_APPROVAL', 'APPROVED', 'REJECTED', 'CANCELLED', 'PAID', 'PENDING', 'PARTIALLY_PAID')
 //   - paidDate: string (optional, max 50 chars)
 //   - upiTxnId: string (optional, max 100 chars)
+//   - upiTransactionReference: string (optional, max 100 chars)
 //   - note: string (optional, max 500 chars)
+//   - approvedBy: string (optional, max 128 chars)
+//   - approvedByName: string (optional, max 100 chars)
+//   - approvedAt: number (optional, epoch timestamp ms)
+//   - rejectedBy: string (optional, max 128 chars)
+//   - rejectedByName: string (optional, max 100 chars)
+//   - rejectedAt: number (optional, epoch timestamp ms)
+//   - rejectionReason: string (optional, max 500 chars)
+//   - isSynced: bool (optional)
 //   - createdAt: number (required, epoch timestamp ms, immutable)
 //   - updatedAt: number (required, epoch timestamp ms)
 //
@@ -82,7 +98,7 @@ rules_version = '2';
 //   - tripTitle: string (optional, max 100 chars)
 //   - userId: string (required, 1-128 chars, matches logger UID)
 //   - userName: string (required, 1-100 chars)
-//   - action: string (required, enum: TRIP_CREATED, MEMBER_ADDED, MEMBER_REMOVED, etc.)
+//   - action: string (required, enum: TRIP_CREATED, MEMBER_ADDED, MEMBER_REMOVED, EXPENSE_ADDED, EXPENSE_UPDATED, EXPENSE_DELETED, PAYMENT_RECORDED, PAYMENT_DECLARED, PAYMENT_APPROVED, PAYMENT_REJECTED, SETTLEMENT_UPDATED, PROFILE_UPDATED)
 //   - details: string (required, 1-500 chars)
 //   - amount: number (optional, >= 0, max 10^8)
 //   - currency: string (optional, max 10 chars)
@@ -189,7 +205,14 @@ service cloud.firestore {
 
     // Validator for payment / settlement records
     function isValidPayment(data) {
-      return hasOnlyAllowedFields(['id', 'tripId', 'fromMemberId', 'toMemberId', 'amount', 'currency', 'status', 'paidDate', 'upiTxnId', 'note', 'createdAt', 'updatedAt'])
+      return hasOnlyAllowedFields([
+          'id', 'tripId', 'fromMemberId', 'toMemberId', 'amount', 'currency', 'status', 'createdAt', 'updatedAt',
+          'paymentId', 'groupId', 'settlementId', 'payerUid', 'payerName', 'receiverUid', 'receiverName',
+          'paidDate', 'upiTxnId', 'upiTransactionReference', 'note',
+          'approvedBy', 'approvedByName', 'approvedAt',
+          'rejectedBy', 'rejectedByName', 'rejectedAt', 'rejectionReason',
+          'isSynced'
+        ])
         && hasRequiredFields(['id', 'tripId', 'fromMemberId', 'toMemberId', 'amount', 'currency', 'status', 'createdAt', 'updatedAt'])
         && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
         && data.tripId is string && data.tripId.size() >= 1 && data.tripId.size() <= 100
@@ -197,10 +220,29 @@ service cloud.firestore {
         && data.toMemberId is string && data.toMemberId.size() >= 1 && data.toMemberId.size() <= 100
         && data.amount is number && data.amount > 0 && data.amount <= 100000000
         && data.currency is string && data.currency.size() >= 2 && data.currency.size() <= 10
-        && data.status in ['PENDING', 'PAID', 'PARTIALLY_PAID']
+        && data.status in [
+          'PENDING_DECLARATION', 'PENDING_ADMIN_APPROVAL', 'APPROVED',
+          'REJECTED', 'CANCELLED', 'PAID', 'PENDING', 'PARTIALLY_PAID'
+        ]
+        && (!('paymentId' in data) || (data.paymentId is string && data.paymentId.size() <= 100))
+        && (!('groupId' in data) || (data.groupId is string && data.groupId.size() <= 100))
+        && (!('settlementId' in data) || (data.settlementId is string && data.settlementId.size() <= 100))
+        && (!('payerUid' in data) || (data.payerUid is string && data.payerUid.size() <= 128))
+        && (!('payerName' in data) || (data.payerName is string && data.payerName.size() <= 100))
+        && (!('receiverUid' in data) || (data.receiverUid is string && data.receiverUid.size() <= 128))
+        && (!('receiverName' in data) || (data.receiverName is string && data.receiverName.size() <= 100))
         && (!('paidDate' in data) || (data.paidDate is string && data.paidDate.size() <= 50))
         && (!('upiTxnId' in data) || (data.upiTxnId is string && data.upiTxnId.size() <= 100))
+        && (!('upiTransactionReference' in data) || (data.upiTransactionReference is string && data.upiTransactionReference.size() <= 100))
         && (!('note' in data) || (data.note is string && data.note.size() <= 500))
+        && (!('approvedBy' in data) || (data.approvedBy is string && data.approvedBy.size() <= 128))
+        && (!('approvedByName' in data) || (data.approvedByName is string && data.approvedByName.size() <= 100))
+        && (!('approvedAt' in data) || data.approvedAt is number)
+        && (!('rejectedBy' in data) || (data.rejectedBy is string && data.rejectedBy.size() <= 128))
+        && (!('rejectedByName' in data) || (data.rejectedByName is string && data.rejectedByName.size() <= 100))
+        && (!('rejectedAt' in data) || data.rejectedAt is number)
+        && (!('rejectionReason' in data) || (data.rejectionReason is string && data.rejectionReason.size() <= 500))
+        && (!('isSynced' in data) || data.isSynced is bool)
         && data.createdAt is number
         && data.updatedAt is number;
     }
@@ -217,7 +259,8 @@ service cloud.firestore {
         && data.action in [
           'TRIP_CREATED', 'MEMBER_ADDED', 'MEMBER_REMOVED',
           'EXPENSE_ADDED', 'EXPENSE_UPDATED', 'EXPENSE_DELETED',
-          'PAYMENT_RECORDED', 'SETTLEMENT_UPDATED', 'PROFILE_UPDATED'
+          'PAYMENT_RECORDED', 'PAYMENT_DECLARED', 'PAYMENT_APPROVED', 'PAYMENT_REJECTED',
+          'SETTLEMENT_UPDATED', 'PROFILE_UPDATED'
         ]
         && data.details is string && data.details.size() >= 1 && data.details.size() <= 500
         && (!('amount' in data) || (data.amount is number && data.amount >= 0 && data.amount <= 100000000))

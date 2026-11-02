@@ -182,9 +182,10 @@ export function calculateMemberBalances(
     });
   });
 
-  // 2. Process payments/settlements (status === 'PAID')
+  // 2. Process payments/settlements: ONLY approved payments reduce outstanding balances.
+  // PENDING_ADMIN_APPROVAL, REJECTED, and CANCELLED payments do NOT affect balances.
   payments
-    .filter((p) => p.status === 'PAID')
+    .filter((p) => p.status === 'APPROVED' || p.status === 'PAID')
     .forEach((pay) => {
       if (ledger[pay.fromMemberId]) {
         // Debtor paid money -> reduces debt (treated as + paymentMade)

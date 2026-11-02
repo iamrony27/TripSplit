@@ -10,6 +10,7 @@ import {
   updateUserUpiId,
   subscribeAuthState,
 } from '../services/firebase/authService';
+import { updateMemberUpiInTrips } from '../services/firebase/tripService';
 import { UserProfile, SetupWizardData } from '../types/user';
 
 interface AuthContextType {
@@ -117,6 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleUpdateUpi = async (upiId: string) => {
     if (!user) return;
     await updateUserUpiId(user.id, upiId);
+    await updateMemberUpiInTrips(user.id, upiId);
     setUser((prev) => (prev ? { ...prev, upiId } : null));
   };
 

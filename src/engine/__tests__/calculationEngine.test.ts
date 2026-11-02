@@ -127,6 +127,73 @@ describe('TripSplit Calculation Engine Tests', () => {
     expect(balances.find((b) => b.memberId === 'sarah')!.netBalance).toBe(0);
     expect(balances.find((b) => b.memberId === 'rohan')!.netBalance).toBe(0);
   });
+
+  test('PENDING_ADMIN_APPROVAL, REJECTED, and CANCELLED payments strictly do NOT reduce balances', () => {
+    const members: TripMember[] = [
+      { id: 'sarah', name: 'Sarah', totalPaid: 0, totalShare: 0, netBalance: 0 },
+      { id: 'rohan', name: 'Rohan', totalPaid: 0, totalShare: 0, netBalance: 0 },
+    ];
+
+    const expenses: Expense[] = [
+      {
+        id: 'e1',
+        tripId: 'trip-1',
+        title: 'Lunch',
+        amount: 1000,
+        originalCurrency: 'INR',
+        convertedAmount: 1000,
+        exchangeRate: 1,
+        paidByMemberId: 'sarah',
+        selectedParticipantIds: ['sarah', 'rohan'],
+        splitMode: 'EQUALLY',
+        shares: { sarah: 500, rohan: 500 },
+        categoryId: 'food',
+        expenseDate: '2026-10-15',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
+    ];
+
+    // Rohan declares payment of 500, but it is PENDING_ADMIN_APPROVAL
+    const pendingPayment: PaymentRecord = {
+      id: 'p_pending',
+      tripId: 'trip-1',
+      fromMemberId: 'rohan',
+      toMemberId: 'sarah',
+      amount: 500,
+      currency: 'INR',
+      status: 'PENDING_ADMIN_APPROVAL',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const balancesWithPending = calculateMemberBalances(members, expenses, [pendingPayment]);
+    // Balances MUST NOT change while awaiting approval
+    expect(balancesWithPending.find((b) => b.memberId === 'sarah')!.netBalance).toBe(500);
+    expect(balancesWithPending.find((b) => b.memberId === 'rohan')!.netBalance).toBe(-500);
+
+    // If rejected, balance also remains unchanged
+    const rejectedPayment: PaymentRecord = {
+      ...pendingPayment,
+      id: 'p_rejected',
+      status: 'REJECTED',
+    };
+    const balancesWithRejected = calculateMemberBalances(members, expenses, [rejectedPayment]);
+    expect(balancesWithRejected.find((b) => b.memberId === 'sarah')!.netBalance).toBe(500);
+    expect(balancesWithRejected.find((b) => b.memberId === 'rohan')!.netBalance).toBe(-500);
+
+    // If approved, balance is reduced
+    const approvedPayment: PaymentRecord = {
+      ...pendingPayment,
+      id: 'p_approved',
+      status: 'APPROVED',
+      approvedBy: 'admin_1',
+      approvedAt: Date.now(),
+    };
+    const balancesWithApproved = calculateMemberBalances(members, expenses, [approvedPayment]);
+    expect(balancesWithApproved.find((b) => b.memberId === 'sarah')!.netBalance).toBe(0);
+    expect(balancesWithApproved.find((b) => b.memberId === 'rohan')!.netBalance).toBe(0);
+  });
 });
 
 describe('Smart Debt Simplification Tests', () => {

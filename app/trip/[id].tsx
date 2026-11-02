@@ -31,6 +31,8 @@ export default function TripDetailsScreen() {
     expenses,
     memberBalances,
     totalTripSpend,
+    payments,
+    isTripAdmin,
     addMember,
     removeMember,
     deleteExpense,
@@ -43,6 +45,19 @@ export default function TripDetailsScreen() {
   const [newMemberUpi, setNewMemberUpi] = useState('');
   const [addingMember, setAddingMember] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const tripApprovedPayments = payments.filter(
+    (p) =>
+      (p.tripId === trip?.id || p.groupId === trip?.id) &&
+      (p.status === 'APPROVED' || p.status === 'PAID')
+  );
+  const totalApprovedAmount = tripApprovedPayments.reduce((acc, p) => acc + p.amount, 0);
+
+  const tripPendingApprovals = payments.filter(
+    (p) =>
+      (p.tripId === trip?.id || p.groupId === trip?.id) &&
+      (p.status === 'PENDING_ADMIN_APPROVAL' || p.status === 'PENDING')
+  );
 
   if (!trip) {
     return (
@@ -127,6 +142,30 @@ export default function TripDetailsScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
+        {/* Pending Approval Banner for Group / Admin */}
+        {tripPendingApprovals.length > 0 && (
+          <TouchableOpacity
+            style={styles.pendingAdminBanner}
+            onPress={() => router.push('/trip/settle')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.pendingAdminIconCircle}>
+              <MaterialCommunityIcons name="clock-alert-outline" size={20} color="#E65100" />
+            </View>
+            <View style={styles.pendingAdminTextCol}>
+              <Text style={styles.pendingAdminTitle}>
+                {tripPendingApprovals.length} Payment Declaration{tripPendingApprovals.length > 1 ? 's' : ''} Pending
+              </Text>
+              <Text style={styles.pendingAdminSubtitle}>
+                {isTripAdmin
+                  ? 'Tap to review and verify in your bank account.'
+                  : 'Awaiting Group Admin verification.'}
+              </Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={20} color="#E65100" />
+          </TouchableOpacity>
+        )}
+
         {/* Hero Financial Card */}
         <View style={styles.heroCard}>
           <View style={styles.heroTop}>
@@ -165,6 +204,48 @@ export default function TripDetailsScreen() {
             >
               Smart Settle
             </Button>
+          </View>
+        </View>
+
+        {/* Group Settlement Status Card */}
+        <View style={styles.card}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.cardHeaderLeft}>
+              <MaterialCommunityIcons name="shield-check" size={18} color={M3Colors.primary} />
+              <Text style={styles.cardTitle}>Settlement Status</Text>
+            </View>
+            <TouchableOpacity onPress={() => router.push('/trip/settle')}>
+              <Text style={styles.addExpenseLink}>Settle Up</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.settlementSummaryRow}>
+            <View style={styles.settlementSummaryCol}>
+              <Text style={styles.settlementColLabel}>TOTAL APPROVED</Text>
+              <Text style={[styles.settlementColAmount, { color: M3Colors.primary }]}>
+                {formatCurrency(totalApprovedAmount, baseCurrency)}
+              </Text>
+              <Text style={styles.settlementColSub}>
+                {tripApprovedPayments.length} payment{tripApprovedPayments.length !== 1 ? 's' : ''} settled
+              </Text>
+            </View>
+
+            <View style={styles.settlementColDivider} />
+
+            <View style={styles.settlementSummaryCol}>
+              <Text style={styles.settlementColLabel}>PENDING APPROVAL</Text>
+              <Text
+                style={[
+                  styles.settlementColAmount,
+                  { color: tripPendingApprovals.length > 0 ? '#E65100' : M3Colors.onSurfaceVariant },
+                ]}
+              >
+                {tripPendingApprovals.length}
+              </Text>
+              <Text style={styles.settlementColSub}>
+                {tripPendingApprovals.length > 0 ? 'Requires action' : 'All up to date'}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -480,5 +561,79 @@ const styles = StyleSheet.create({
     ...M3Typography.bodySm,
     color: M3Colors.error,
     marginBottom: 8,
+  },
+  pendingAdminBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    borderRadius: M3Shapes.cardMedium,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+    gap: 12,
+    marginBottom: 4,
+    elevation: 2,
+  },
+  pendingAdminIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFE082',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pendingAdminTextCol: {
+    flex: 1,
+  },
+  pendingAdminTitle: {
+    ...M3Typography.titleSm,
+    color: '#E65100',
+    fontWeight: '800',
+  },
+  pendingAdminSubtitle: {
+    ...M3Typography.bodySm,
+    color: '#BF360C',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  settlementSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: M3Colors.surfaceContainerLow,
+    borderRadius: M3Shapes.card,
+    padding: 12,
+    marginTop: 8,
+  },
+  settlementSummaryCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  settlementColLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: M3Colors.onSurfaceVariant,
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  settlementColAmount: {
+    ...M3Typography.titleMedium,
+    fontWeight: '800',
+  },
+  settlementColSub: {
+    fontSize: 10,
+    color: M3Colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  settlementColDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: M3Colors.outlineVariant,
+    opacity: 0.5,
   },
 });

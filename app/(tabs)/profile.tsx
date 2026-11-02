@@ -50,6 +50,28 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleRemoveUpi = () => {
+    Alert.alert(
+      'Remove UPI ID',
+      'Are you sure you want to remove your UPI ID? Other members in your trips will not be able to send payments to you via UPI.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await updateUpi('');
+              Alert.alert('Removed', 'Your UPI ID has been removed.');
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Failed to remove UPI ID');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleSignOut = () => {
     Alert.alert(
       'Log Out',
@@ -160,6 +182,15 @@ export default function ProfileScreen() {
                   style={styles.upiActionBtn}
                 >
                   Edit UPI ID
+                </Button>
+                <Button
+                  mode="outlined"
+                  onPress={handleRemoveUpi}
+                  icon="trash-can-outline"
+                  textColor={M3Colors.error}
+                  style={[styles.upiActionBtn, { borderColor: M3Colors.error }]}
+                >
+                  Remove UPI
                 </Button>
               </View>
             </View>
