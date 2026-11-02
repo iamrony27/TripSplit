@@ -11,7 +11,7 @@ import { paperTheme } from '../src/theme/paperTheme';
 import { M3Colors } from '../src/theme/colors';
 
 export const unstable_settings = {
-  initialRouteName: '(tabs)',
+  anchor: '(tabs)',
 };
 
 function RootNavigation() {
