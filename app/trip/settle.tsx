@@ -26,6 +26,7 @@ import { launchUpiPayment } from '../../src/services/upi/upiLauncher';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
+import { safeGoBack } from '../../src/utils/navigation';
 
 type TabType = 'settle' | 'approvals' | 'history';
 type HistoryFilter = 'ALL' | 'APPROVED' | 'REJECTED';
@@ -64,7 +65,12 @@ export default function SmartSettlementScreen() {
   if (!activeTrip) {
     return (
       <View style={styles.container}>
-        <TopAppBar title="Smart Settlement" showBack onBackPress={() => router.back()} />
+        <TopAppBar
+          title="Smart Settlement"
+          showBack
+          fallbackRoute="/(tabs)"
+          onBackPress={() => safeGoBack(router, '/(tabs)')}
+        />
         <View style={styles.noTripCenter}>
           <Text style={styles.noTripText}>No active trip selected.</Text>
         </View>
@@ -271,7 +277,8 @@ export default function SmartSettlementScreen() {
         title="Settlement & UPI"
         subtitle={activeTrip.title}
         showBack
-        onBackPress={() => router.back()}
+        fallbackRoute={`/trip/${activeTrip.id}`}
+        onBackPress={() => safeGoBack(router, `/trip/${activeTrip.id}`)}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>

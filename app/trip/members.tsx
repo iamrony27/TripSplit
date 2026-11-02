@@ -23,6 +23,7 @@ import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
 import { formatCurrency } from '../../src/services/currency/exchangeRateService';
+import { safeGoBack } from '../../src/utils/navigation';
 
 export default function TripMembersScreen() {
   const router = useRouter();
@@ -56,7 +57,12 @@ export default function TripMembersScreen() {
   if (!trip) {
     return (
       <View style={styles.container}>
-        <TopAppBar title="Members" showBack onBackPress={() => router.back()} />
+        <TopAppBar
+          title="Members"
+          showBack
+          fallbackRoute="/(tabs)"
+          onBackPress={() => safeGoBack(router, '/(tabs)')}
+        />
         <View style={styles.centerContainer}>
           <Text style={styles.emptyText}>No trip found</Text>
         </View>
@@ -128,7 +134,8 @@ export default function TripMembersScreen() {
         title="Group Members"
         subtitle={trip.title}
         showBack
-        onBackPress={() => router.back()}
+        fallbackRoute={`/trip/${trip.id}`}
+        onBackPress={() => safeGoBack(router, `/trip/${trip.id}`)}
         rightAction={
           isTripAdmin ? (
             <TouchableOpacity

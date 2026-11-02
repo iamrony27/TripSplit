@@ -24,6 +24,7 @@ import { GroupInvitation } from '../src/types/invitation';
 import { M3Colors } from '../src/theme/colors';
 import { M3Typography } from '../src/theme/typography';
 import { M3Shapes } from '../src/theme/shapes';
+import { safeGoBack } from '../src/utils/navigation';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SCAN_BOX_SIZE = Math.min(SCREEN_WIDTH * 0.72, 260);
@@ -207,7 +208,7 @@ export default function JoinGroupScreen() {
             if (step === 'PREVIEW') {
               setStep('INPUT');
             } else {
-              router.back();
+              safeGoBack(router, '/(auth)/login');
             }
           }}
           style={styles.backBtn}

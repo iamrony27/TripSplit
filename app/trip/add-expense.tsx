@@ -27,6 +27,7 @@ import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
 import { useKeyboardBottomInset } from '../../src/hooks/useKeyboardBottomInset';
+import { safeGoBack } from '../../src/utils/navigation';
 
 export default function AddExpenseScreen() {
   const router = useRouter();
@@ -38,7 +39,12 @@ export default function AddExpenseScreen() {
   if (!activeTrip) {
     return (
       <View style={styles.container}>
-        <TopAppBar title="Add Expense" showBack onBackPress={() => router.back()} />
+        <TopAppBar
+          title="Add Expense"
+          showBack
+          fallbackRoute="/(tabs)"
+          onBackPress={() => safeGoBack(router, '/(tabs)')}
+        />
         <View style={styles.noTripCenter}>
           <Text style={styles.noTripText}>Please select or create an active trip first.</Text>
           <Button mode="contained" onPress={() => router.replace('/(tabs)/trips')}>
@@ -183,7 +189,7 @@ export default function AddExpenseScreen() {
         receiptUrl: receiptUrl || undefined,
       });
 
-      router.back();
+      safeGoBack(router, `/trip/${activeTrip.id}`);
     } catch (err: any) {
       console.warn('Save expense error:', err);
       setErrorMsg(err.message || 'Failed to save expense');
@@ -198,7 +204,8 @@ export default function AddExpenseScreen() {
         title="Add Expense"
         subtitle={activeTrip.title}
         showBack
-        onBackPress={() => router.back()}
+        fallbackRoute={`/trip/${activeTrip.id}`}
+        onBackPress={() => safeGoBack(router, `/trip/${activeTrip.id}`)}
       />
 
       <KeyboardAvoidingView

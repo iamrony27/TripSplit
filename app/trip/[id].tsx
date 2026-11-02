@@ -23,6 +23,7 @@ import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
 import { formatCurrency } from '../../src/services/currency/exchangeRateService';
 import { isValidUpiId } from '../../src/services/upi/upiParser';
+import { safeGoBack } from '../../src/utils/navigation';
 
 export default function TripDetailsScreen() {
   const router = useRouter();
@@ -67,7 +68,12 @@ export default function TripDetailsScreen() {
   if (!trip) {
     return (
       <View style={styles.container}>
-        <TopAppBar title="Trip Not Found" showBack onBackPress={() => router.back()} />
+        <TopAppBar
+          title="Trip Not Found"
+          showBack
+          fallbackRoute="/(tabs)/trips"
+          onBackPress={() => safeGoBack(router, '/(tabs)/trips')}
+        />
         <View style={styles.notFoundCenter}>
           <Text style={styles.notFoundText}>This trip could not be found.</Text>
           <Button mode="contained" onPress={() => router.replace('/(tabs)/trips')}>
@@ -165,7 +171,8 @@ export default function TripDetailsScreen() {
         title={trip.title}
         subtitle={`${baseCurrency} • ${trip.members.length} Members`}
         showBack
-        onBackPress={() => router.back()}
+        fallbackRoute="/(tabs)/trips"
+        onBackPress={() => safeGoBack(router, '/(tabs)/trips')}
         rightAction={
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             {isTripAdmin && (

@@ -18,6 +18,7 @@ import { formatCurrency } from '../src/services/currency/exchangeRateService';
 import { M3Colors } from '../src/theme/colors';
 import { M3Typography } from '../src/theme/typography';
 import { M3Shapes } from '../src/theme/shapes';
+import { safeGoBack } from '../src/utils/navigation';
 
 export default function MyDashboardScreen() {
   const router = useRouter();
@@ -80,7 +81,8 @@ export default function MyDashboardScreen() {
         title="My Financial Dashboard"
         subtitle={activeTrip?.title || 'TripSplit'}
         showBack
-        onBackPress={() => router.back()}
+        fallbackRoute="/(tabs)"
+        onBackPress={() => safeGoBack(router, '/(tabs)')}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>

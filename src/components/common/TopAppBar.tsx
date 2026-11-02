@@ -15,12 +15,14 @@ import { M3Colors } from '../../theme/colors';
 import { M3Typography } from '../../theme/typography';
 import { M3Shapes } from '../../theme/shapes';
 import { useTrips } from '../../context/TripContext';
+import { safeGoBack } from '../../utils/navigation';
 
 interface TopAppBarProps {
   title: string;
   subtitle?: string;
   showBack?: boolean;
   onBackPress?: () => void;
+  fallbackRoute?: string;
   avatarUrl?: string;
   onProfilePress?: () => void;
   onNotificationPress?: () => void;
@@ -33,6 +35,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   subtitle = 'TripSplit',
   showBack = false,
   onBackPress,
+  fallbackRoute = '/(tabs)',
   avatarUrl,
   onProfilePress,
   onNotificationPress,
@@ -56,9 +59,13 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
 
   const handleBack = () => {
     if (onBackPress) {
-      onBackPress();
+      if (typeof router.canGoBack === 'function' && router.canGoBack()) {
+        onBackPress();
+      } else {
+        router.replace(fallbackRoute as any);
+      }
     } else {
-      router.back();
+      safeGoBack(router, fallbackRoute);
     }
   };
 

@@ -27,6 +27,7 @@ import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
 import { useKeyboardBottomInset } from '../../src/hooks/useKeyboardBottomInset';
+import { safeGoBack } from '../../src/utils/navigation';
 
 export default function EditExpenseScreen() {
   const router = useRouter();
@@ -97,11 +98,16 @@ export default function EditExpenseScreen() {
   if (!expense || !trip) {
     return (
       <View style={styles.container}>
-        <TopAppBar title="Edit Transaction" showBack onBackPress={() => router.back()} />
+        <TopAppBar
+          title="Edit Transaction"
+          showBack
+          fallbackRoute="/(tabs)"
+          onBackPress={() => safeGoBack(router, '/(tabs)')}
+        />
         <View style={styles.centerContainer}>
           <MaterialCommunityIcons name="alert-circle-outline" size={48} color={M3Colors.onSurfaceVariant} />
           <Text style={styles.errorText}>Transaction or trip not found.</Text>
-          <Button mode="contained" onPress={() => router.back()}>
+          <Button mode="contained" onPress={() => safeGoBack(router, '/(tabs)')}>
             Go Back
           </Button>
         </View>
@@ -207,7 +213,7 @@ export default function EditExpenseScreen() {
       Alert.alert('Updated', 'Transaction has been updated with audit history.', [
         {
           text: 'OK',
-          onPress: () => router.back(),
+          onPress: () => safeGoBack(router, `/trip/${trip.id}`),
         },
       ]);
     } catch (err: any) {
@@ -226,7 +232,8 @@ export default function EditExpenseScreen() {
         title="Edit Transaction"
         subtitle={trip.title}
         showBack
-        onBackPress={() => router.back()}
+        fallbackRoute={`/trip/${trip.id}`}
+        onBackPress={() => safeGoBack(router, `/trip/${trip.id}`)}
       />
 
       <ScrollView

@@ -22,6 +22,7 @@ import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
 import { isValidUpiId } from '../../src/services/upi/upiParser';
 import { useKeyboardBottomInset } from '../../src/hooks/useKeyboardBottomInset';
+import { safeGoBack } from '../../src/utils/navigation';
 
 export default function CreateTripScreen() {
   const router = useRouter();
@@ -104,7 +105,8 @@ export default function CreateTripScreen() {
         title="Create New Trip"
         subtitle="TripSplit"
         showBack
-        onBackPress={() => router.back()}
+        fallbackRoute="/(tabs)/trips"
+        onBackPress={() => safeGoBack(router, '/(tabs)/trips')}
       />
 
       <KeyboardAvoidingView

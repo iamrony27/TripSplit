@@ -16,6 +16,7 @@ import { parseUpiUri, isValidUpiId } from '../src/services/upi/upiParser';
 import { M3Colors } from '../src/theme/colors';
 import { M3Typography } from '../src/theme/typography';
 import { M3Shapes } from '../src/theme/shapes';
+import { safeGoBack } from '../src/utils/navigation';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SCAN_BOX_SIZE = Math.min(SCREEN_WIDTH * 0.72, 280);
@@ -47,7 +48,7 @@ export default function ScanQrScreen() {
         <TouchableOpacity onPress={requestPermission} style={styles.grantBtn}>
           <Text style={styles.grantBtnText}>Grant Camera Permission</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.back()} style={styles.cancelBtn}>
+        <TouchableOpacity onPress={() => safeGoBack(router, '/(tabs)')} style={styles.cancelBtn}>
           <Text style={styles.cancelBtnText}>Cancel</Text>
         </TouchableOpacity>
       </View>
@@ -102,19 +103,19 @@ export default function ScanQrScreen() {
         Alert.alert(
           'UPI ID Linked',
           `Successfully saved your personal UPI ID: ${extractedUpiId}${payeeName ? ` (${payeeName})` : ''}`,
-          [{ text: 'OK', onPress: () => router.back() }]
+          [{ text: 'OK', onPress: () => safeGoBack(router, '/(tabs)/profile') }]
         );
       } else {
         Alert.alert(
           'UPI QR Detected',
           `Payee: ${payeeName || 'Unknown'}\nUPI ID: ${extractedUpiId}`,
           [
-            { text: 'Copy / Done', onPress: () => router.back() },
+            { text: 'Copy / Done', onPress: () => safeGoBack(router, '/(tabs)') },
             {
               text: 'Save to Profile',
               onPress: async () => {
                 await updateUpi(extractedUpiId);
-                router.back();
+                safeGoBack(router, '/(tabs)/profile');
               },
             },
           ]
@@ -142,7 +143,7 @@ export default function ScanQrScreen() {
 
       {/* Top Controls Overlay */}
       <View style={[styles.topOverlay, { top: Math.max(insets.top + 8, 44) }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.iconCircle}>
+        <TouchableOpacity onPress={() => safeGoBack(router, '/(tabs)')} style={styles.iconCircle}>
           <MaterialCommunityIcons name="close" size={24} color="#FFFFFF" />
         </TouchableOpacity>
 

@@ -21,6 +21,7 @@ import {
 import { M3Colors } from '../src/theme/colors';
 import { M3Typography } from '../src/theme/typography';
 import { M3Shapes } from '../src/theme/shapes';
+import { safeGoBack } from '../src/utils/navigation';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -112,7 +113,8 @@ export default function NotificationsScreen() {
       <TopAppBar
         title="Notifications"
         showBack
-        onBackPress={() => router.back()}
+        fallbackRoute="/(tabs)"
+        onBackPress={() => safeGoBack(router, '/(tabs)')}
         rightAction={
           <View style={styles.topRightActions}>
             {unreadNotificationsCount > 0 && (

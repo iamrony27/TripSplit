@@ -15,6 +15,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
+import { safeGoBack } from '../../src/utils/navigation';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -59,7 +60,7 @@ export default function ForgotPasswordScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => safeGoBack(router, '/(auth)/login')}
           style={styles.backBtn}
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color={M3Colors.onSurface} />
