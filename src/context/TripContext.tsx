@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useRef } from 'react';
 import { useAuth } from './AuthContext';
+import { useToast } from './ToastContext';
 import { Trip, TripMember, MemberRole } from '../types/trip';
 import { Expense, SplitMode, ParticipantSplit } from '../types/expense';
 import { PaymentRecord, PaymentStatus, MemberBalance, SettlementSuggestion } from '../types/settlement';
@@ -166,6 +167,7 @@ const TripContext = createContext<TripContextType | undefined>(undefined);
 
 export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [activeTripId, setActiveTripId] = useState<string | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -402,7 +404,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!activeTrip || !user) throw new Error('No active trip or user');
     if (!isTripAdmin) throw new Error('Only a group administrator can edit transactions.');
 
-    return adminEditExpenseInService({
+    const updated = await adminEditExpenseInService({
       expenseId: params.expenseId,
       tripId: activeTrip.id,
       adminUserId: user.id,
@@ -410,6 +412,14 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       reason: params.reason,
       updates: params.updates,
     });
+
+    showToast({
+      type: 'edit',
+      title: 'Transaction Updated',
+      message: `"${updated.title || 'Transaction'}" has been updated`,
+    });
+
+    return updated;
   };
 
   // 8. Member Profile Merging
@@ -424,6 +434,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       adminUserId: user.id,
       adminName: user.fullName || 'Admin',
       notes,
+    });
+
+    showToast({
+      type: 'edit',
+      title: 'Profiles Merged',
+      message: 'Member profiles and transactions merged successfully',
     });
   };
 
@@ -507,20 +523,37 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       timestamp: Date.now(),
     });
 
+    showToast({
+      type: 'success',
+      title: 'Trip Created',
+      message: `"${newTrip.title}" group created successfully`,
+    });
+
     setActiveTripId(newTrip.id);
     return newTrip;
   };
 
   const updateTrip = async (tripId: string, updates: Partial<Trip>) => {
     await updateTripInFirestore(tripId, updates);
+    showToast({
+      type: 'edit',
+      title: 'Trip Updated',
+      message: 'Trip details updated successfully',
+    });
   };
 
   const deleteTrip = async (tripId: string) => {
+    const targetTrip = trips.find((t) => t.id === tripId);
     await deleteTripInFirestore(tripId);
     if (activeTripId === tripId) {
       const remaining = trips.filter((t) => t.id !== tripId);
       setActiveTripId(remaining.length > 0 ? remaining[0].id : null);
     }
+    showToast({
+      type: 'delete',
+      title: 'Trip Deleted',
+      message: targetTrip ? `"${targetTrip.title}" removed` : 'Trip removed successfully',
+    });
   };
 
   const addMember = async (tripId: string, member: TripMember) => {
@@ -541,6 +574,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         timestamp: Date.now(),
       });
     }
+
+    showToast({
+      type: 'success',
+      title: 'Member Added',
+      message: `${member.name} added to "${targetTrip.title}"`,
+    });
   };
 
   const removeMember = async (tripId: string, memberId: string) => {
@@ -562,6 +601,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         timestamp: Date.now(),
       });
     }
+
+    showToast({
+      type: 'delete',
+      title: 'Member Removed',
+      message: `${memberName} removed from "${targetTrip.title}"`,
+    });
   };
 
   const addExpense = async (
@@ -609,10 +654,20 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       timestamp: Date.now(),
     });
 
+    showToast({
+      type: 'success',
+      title: 'Transaction Added',
+      message: `"${expenseData.title}" (${expenseData.originalCurrency} ${expenseData.amount.toFixed(2)}) added`,
+    });
   };
 
   const updateExpense = async (expenseId: string, updates: Partial<Expense>) => {
     await updateExpenseInFirestore(expenseId, { ...updates, tripId: activeTripId || undefined });
+    showToast({
+      type: 'edit',
+      title: 'Transaction Updated',
+      message: updates.title ? `"${updates.title}" updated` : 'Transaction details updated',
+    });
   };
 
   const deleteExpense = async (expenseId: string) => {
@@ -631,6 +686,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         timestamp: Date.now(),
       });
     }
+
+    showToast({
+      type: 'delete',
+      title: 'Transaction Deleted',
+      message: expense ? `"${expense.title}" removed` : 'Transaction deleted',
+    });
   };
 
   const declarePayment = async (
@@ -678,6 +739,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currency: declaration.currency,
       timestamp: Date.now(),
     });
+
+    showToast({
+      type: 'info',
+      title: 'Payment Declared',
+      message: `${declaration.currency} ${declaration.amount.toFixed(2)} declared for admin approval`,
+    });
   };
 
   const approvePayment = async (paymentId: string) => {
@@ -703,6 +770,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       amount: approved.amount,
       currency: approved.currency,
       timestamp: Date.now(),
+    });
+
+    showToast({
+      type: 'success',
+      title: 'Payment Approved',
+      message: `Payment of ${approved.currency} ${approved.amount.toFixed(2)} approved`,
     });
   };
 
@@ -730,11 +803,22 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currency: rejected.currency,
       timestamp: Date.now(),
     });
+
+    showToast({
+      type: 'delete',
+      title: 'Payment Rejected',
+      message: `Payment of ${rejected.currency} ${rejected.amount.toFixed(2)} was rejected`,
+    });
   };
 
   const cancelPayment = async (paymentId: string) => {
     if (!activeTrip || !user) throw new Error('No active trip or user');
     await cancelPaymentDeclaration(paymentId, activeTrip.id, user.id, currentMember?.id);
+    showToast({
+      type: 'info',
+      title: 'Declaration Cancelled',
+      message: 'Payment declaration cancelled',
+    });
   };
 
   const recordPayment = async (
@@ -769,6 +853,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       amount: paymentData.amount,
       currency: paymentData.currency,
       timestamp: Date.now(),
+    });
+
+    showToast({
+      type: 'success',
+      title: 'Payment Recorded',
+      message: `${paymentData.currency} ${paymentData.amount.toFixed(2)} payment recorded`,
     });
   };
 

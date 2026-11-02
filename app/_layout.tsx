@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { TripProvider } from '../src/context/TripContext';
+import { ToastProvider } from '../src/context/ToastContext';
 import { paperTheme } from '../src/theme/paperTheme';
 import { M3Colors } from '../src/theme/colors';
 
@@ -147,12 +148,14 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <PaperProvider theme={paperTheme}>
-          <AuthProvider>
-            <TripProvider>
-              <StatusBar style="dark" />
-              <RootNavigation />
-            </TripProvider>
-          </AuthProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <TripProvider>
+                <StatusBar style="dark" />
+                <RootNavigation />
+              </TripProvider>
+            </AuthProvider>
+          </ToastProvider>
         </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
