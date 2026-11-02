@@ -70,21 +70,21 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
       <ScrollView
         ref={scrollViewRef}
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: Math.max(insets.top, 24),
-            paddingBottom: Math.max(insets.bottom, 40) + 260,
+            paddingTop: Math.max(insets.top, 20),
+            paddingBottom: Math.max(insets.bottom, 24) + 32,
           },
         ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        automaticallyAdjustKeyboardInsets={true}
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         showsVerticalScrollIndicator={false}
       >
         <TouchableOpacity
@@ -150,11 +150,6 @@ export default function RegisterScreen() {
               setPassword(text);
               if (errorMsg) setErrorMsg('');
             }}
-            onFocus={() => {
-              setTimeout(() => {
-                scrollViewRef.current?.scrollToEnd({ animated: true });
-              }, 150);
-            }}
             secureTextEntry={!showPassword}
             mode="outlined"
             style={styles.input}
@@ -176,11 +171,6 @@ export default function RegisterScreen() {
             onChangeText={(text) => {
               setConfirmPassword(text);
               if (errorMsg) setErrorMsg('');
-            }}
-            onFocus={() => {
-              setTimeout(() => {
-                scrollViewRef.current?.scrollToEnd({ animated: true });
-              }, 150);
             }}
             secureTextEntry={!showPassword}
             mode="outlined"
@@ -224,7 +214,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: M3Shapes.spacing.lg,
   },
   backBtn: {
@@ -236,7 +225,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   brandContainer: {
-    marginBottom: M3Shapes.spacing.xl,
+    marginBottom: 16,
   },
   appTitle: {
     ...M3Typography.displaySm,

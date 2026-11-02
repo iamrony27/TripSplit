@@ -11,6 +11,7 @@ import {
 import { TextInput, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/context/AuthContext';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
@@ -19,6 +20,7 @@ import { safeGoBack } from '../../src/utils/navigation';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { resetPassword } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -53,13 +55,20 @@ export default function ForgotPasswordScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 160 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: Math.max(insets.top, 20),
+            paddingBottom: Math.max(insets.bottom, 24) + 32,
+          },
+        ]}
         keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets={true}
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         showsVerticalScrollIndicator={false}
       >
         <TouchableOpacity
@@ -147,7 +156,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: M3Shapes.spacing.lg,
   },
   backBtn: {
@@ -159,7 +167,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   brandContainer: {
-    marginBottom: M3Shapes.spacing.xl,
+    marginBottom: 16,
   },
   appTitle: {
     ...M3Typography.displaySm,
