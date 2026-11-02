@@ -12,6 +12,7 @@
     },
     "android": {
       "package": "com.tripsplit.app",
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#f3fcf4",
         "foregroundImage": "./assets/images/android-icon-foreground.png"

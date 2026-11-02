@@ -106,7 +106,7 @@ export default function HomeScreen() {
                   </Text>
                 </View>
                 <View style={styles.heroIconBadge}>
-                  <MaterialCommunityIcons name="cash-multiple" size={24} color={M3Colors.onPrimary} />
+                  <MaterialCommunityIcons name="cash-multiple" size={24} color={M3Colors.primary} />
                 </View>
               </View>
 
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   },
   heroAmount: {
     ...M3Typography.headlineLg,
-    color: M3Colors.onPrimary,
+    color: M3Colors.onPrimaryContainer,
     fontWeight: '800',
     marginTop: 4,
   },
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(0, 108, 76, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },

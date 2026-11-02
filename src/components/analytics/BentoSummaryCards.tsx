@@ -37,13 +37,13 @@ export const BentoSummaryCards: React.FC<BentoSummaryCardsProps> = ({
             <Text style={styles.heroAmount}>{formatCurrency(totalSpend, currency)}</Text>
           </View>
           <View style={styles.heroIconCircle}>
-            <MaterialCommunityIcons name="cash-multiple" size={24} color={M3Colors.onPrimary} />
+            <MaterialCommunityIcons name="cash-multiple" size={24} color={M3Colors.primary} />
           </View>
         </View>
 
         <View style={styles.heroBottomRow}>
           <View style={styles.heroBadge}>
-            <MaterialCommunityIcons name="trending-up" size={14} color={M3Colors.onPrimary} />
+            <MaterialCommunityIcons name="trending-up" size={14} color={M3Colors.primary} />
             <Text style={styles.heroBadgeText}>Calculated Live Across All Members</Text>
           </View>
         </View>
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   heroAmount: {
     ...M3Typography.headlineLg,
-    color: M3Colors.onPrimary,
+    color: M3Colors.onPrimaryContainer,
     fontWeight: '800',
     marginTop: 4,
   },
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(0, 108, 76, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -144,15 +144,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: 'rgba(0, 108, 76, 0.12)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: M3Shapes.pill,
   },
   heroBadgeText: {
     ...M3Typography.labelSm,
-    color: M3Colors.onPrimary,
-    fontWeight: '600',
+    color: M3Colors.onPrimaryContainer,
+    fontWeight: '700',
   },
   subGrid: {
     flexDirection: 'row',

@@ -4,6 +4,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
   TouchableOpacity,
   Alert,
 } from 'react-native';
@@ -102,16 +104,25 @@ export default function CreateTripScreen() {
         onBackPress={() => router.back()}
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Trip Details</Text>
+      <KeyboardAvoidingView
+        style={styles.keyboardContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Trip Details</Text>
 
-          {errorMsg ? (
-            <View style={styles.errorBanner}>
-              <MaterialCommunityIcons name="alert-circle" size={18} color={M3Colors.onErrorContainer} />
-              <Text style={styles.errorText}>{errorMsg}</Text>
-            </View>
-          ) : null}
+            {errorMsg ? (
+              <View style={styles.errorBanner}>
+                <MaterialCommunityIcons name="alert-circle" size={18} color={M3Colors.onErrorContainer} />
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              </View>
+            ) : null}
 
           <TextInput
             label="Trip Title *"
@@ -270,7 +281,8 @@ export default function CreateTripScreen() {
           Create Trip & Start Splitting
         </Button>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
+  </View>
   );
 }
 
@@ -279,10 +291,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: M3Colors.surface,
   },
+  keyboardContainer: {
+    flex: 1,
+  },
   scrollContent: {
     padding: M3Shapes.spacing.md,
     gap: 12,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   card: {
     backgroundColor: M3Colors.surfaceContainerLowest,

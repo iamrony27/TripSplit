@@ -4,6 +4,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
   TouchableOpacity,
   Image,
   Alert,
@@ -85,154 +87,166 @@ export default function SetupWizardScreen() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[styles.scrollContent, { paddingTop: Math.max(insets.top + 16, 32) }]}
+    <KeyboardAvoidingView
+      style={styles.keyboardContainer}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.stepBadge}>
-          <Text style={styles.stepText}>First Time Setup</Text>
-        </View>
-        <Text style={styles.title}>Complete Your Profile</Text>
-        <Text style={styles.subtitle}>
-          Set up your profile preferences and UPI ID for seamless group settlements.
-        </Text>
-      </View>
-
-      {/* Avatar Picker */}
-      <View style={styles.avatarSection}>
-        <TouchableOpacity onPress={handlePickImage} style={styles.avatarBtn} activeOpacity={0.8}>
-          {photoUrl ? (
-            <Image source={{ uri: photoUrl }} style={styles.avatarImage} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <MaterialCommunityIcons name="camera-plus" size={36} color={M3Colors.primary} />
-            </View>
-          )}
-          <View style={styles.editIconBadge}>
-            <MaterialCommunityIcons name="pencil" size={14} color="#FFFFFF" />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: Math.max(insets.top + 16, 32) }]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.stepBadge}>
+            <Text style={styles.stepText}>First Time Setup</Text>
           </View>
-        </TouchableOpacity>
-        <Text style={styles.avatarHint}>Tap to upload photo</Text>
-      </View>
-
-      {/* Form Fields Card */}
-      <View style={styles.card}>
-        {errorMsg ? (
-          <View style={styles.errorBanner}>
-            <MaterialCommunityIcons name="alert-circle" size={18} color={M3Colors.onErrorContainer} />
-            <Text style={styles.errorText}>{errorMsg}</Text>
-          </View>
-        ) : null}
-
-        <TextInput
-          label="Full Name *"
-          value={fullName}
-          onChangeText={(t) => {
-            setFullName(t);
-            if (errorMsg) setErrorMsg('');
-          }}
-          mode="outlined"
-          style={styles.input}
-          outlineColor={M3Colors.outlineVariant}
-          activeOutlineColor={M3Colors.primary}
-          left={<TextInput.Icon icon="account" />}
-        />
-
-        <TextInput
-          label="Country"
-          value={country}
-          onChangeText={setCountry}
-          mode="outlined"
-          style={styles.input}
-          outlineColor={M3Colors.outlineVariant}
-          activeOutlineColor={M3Colors.primary}
-          left={<TextInput.Icon icon="earth" />}
-        />
-
-        {/* Currency Selector */}
-        <Menu
-          visible={currencyMenuVisible}
-          onDismiss={() => setCurrencyMenuVisible(false)}
-          anchor={
-            <TouchableOpacity
-              onPress={() => setCurrencyMenuVisible(true)}
-              style={styles.selectorBtn}
-            >
-              <View style={styles.selectorLeft}>
-                <MaterialCommunityIcons name="currency-usd" size={20} color={M3Colors.onSurfaceVariant} />
-                <View>
-                  <Text style={styles.selectorLabel}>Default Base Currency</Text>
-                  <Text style={styles.selectorValue}>
-                    {SUPPORTED_CURRENCIES[currency]?.flag} {currency} - {SUPPORTED_CURRENCIES[currency]?.name}
-                  </Text>
-                </View>
-              </View>
-              <MaterialCommunityIcons name="chevron-down" size={24} color={M3Colors.onSurfaceVariant} />
-            </TouchableOpacity>
-          }
-        >
-          {Object.values(SUPPORTED_CURRENCIES).map((c) => (
-            <Menu.Item
-              key={c.code}
-              onPress={() => {
-                setCurrency(c.code);
-                setCurrencyMenuVisible(false);
-              }}
-              title={`${c.flag} ${c.code} - ${c.name} (${c.symbol})`}
-            />
-          ))}
-        </Menu>
-
-        {/* UPI ID Section */}
-        <View style={styles.upiContainer}>
-          <Text style={styles.upiHeading}>UPI ID for Settlements</Text>
-          <Text style={styles.upiSubtitle}>
-            When group members owe you money, their payments will be sent to this UPI address.
+          <Text style={styles.title}>Complete Your Profile</Text>
+          <Text style={styles.subtitle}>
+            Set up your profile preferences and UPI ID for seamless group settlements.
           </Text>
-
-          <View style={styles.upiInputRow}>
-            <TextInput
-              label="UPI ID (optional)"
-              placeholder="e.g. name@okhdfcbank"
-              value={upiId}
-              onChangeText={(t) => {
-                setUpiId(t);
-                if (errorMsg) setErrorMsg('');
-              }}
-              mode="outlined"
-              style={[styles.input, { flex: 1, marginBottom: 0 }]}
-              outlineColor={M3Colors.outlineVariant}
-              activeOutlineColor={M3Colors.primary}
-              left={<TextInput.Icon icon="qrcode" />}
-            />
-            <TouchableOpacity
-              onPress={() => router.push({ pathname: '/scan-qr', params: { returnTarget: 'wizard' } })}
-              style={styles.scanBtn}
-            >
-              <MaterialCommunityIcons name="qrcode-scan" size={22} color={M3Colors.onPrimary} />
-            </TouchableOpacity>
-          </View>
         </View>
 
-        <Button
-          mode="contained"
-          onPress={handleComplete}
-          loading={loading}
-          disabled={loading}
-          style={styles.completeBtn}
-          contentStyle={styles.completeBtnContent}
-          buttonColor={M3Colors.primary}
-        >
-          Get Started
-        </Button>
-      </View>
-    </ScrollView>
+        {/* Avatar Picker */}
+        <View style={styles.avatarSection}>
+          <TouchableOpacity onPress={handlePickImage} style={styles.avatarBtn} activeOpacity={0.8}>
+            {photoUrl ? (
+              <Image source={{ uri: photoUrl }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <MaterialCommunityIcons name="camera-plus" size={36} color={M3Colors.primary} />
+              </View>
+            )}
+            <View style={styles.editIconBadge}>
+              <MaterialCommunityIcons name="pencil" size={14} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.avatarHint}>Tap to upload photo</Text>
+        </View>
+
+        {/* Form Fields Card */}
+        <View style={styles.card}>
+          {errorMsg ? (
+            <View style={styles.errorBanner}>
+              <MaterialCommunityIcons name="alert-circle" size={18} color={M3Colors.onErrorContainer} />
+              <Text style={styles.errorText}>{errorMsg}</Text>
+            </View>
+          ) : null}
+
+          <TextInput
+            label="Full Name *"
+            value={fullName}
+            onChangeText={(t) => {
+              setFullName(t);
+              if (errorMsg) setErrorMsg('');
+            }}
+            mode="outlined"
+            style={styles.input}
+            outlineColor={M3Colors.outlineVariant}
+            activeOutlineColor={M3Colors.primary}
+            left={<TextInput.Icon icon="account" />}
+          />
+
+          <TextInput
+            label="Country"
+            value={country}
+            onChangeText={setCountry}
+            mode="outlined"
+            style={styles.input}
+            outlineColor={M3Colors.outlineVariant}
+            activeOutlineColor={M3Colors.primary}
+            left={<TextInput.Icon icon="earth" />}
+          />
+
+          {/* Currency Selector */}
+          <Menu
+            visible={currencyMenuVisible}
+            onDismiss={() => setCurrencyMenuVisible(false)}
+            anchor={
+              <TouchableOpacity
+                onPress={() => setCurrencyMenuVisible(true)}
+                style={styles.selectorBtn}
+              >
+                <View style={styles.selectorLeft}>
+                  <MaterialCommunityIcons name="currency-usd" size={20} color={M3Colors.onSurfaceVariant} />
+                  <View>
+                    <Text style={styles.selectorLabel}>Default Base Currency</Text>
+                    <Text style={styles.selectorValue}>
+                      {SUPPORTED_CURRENCIES[currency]?.flag} {currency} - {SUPPORTED_CURRENCIES[currency]?.name}
+                    </Text>
+                  </View>
+                </View>
+                <MaterialCommunityIcons name="chevron-down" size={24} color={M3Colors.onSurfaceVariant} />
+              </TouchableOpacity>
+            }
+          >
+            {Object.values(SUPPORTED_CURRENCIES).map((c) => (
+              <Menu.Item
+                key={c.code}
+                onPress={() => {
+                  setCurrency(c.code);
+                  setCurrencyMenuVisible(false);
+                }}
+                title={`${c.flag} ${c.code} - ${c.name} (${c.symbol})`}
+              />
+            ))}
+          </Menu>
+
+          {/* UPI ID Section */}
+          <View style={styles.upiContainer}>
+            <Text style={styles.upiHeading}>UPI ID for Settlements</Text>
+            <Text style={styles.upiSubtitle}>
+              When group members owe you money, their payments will be sent to this UPI address.
+            </Text>
+
+            <View style={styles.upiInputRow}>
+              <TextInput
+                label="UPI ID (optional)"
+                placeholder="e.g. name@okhdfcbank"
+                value={upiId}
+                onChangeText={(t) => {
+                  setUpiId(t);
+                  if (errorMsg) setErrorMsg('');
+                }}
+                mode="outlined"
+                style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                outlineColor={M3Colors.outlineVariant}
+                activeOutlineColor={M3Colors.primary}
+                left={<TextInput.Icon icon="qrcode" />}
+              />
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: '/scan-qr', params: { returnTarget: 'wizard' } })}
+                style={styles.scanBtn}
+              >
+                <MaterialCommunityIcons name="qrcode-scan" size={22} color={M3Colors.onPrimary} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Button
+            mode="contained"
+            onPress={handleComplete}
+            loading={loading}
+            disabled={loading}
+            style={styles.completeBtn}
+            contentStyle={styles.completeBtnContent}
+            buttonColor={M3Colors.primary}
+          >
+            Get Started
+          </Button>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardContainer: {
+    flex: 1,
+    backgroundColor: M3Colors.surface,
+  },
   container: {
     flex: 1,
     backgroundColor: M3Colors.surface,
@@ -240,7 +254,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: M3Shapes.spacing.lg,
     paddingTop: 48,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   header: {
     alignItems: 'center',

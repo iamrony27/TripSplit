@@ -4,6 +4,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
   TouchableOpacity,
   Image,
   Alert,
@@ -196,61 +198,71 @@ export default function AddExpenseScreen() {
         onBackPress={() => router.back()}
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {errorMsg ? (
-          <View style={styles.errorBanner}>
-            <MaterialCommunityIcons name="alert-circle" size={18} color={M3Colors.onErrorContainer} />
-            <Text style={styles.errorText}>{errorMsg}</Text>
-          </View>
-        ) : null}
+      <KeyboardAvoidingView
+        style={styles.keyboardContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          {errorMsg ? (
+            <View style={styles.errorBanner}>
+              <MaterialCommunityIcons name="alert-circle" size={18} color={M3Colors.onErrorContainer} />
+              <Text style={styles.errorText}>{errorMsg}</Text>
+            </View>
+          ) : null}
 
-        {/* Hero Amount Input Card matching Stitch Screen 2 */}
-        <View style={styles.amountCard}>
-          <Text style={styles.amountLabel}>ENTER AMOUNT</Text>
-          <View style={styles.amountInputRow}>
-            {/* Currency Pill */}
-            <Menu
-              visible={currencyMenuVisible}
-              onDismiss={() => setCurrencyMenuVisible(false)}
-              anchor={
-                <TouchableOpacity
-                  onPress={() => setCurrencyMenuVisible(true)}
-                  style={styles.currencyPill}
-                >
-                  <Text style={styles.currencyPillText}>
-                    {SUPPORTED_CURRENCIES[currency]?.symbol || currency}
-                  </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={16} color={M3Colors.onPrimaryContainer} />
-                </TouchableOpacity>
-              }
-            >
-              {Object.values(SUPPORTED_CURRENCIES).map((c) => (
-                <Menu.Item
-                  key={c.code}
-                  onPress={() => {
-                    setCurrency(c.code);
-                    setCurrencyMenuVisible(false);
-                  }}
-                  title={`${c.flag} ${c.code} (${c.symbol})`}
-                />
-              ))}
-            </Menu>
+          {/* Hero Amount Input Card matching Stitch Screen 2 */}
+          <View style={styles.amountCard}>
+            <Text style={styles.amountLabel}>ENTER AMOUNT</Text>
+            <View style={styles.amountInputRow}>
+              {/* Currency Pill */}
+              <Menu
+                visible={currencyMenuVisible}
+                onDismiss={() => setCurrencyMenuVisible(false)}
+                anchor={
+                  <TouchableOpacity
+                    onPress={() => setCurrencyMenuVisible(true)}
+                    style={styles.currencyPill}
+                  >
+                    <Text style={styles.currencyPillText}>
+                      {SUPPORTED_CURRENCIES[currency]?.symbol || currency}
+                    </Text>
+                    <MaterialCommunityIcons name="chevron-down" size={16} color={M3Colors.onPrimaryContainer} />
+                  </TouchableOpacity>
+                }
+              >
+                {Object.values(SUPPORTED_CURRENCIES).map((c) => (
+                  <Menu.Item
+                    key={c.code}
+                    onPress={() => {
+                      setCurrency(c.code);
+                      setCurrencyMenuVisible(false);
+                    }}
+                    title={`${c.flag} ${c.code} (${c.symbol})`}
+                  />
+                ))}
+              </Menu>
 
-            <TextInput
-              value={amountStr}
-              onChangeText={(t) => {
-                setAmountStr(t);
-                if (errorMsg) setErrorMsg('');
-              }}
-              placeholder="0.00"
-              keyboardType="decimal-pad"
-              style={styles.amountInput}
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              theme={{ colors: { text: M3Colors.onSurface } }}
-            />
+              <TextInput
+                value={amountStr}
+                onChangeText={(t) => {
+                  setAmountStr(t);
+                  if (errorMsg) setErrorMsg('');
+                }}
+                placeholder="0.00"
+                placeholderTextColor="rgba(0, 33, 20, 0.45)"
+                keyboardType="decimal-pad"
+                textColor={M3Colors.onPrimaryContainer}
+                style={styles.amountInput}
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
+              />
+            </View>
           </View>
-        </View>
 
         {/* Expense Info Card */}
         <View style={styles.card}>
@@ -461,7 +473,8 @@ export default function AddExpenseScreen() {
           Save Expense
         </Button>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
+  </View>
   );
 }
 
@@ -470,10 +483,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: M3Colors.surface,
   },
+  keyboardContainer: {
+    flex: 1,
+  },
   scrollContent: {
     padding: M3Shapes.spacing.md,
     gap: 12,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   noTripCenter: {
     flex: 1,
@@ -543,6 +559,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     minWidth: 160,
     textAlign: 'center',
+    color: M3Colors.onPrimaryContainer,
   },
   card: {
     backgroundColor: M3Colors.surfaceContainerLowest,

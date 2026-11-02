@@ -122,7 +122,11 @@ export default function TripDetailsScreen() {
         }
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         {/* Hero Financial Card */}
         <View style={styles.heroCard}>
           <View style={styles.heroTop}>
@@ -346,19 +350,19 @@ const styles = StyleSheet.create({
   },
   heroAmount: {
     ...M3Typography.headlineLg,
-    color: M3Colors.onPrimary,
+    color: M3Colors.onPrimaryContainer,
     fontWeight: '800',
     marginTop: 4,
   },
   currencyBadge: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(0, 33, 20, 0.12)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: M3Shapes.pill,
   },
   currencyBadgeText: {
     ...M3Typography.labelSm,
-    color: M3Colors.onPrimary,
+    color: M3Colors.onPrimaryContainer,
     fontWeight: '800',
   },
   heroDescription: {
