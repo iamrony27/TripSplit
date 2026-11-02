@@ -1,0 +1,28 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper to check user authentication
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper to check if file is an image and within size limit
+    function isImage(maxBytes) {
+      return request.resource.contentType.matches('image/.*')
+        && request.resource.size <= maxBytes;
+    }
+
+    // User profile images
+    match /users/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId && isImage(5 * 1024 * 1024);
+    }
+
+    // Trip receipts and cover images
+    match /trips/{tripId}/{allPaths=**} {
+      // Authenticated users can read and upload receipt/cover images (max 10MB)
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isImage(10 * 1024 * 1024);
+    }
+  }
+}
