@@ -1,51 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Vibration, Platform } from 'react-native';
-import { requireOptionalNativeModule } from 'expo-modules-core';
+import { Vibration } from 'react-native';
 
 const SOUND_ENABLED_KEY = '@tripsplit_notification_sound_enabled';
 let isSoundEnabledCache: boolean | null = null;
 
-// Safe loading of audio asset
-let notificationSoundAsset: any = null;
-try {
-  notificationSoundAsset = require('../../../assets/sounds/notification.wav');
-} catch {
-  notificationSoundAsset = null;
-}
-
-// Lazy-loaded audio module reference with graceful fallback for environments
-// lacking the native ExponentAV module (such as Expo Go client)
-let AudioModule: any = null;
-let audioModuleChecked = false;
-
-function getAudioModule(): any {
-  if (!audioModuleChecked) {
-    audioModuleChecked = true;
-    try {
-      // Check if native ExponentAV module exists BEFORE requiring expo-av.
-      // In Expo Go, ExponentAV is not compiled into the client binary, and requireOptionalNativeModule
-      // safely returns null without throwing an unhandled exception.
-      const hasNativeAV =
-        typeof requireOptionalNativeModule === 'function' &&
-        requireOptionalNativeModule('ExponentAV') != null;
-
-      if (hasNativeAV) {
-        const expoAv = require('expo-av');
-        if (expoAv && expoAv.Audio) {
-          AudioModule = expoAv.Audio;
-        }
-      } else {
-        AudioModule = null;
-      }
-    } catch {
-      AudioModule = null;
-    }
-  }
-  return AudioModule;
-}
-
 /**
- * Checks if notification sound is enabled in user preferences.
+ * Checks if notification sound / haptics is enabled in user preferences.
  */
 export async function isSoundEnabled(): Promise<boolean> {
   if (isSoundEnabledCache !== null) {
@@ -61,7 +21,7 @@ export async function isSoundEnabled(): Promise<boolean> {
 }
 
 /**
- * Toggles or sets notification sound preference.
+ * Toggles or sets notification sound / haptics preference.
  */
 export async function setSoundEnabled(enabled: boolean): Promise<void> {
   try {
@@ -73,42 +33,20 @@ export async function setSoundEnabled(enabled: boolean): Promise<void> {
 }
 
 /**
- * Plays the pleasant notification chime.
- * Unloads the audio resource from memory immediately after playback completes.
- * Safely falls back to subtle haptic vibration if native audio is unavailable (e.g. in Expo Go).
+ * Plays subtle notification feedback (gentle haptic pulse).
+ * Non-blocking, completely safe across all platforms without native module dependencies.
  */
 export async function playNotificationSound(): Promise<void> {
   try {
     const enabled = await isSoundEnabled();
     if (!enabled) return;
 
-    const Audio = getAudioModule();
-    if (Audio && notificationSoundAsset) {
-      // Configure audio mode to play safely
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-      });
-
-      const { sound } = await Audio.Sound.createAsync(
-        notificationSoundAsset,
-        { shouldPlay: true, volume: 1.0 },
-        (status: any) => {
-          if (status && status.isLoaded && status.didJustFinish) {
-            sound.unloadAsync().catch(() => {});
-          }
-        }
-      );
-    } else {
-      // Gentle haptic feedback fallback when ExponentAV native binary is not present in runtime
-      try {
-        Vibration.vibrate(60);
-      } catch {
-        // Safe no-op on platforms without vibration support
-      }
+    try {
+      Vibration.vibrate(60);
+    } catch {
+      // Safe no-op on platforms without vibration support
     }
   } catch (error) {
-    // Graceful fallback - never interrupt user flow if device audio fails
-    console.warn('Notification sound playback notice:', error);
+    console.warn('Notification sound notice:', error);
   }
 }
