@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Vibration } from 'react-native';
+import { Vibration, Platform } from 'react-native';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 
 const SOUND_ENABLED_KEY = '@tripsplit_notification_sound_enabled';
 let isSoundEnabledCache: boolean | null = null;
@@ -13,7 +14,7 @@ try {
 }
 
 // Lazy-loaded audio module reference with graceful fallback for environments
-// lacking the native ExponentAV module (e.g., modern Expo Go SDK)
+// lacking the native ExponentAV module (such as Expo Go client)
 let AudioModule: any = null;
 let audioModuleChecked = false;
 
@@ -21,11 +22,20 @@ function getAudioModule(): any {
   if (!audioModuleChecked) {
     audioModuleChecked = true;
     try {
-      // In Expo Go, require('expo-av') throws "Cannot find native module 'ExponentAV'"
-      // Catching this prevents the entire application bundle from crashing on load
-      const expoAv = require('expo-av');
-      if (expoAv && expoAv.Audio) {
-        AudioModule = expoAv.Audio;
+      // Check if native ExponentAV module exists BEFORE requiring expo-av.
+      // In Expo Go, ExponentAV is not compiled into the client binary, and requireOptionalNativeModule
+      // safely returns null without throwing an unhandled exception.
+      const hasNativeAV =
+        typeof requireOptionalNativeModule === 'function' &&
+        requireOptionalNativeModule('ExponentAV') != null;
+
+      if (hasNativeAV) {
+        const expoAv = require('expo-av');
+        if (expoAv && expoAv.Audio) {
+          AudioModule = expoAv.Audio;
+        }
+      } else {
+        AudioModule = null;
       }
     } catch {
       AudioModule = null;
