@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTrips } from '../src/context/TripContext';
 import { TopAppBar } from '../src/components/common/TopAppBar';
 import { AppNotification, NotificationType } from '../src/types/notification';
+import { isSoundEnabled, setSoundEnabled } from '../src/services/audio/soundService';
 import { M3Colors } from '../src/theme/colors';
 import { M3Typography } from '../src/theme/typography';
 import { M3Shapes } from '../src/theme/shapes';
@@ -24,7 +24,23 @@ export default function NotificationsScreen() {
     unreadNotificationsCount,
     markNotificationRead,
     markAllNotificationsRead,
+    playNotificationSound,
   } = useTrips();
+
+  const [soundOn, setSoundOn] = useState<boolean>(true);
+
+  useEffect(() => {
+    isSoundEnabled().then((enabled) => setSoundOn(enabled));
+  }, []);
+
+  const handleToggleSound = async () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    await setSoundEnabled(next);
+    if (next) {
+      playNotificationSound();
+    }
+  };
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
@@ -71,19 +87,76 @@ export default function NotificationsScreen() {
         showBack
         onBackPress={() => router.back()}
         rightAction={
-          unreadNotificationsCount > 0 ? (
+          <View style={styles.topRightActions}>
+            {unreadNotificationsCount > 0 && (
+              <TouchableOpacity
+                onPress={markAllNotificationsRead}
+                style={styles.markAllBtn}
+                accessibilityLabel="Mark all as read"
+              >
+                <Text style={styles.markAllText}>Mark read</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
-              onPress={markAllNotificationsRead}
-              style={styles.markAllBtn}
-              accessibilityLabel="Mark all as read"
+              onPress={() => playNotificationSound()}
+              style={styles.soundTestIconBtn}
+              accessibilityLabel="Test notification sound"
             >
-              <Text style={styles.markAllText}>Mark read</Text>
+              <MaterialCommunityIcons name="bell-ring-outline" size={20} color={M3Colors.primary} />
             </TouchableOpacity>
-          ) : null
+          </View>
         }
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Sound Settings Card */}
+        <View style={styles.soundCard}>
+          <View style={styles.soundCardLeft}>
+            <View
+              style={[
+                styles.soundCardIconCircle,
+                { backgroundColor: soundOn ? M3Colors.primaryContainer : M3Colors.surfaceContainerHigh },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={soundOn ? 'volume-high' : 'volume-off'}
+                size={22}
+                color={soundOn ? M3Colors.primary : M3Colors.outline}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.soundCardTitle}>Notification Sound</Text>
+              <Text style={styles.soundCardSubtitle}>
+                {soundOn ? 'Plays a gentle chime on payments & alerts' : 'Notification sounds are muted'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.soundCardRight}>
+            {soundOn && (
+              <TouchableOpacity
+                onPress={() => playNotificationSound()}
+                style={styles.testChimeBtn}
+                activeOpacity={0.7}
+                accessibilityLabel="Play chime preview"
+              >
+                <MaterialCommunityIcons name="play" size={14} color={M3Colors.primary} />
+                <Text style={styles.testChimeText}>Test</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={handleToggleSound}
+              style={[styles.toggleBtn, soundOn && styles.toggleBtnActive]}
+              activeOpacity={0.8}
+              accessibilityLabel={soundOn ? 'Mute notification sound' : 'Unmute notification sound'}
+            >
+              <Text style={[styles.toggleBtnText, soundOn && styles.toggleBtnTextActive]}>
+                {soundOn ? 'ON' : 'OFF'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {notifications.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>
@@ -147,6 +220,89 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: M3Colors.surface,
+  },
+  topRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  soundTestIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: M3Colors.primaryContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  soundCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: M3Colors.surfaceContainerLow,
+    borderRadius: M3Shapes.card,
+    padding: M3Shapes.spacing.md,
+    borderWidth: 1,
+    borderColor: M3Colors.outlineVariant,
+  },
+  soundCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  soundCardIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  soundCardTitle: {
+    ...M3Typography.titleSmall,
+    color: M3Colors.onSurface,
+    fontWeight: '700',
+  },
+  soundCardSubtitle: {
+    ...M3Typography.labelSmall,
+    color: M3Colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  soundCardRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginLeft: 8,
+  },
+  testChimeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: M3Shapes.pill,
+    backgroundColor: M3Colors.primaryContainer,
+  },
+  testChimeText: {
+    ...M3Typography.labelSmall,
+    color: M3Colors.primary,
+    fontWeight: '700',
+  },
+  toggleBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: M3Shapes.pill,
+    backgroundColor: M3Colors.surfaceContainerHigh,
+  },
+  toggleBtnActive: {
+    backgroundColor: M3Colors.primary,
+  },
+  toggleBtnText: {
+    ...M3Typography.labelSmall,
+    color: M3Colors.onSurfaceVariant,
+    fontWeight: '700',
+  },
+  toggleBtnTextActive: {
+    color: M3Colors.onPrimary,
   },
   markAllBtn: {
     paddingHorizontal: 12,

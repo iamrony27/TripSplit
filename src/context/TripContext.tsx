@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { Trip, TripMember, MemberRole } from '../types/trip';
 import { Expense, SplitMode, ParticipantSplit } from '../types/expense';
@@ -61,6 +61,7 @@ import {
 } from '../engine/expenseCalculator';
 import { simplifyDebts } from '../engine/debtSimplifier';
 import { convertCurrency } from '../services/currency/exchangeRateService';
+import { playNotificationSound } from '../services/audio/soundService';
 
 interface TripContextType {
   trips: Trip[];
@@ -94,6 +95,7 @@ interface TripContextType {
   unreadNotificationsCount: number;
   markNotificationRead: (notificationId: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
+  playNotificationSound: () => Promise<void>;
 
   // Admin Expense Editing & Member Merging
   adminEditExpense: (params: {
@@ -226,6 +228,14 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [activeTripId]);
 
+  const isFirstLoadNotificationsRef = useRef(true);
+  const prevUnreadCountRef = useRef(0);
+
+  useEffect(() => {
+    isFirstLoadNotificationsRef.current = true;
+    prevUnreadCountRef.current = 0;
+  }, [user?.id]);
+
   // 3. Subscribe to In-App Notifications for Current User
   useEffect(() => {
     if (!user?.id) {
@@ -234,6 +244,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const unsubscribe = subscribeUserNotifications(user.id, (notes) => {
+      const unreadCount = notes.filter((n) => !n.isRead).length;
+      if (!isFirstLoadNotificationsRef.current && unreadCount > prevUnreadCountRef.current) {
+        playNotificationSound().catch(() => {});
+      }
+      isFirstLoadNotificationsRef.current = false;
+      prevUnreadCountRef.current = unreadCount;
       setNotifications(notes);
     });
 
@@ -325,6 +341,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       adminName: user.fullName || 'Admin',
       role,
     });
+    playNotificationSound().catch(() => {});
   };
 
   const rejectJoinRequest = async (request: JoinRequest, reason?: string) => {
@@ -618,6 +635,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     await declarePaymentInFirestore(declaration);
+    playNotificationSound().catch(() => {});
 
     await logActivityInFirestore({
       id: `act_${Date.now()}`,
@@ -644,6 +662,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isTripAdmin,
       currentMemberId: currentMember?.id,
     });
+    playNotificationSound().catch(() => {});
 
     await logActivityInFirestore({
       id: `act_${Date.now()}`,
@@ -764,6 +783,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         unreadNotificationsCount,
         markNotificationRead,
         markAllNotificationsRead,
+        playNotificationSound,
 
         adminEditExpense,
         mergeMembers,
