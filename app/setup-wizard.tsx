@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -21,11 +21,14 @@ import { M3Typography } from '../src/theme/typography';
 import { M3Shapes } from '../src/theme/shapes';
 import { SUPPORTED_CURRENCIES } from '../src/services/currency/exchangeRateService';
 import { isValidUpiId } from '../src/services/upi/upiParser';
+import { useKeyboardBottomInset } from '../src/hooks/useKeyboardBottomInset';
 
 export default function SetupWizardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, completeSetup } = useAuth();
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const keyboardInset = useKeyboardBottomInset(80);
 
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [photoUrl, setPhotoUrl] = useState(user?.photoUrl || '');
@@ -93,8 +96,12 @@ export default function SetupWizardScreen() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <ScrollView
+        ref={scrollViewRef}
         style={styles.container}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: Math.max(insets.top + 16, 32) }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: Math.max(insets.top + 16, 32), paddingBottom: Math.max(keyboardInset, 100) },
+        ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
@@ -210,6 +217,7 @@ export default function SetupWizardScreen() {
                   setUpiId(t);
                   if (errorMsg) setErrorMsg('');
                 }}
+                onFocus={() => setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 150)}
                 mode="outlined"
                 style={[styles.input, { flex: 1, marginBottom: 0 }]}
                 outlineColor={M3Colors.outlineVariant}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -21,11 +21,14 @@ import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
 import { isValidUpiId } from '../../src/services/upi/upiParser';
+import { useKeyboardBottomInset } from '../../src/hooks/useKeyboardBottomInset';
 
 export default function CreateTripScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { createNewTrip } = useTrips();
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const keyboardInset = useKeyboardBottomInset(80);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -110,7 +113,8 @@ export default function CreateTripScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          ref={scrollViewRef}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(keyboardInset, 100) }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
@@ -242,6 +246,7 @@ export default function CreateTripScreen() {
               label="Friend's Name"
               value={newMemberName}
               onChangeText={setNewMemberName}
+              onFocus={() => setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 150)}
               mode="outlined"
               style={styles.memberInput}
               outlineColor={M3Colors.outlineVariant}
@@ -252,6 +257,7 @@ export default function CreateTripScreen() {
               placeholder="e.g. friend@okhdfcbank"
               value={newMemberUpi}
               onChangeText={setNewMemberUpi}
+              onFocus={() => setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 150)}
               mode="outlined"
               style={styles.memberInput}
               outlineColor={M3Colors.outlineVariant}

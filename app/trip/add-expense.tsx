@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,9 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  TextInput as RNTextInput,
 } from 'react-native';
-import { TextInput, Button, Checkbox, Menu } from 'react-native-paper';
+import { TextInput, Button, Checkbox } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
@@ -25,11 +26,14 @@ import { calculateExpenseShares, round2 } from '../../src/engine/expenseCalculat
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
+import { useKeyboardBottomInset } from '../../src/hooks/useKeyboardBottomInset';
 
 export default function AddExpenseScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { activeTrip, addExpense } = useTrips();
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const keyboardInset = useKeyboardBottomInset(80);
 
   if (!activeTrip) {
     return (
@@ -49,8 +53,7 @@ export default function AddExpenseScreen() {
 
   // State
   const [amountStr, setAmountStr] = useState('');
-  const [currency, setCurrency] = useState(baseCurrency);
-  const [currencyMenuVisible, setCurrencyMenuVisible] = useState(false);
+  const currency = baseCurrency; // Currency is fixed from the trip's base currency
   const [title, setTitle] = useState('');
   const [categoryId, setCategoryId] = useState('food');
   const [paidByMemberId, setPaidByMemberId] = useState<string>(
@@ -204,7 +207,8 @@ export default function AddExpenseScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          ref={scrollViewRef}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(keyboardInset, 100) }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
@@ -219,47 +223,27 @@ export default function AddExpenseScreen() {
           <View style={styles.amountCard}>
             <Text style={styles.amountLabel}>ENTER AMOUNT</Text>
             <View style={styles.amountInputRow}>
-              {/* Currency Pill */}
-              <Menu
-                visible={currencyMenuVisible}
-                onDismiss={() => setCurrencyMenuVisible(false)}
-                anchor={
-                  <TouchableOpacity
-                    onPress={() => setCurrencyMenuVisible(true)}
-                    style={styles.currencyPill}
-                  >
-                    <Text style={styles.currencyPillText}>
-                      {SUPPORTED_CURRENCIES[currency]?.symbol || currency}
-                    </Text>
-                    <MaterialCommunityIcons name="chevron-down" size={16} color={M3Colors.onPrimaryContainer} />
-                  </TouchableOpacity>
-                }
-              >
-                {Object.values(SUPPORTED_CURRENCIES).map((c) => (
-                  <Menu.Item
-                    key={c.code}
-                    onPress={() => {
-                      setCurrency(c.code);
-                      setCurrencyMenuVisible(false);
-                    }}
-                    title={`${c.flag} ${c.code} (${c.symbol})`}
-                  />
-                ))}
-              </Menu>
+              {/* Static Currency Pill (Fixed from Trip Base Currency) */}
+              <View style={styles.currencyPill}>
+                <Text style={styles.currencyPillText}>
+                  {SUPPORTED_CURRENCIES[currency]?.symbol || currency}
+                </Text>
+              </View>
 
-              <TextInput
+              <RNTextInput
                 value={amountStr}
                 onChangeText={(t) => {
                   setAmountStr(t);
                   if (errorMsg) setErrorMsg('');
                 }}
                 placeholder="0.00"
-                placeholderTextColor="rgba(0, 33, 20, 0.45)"
+                placeholderTextColor="rgba(0, 33, 20, 0.35)"
                 keyboardType="decimal-pad"
-                textColor={M3Colors.onPrimaryContainer}
+                cursorColor={M3Colors.primary}
+                selectionColor={M3Colors.primary}
+                showSoftInputOnFocus={true}
+                autoFocus={true}
                 style={styles.amountInput}
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
               />
             </View>
           </View>
@@ -370,6 +354,7 @@ export default function AddExpenseScreen() {
                         onChangeText={(t) =>
                           setCustomSplits((prev) => ({ ...prev, [member.id]: parseFloat(t) || 0 }))
                         }
+                        onFocus={() => setTimeout(() => scrollViewRef.current?.scrollTo({ y: 350, animated: true }), 120)}
                         mode="outlined"
                         dense
                         style={styles.customSplitInput}
@@ -387,6 +372,7 @@ export default function AddExpenseScreen() {
                           onChangeText={(t) =>
                             setCustomSplits((prev) => ({ ...prev, [member.id]: parseFloat(t) || 0 }))
                           }
+                          onFocus={() => setTimeout(() => scrollViewRef.current?.scrollTo({ y: 350, animated: true }), 120)}
                           mode="outlined"
                           dense
                           style={styles.customSplitInputSmall}
@@ -406,6 +392,7 @@ export default function AddExpenseScreen() {
                           onChangeText={(t) =>
                             setCustomSplits((prev) => ({ ...prev, [member.id]: parseInt(t) || 1 }))
                           }
+                          onFocus={() => setTimeout(() => scrollViewRef.current?.scrollTo({ y: 350, animated: true }), 120)}
                           mode="outlined"
                           dense
                           style={styles.customSplitInputSmall}
@@ -428,6 +415,7 @@ export default function AddExpenseScreen() {
             label="Expense Date (YYYY-MM-DD)"
             value={expenseDate}
             onChangeText={setExpenseDate}
+            onFocus={() => setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 150)}
             mode="outlined"
             style={styles.input}
             outlineColor={M3Colors.outlineVariant}
@@ -440,6 +428,7 @@ export default function AddExpenseScreen() {
             placeholder="e.g. Britto's table #14"
             value={description}
             onChangeText={setDescription}
+            onFocus={() => setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 150)}
             mode="outlined"
             style={styles.input}
             outlineColor={M3Colors.outlineVariant}
