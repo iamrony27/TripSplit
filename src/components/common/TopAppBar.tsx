@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  StatusBar,
+  Platform,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -30,6 +38,8 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
 }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 0;
+  const topInset = Math.max(insets.top, statusBarHeight);
 
   const handleBack = () => {
     if (onBackPress) {
@@ -40,7 +50,8 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, height: 56 + insets.top }]}>
+    <View style={[styles.container, { paddingTop: topInset }]}>
+      <View style={styles.appBarInner}>
       <View style={styles.leftContainer}>
         {showBack ? (
           <TouchableOpacity
@@ -118,18 +129,21 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
           </>
         )}
       </View>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: M3Colors.surface,
+  },
+  appBarInner: {
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: M3Shapes.spacing.md,
-    backgroundColor: M3Colors.surface,
   },
   leftContainer: {
     flexDirection: 'row',

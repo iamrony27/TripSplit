@@ -16,6 +16,7 @@ export interface CategorySpendItem {
   categoryName: string;
   icon: string;
   color: string;
+  textColor?: string;
   amount: number;
   percentage: number;
 }
@@ -61,26 +62,36 @@ export const SpendingCharts: React.FC<SpendingChartsProps> = ({
     onFilterChange?.(val);
   };
 
-  // Prepare Pie Chart Data
+  // Prepare Pie Chart Data with high-contrast text per segment
   const pieData = categorySpends.map((item) => ({
     value: item.amount,
     color: item.color || M3Colors.primary,
-    text: `${item.percentage.toFixed(0)}%`,
-    textColor: '#ffffff',
-    textSize: 11,
+    text: item.percentage >= 6 ? `${item.percentage.toFixed(0)}%` : '',
+    textColor: item.textColor || M3Colors.onSurface,
+    textSize: 12,
+    fontWeight: '800',
   }));
 
-  // Prepare Bar Chart Data
-  const barData = memberSpends.map((item, index) => ({
-    value: item.amount,
-    label: item.name.length > 5 ? item.name.substring(0, 5) + '..' : item.name,
-    frontColor: index % 2 === 0 ? M3Colors.primary : M3Colors.secondary,
-    topLabelComponent: () => (
-      <Text style={styles.chartBarLabel}>
-        {item.amount >= 1000 ? `${(item.amount / 1000).toFixed(1)}k` : Math.round(item.amount)}
-      </Text>
-    ),
-  }));
+  // Prepare Bar Chart Data with clean first names
+  const barData = memberSpends.map((item, index) => {
+    const firstName = item.name.trim().split(' ')[0] || item.name;
+    const cleanLabel = firstName.length > 7 ? firstName.substring(0, 6) + '…' : firstName;
+    return {
+      value: item.amount,
+      label: cleanLabel,
+      labelTextStyle: {
+        color: M3Colors.onSurface,
+        fontSize: 11,
+        fontWeight: '600' as const,
+      },
+      frontColor: index % 2 === 0 ? M3Colors.primary : M3Colors.secondary,
+      topLabelComponent: () => (
+        <Text style={styles.chartBarLabel}>
+          {item.amount >= 1000 ? `${(item.amount / 1000).toFixed(1)}k` : Math.round(item.amount)}
+        </Text>
+      ),
+    };
+  });
 
   // Prepare Line Chart Data
   const lineData = dailySpends.map((item) => ({
@@ -185,7 +196,7 @@ export const SpendingCharts: React.FC<SpendingChartsProps> = ({
               <View style={styles.barContainer}>
                 <BarChart
                   data={barData}
-                  width={CHART_WIDTH}
+                  width={CHART_WIDTH - 30}
                   height={180}
                   barWidth={24}
                   spacing={20}
@@ -193,8 +204,23 @@ export const SpendingCharts: React.FC<SpendingChartsProps> = ({
                   roundedBottom
                   hideRules
                   yAxisThickness={0}
+                  yAxisLabelWidth={44}
+                  formatYLabel={(val) => {
+                    const num = Number(val);
+                    return isNaN(num) ? `${val}` : num >= 1000 ? `${(num / 1000).toFixed(0)}k` : `${val}`;
+                  }}
                   xAxisThickness={1}
                   xAxisColor={M3Colors.outlineVariant}
+                  xAxisLabelTextStyle={{
+                    color: M3Colors.onSurface,
+                    fontSize: 11,
+                    fontWeight: '600',
+                  }}
+                  yAxisTextStyle={{
+                    color: M3Colors.onSurfaceVariant,
+                    fontSize: 10,
+                    fontWeight: '600',
+                  }}
                   noOfSections={4}
                   isAnimated
                 />
@@ -215,7 +241,7 @@ export const SpendingCharts: React.FC<SpendingChartsProps> = ({
               <View style={styles.lineContainer}>
                 <LineChart
                   data={lineData}
-                  width={CHART_WIDTH}
+                  width={CHART_WIDTH - 30}
                   height={180}
                   color={M3Colors.primary}
                   thickness={3}
@@ -225,8 +251,23 @@ export const SpendingCharts: React.FC<SpendingChartsProps> = ({
                   curved
                   hideRules
                   yAxisThickness={0}
+                  yAxisLabelWidth={44}
+                  formatYLabel={(val) => {
+                    const num = Number(val);
+                    return isNaN(num) ? `${val}` : num >= 1000 ? `${(num / 1000).toFixed(0)}k` : `${val}`;
+                  }}
                   xAxisThickness={1}
                   xAxisColor={M3Colors.outlineVariant}
+                  xAxisLabelTextStyle={{
+                    color: M3Colors.onSurface,
+                    fontSize: 11,
+                    fontWeight: '600',
+                  }}
+                  yAxisTextStyle={{
+                    color: M3Colors.onSurfaceVariant,
+                    fontSize: 10,
+                    fontWeight: '600',
+                  }}
                   dataPointsColor={M3Colors.primary}
                   isAnimated
                 />
@@ -357,7 +398,7 @@ const styles = StyleSheet.create({
   },
   legendAmount: {
     ...M3Typography.labelSm,
-    color: M3Colors.onSurfaceVariant,
+    color: M3Colors.onSurface,
     fontWeight: '700',
   },
   barContainer: {
@@ -366,10 +407,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   chartBarLabel: {
-    fontSize: 9,
-    color: M3Colors.onSurfaceVariant,
+    fontSize: 10,
+    color: M3Colors.onSurface,
     marginBottom: 2,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   lineContainer: {
     alignItems: 'center',

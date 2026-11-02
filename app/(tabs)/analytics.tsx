@@ -111,6 +111,7 @@ export default function AnalyticsScreen() {
           categoryName: info.name,
           icon: info.icon,
           color: info.color,
+          textColor: info.textColor || M3Colors.onSurface,
           amount,
           percentage,
         };
