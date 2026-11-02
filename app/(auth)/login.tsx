@@ -8,7 +8,7 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
-import { TextInput, Button } from 'react-native-paper';
+import { TextInput, Button, HelperText } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,10 @@ import { useAuth } from '../../src/context/AuthContext';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type ErrorType = 'VALIDATION' | 'CREDENTIALS' | 'NOT_FOUND' | 'TOO_MANY_REQUESTS' | 'NETWORK' | 'GENERAL' | null;
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -27,30 +31,112 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Error handling states
   const [errorMsg, setErrorMsg] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [errorType, setErrorType] = useState<ErrorType>(null);
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      setErrorMsg('Please enter both email and password.');
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password;
+
+    let hasValidationError = false;
+
+    // Validate Email
+    if (!trimmedEmail) {
+      setEmailError('Email address is required.');
+      hasValidationError = true;
+    } else if (!EMAIL_REGEX.test(trimmedEmail)) {
+      setEmailError('Please enter a valid email address (e.g. name@example.com).');
+      hasValidationError = true;
+    } else {
+      setEmailError('');
+    }
+
+    // Validate Password
+    if (!trimmedPassword) {
+      setPasswordError('Password is required.');
+      hasValidationError = true;
+    } else if (trimmedPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters.');
+      hasValidationError = true;
+    } else {
+      setPasswordError('');
+    }
+
+    if (hasValidationError) {
+      setErrorMsg('Please check the highlighted fields above.');
+      setErrorType('VALIDATION');
       return;
     }
+
+    // Clear previous errors before submission
     setErrorMsg('');
+    setEmailError('');
+    setPasswordError('');
+    setErrorType(null);
     setLoading(true);
+
     try {
-      await signIn(email.trim(), password);
+      await signIn(trimmedEmail, trimmedPassword);
     } catch (err: any) {
       console.warn('Login error:', err);
-      let msg = 'Failed to sign in. Please verify your credentials.';
+      const code = err?.code || '';
+      const message = err?.message || '';
+
       if (
-        err.code === 'auth/invalid-credential' ||
-        err.code === 'auth/user-not-found' ||
-        err.code === 'auth/wrong-password'
+        code === 'auth/invalid-credential' ||
+        code === 'auth/wrong-password' ||
+        message.includes('invalid-credential') ||
+        message.includes('wrong-password')
       ) {
-        msg = 'Invalid email or password.';
-      } else if (err.code === 'auth/network-request-failed') {
-        msg = 'Network error. Please check your internet connection.';
+        setPasswordError('Incorrect password');
+        setErrorMsg('Incorrect email or password. Please verify and try again.');
+        setErrorType('CREDENTIALS');
+      } else if (
+        code === 'auth/user-not-found' ||
+        message.includes('user-not-found')
+      ) {
+        setEmailError('No account found');
+        setErrorMsg('No account found with this email. Would you like to create one?');
+        setErrorType('NOT_FOUND');
+      } else if (
+        code === 'auth/invalid-email' ||
+        message.includes('invalid-email')
+      ) {
+        setEmailError('Invalid email format');
+        setErrorMsg('The email address entered is not valid.');
+        setErrorType('VALIDATION');
+      } else if (
+        code === 'auth/too-many-requests' ||
+        message.includes('too-many-requests')
+      ) {
+        setErrorMsg('Too many unsuccessful attempts. Access is temporarily locked for security. Please try again later or reset your password.');
+        setErrorType('TOO_MANY_REQUESTS');
+      } else if (
+        code === 'auth/user-disabled' ||
+        message.includes('user-disabled')
+      ) {
+        setErrorMsg('This account has been disabled. Please contact support.');
+        setErrorType('GENERAL');
+      } else if (
+        code === 'auth/network-request-failed' ||
+        message.includes('network-request-failed')
+      ) {
+        setErrorMsg('Network connection error. Please check your internet connection.');
+        setErrorType('NETWORK');
+      } else if (
+        code === 'auth/internal-error' ||
+        message.includes('internal-error')
+      ) {
+        setErrorMsg('Firebase service is temporarily unavailable. Please try again or use Demo Account.');
+        setErrorType('GENERAL');
+      } else {
+        setErrorMsg(err?.message || 'Failed to sign in. Please check your credentials and try again.');
+        setErrorType('GENERAL');
       }
-      setErrorMsg(msg);
     } finally {
       setLoading(false);
     }
@@ -59,13 +145,17 @@ export default function LoginScreen() {
   const handleDemoLogin = async () => {
     setLoading(true);
     setErrorMsg('');
+    setEmailError('');
+    setPasswordError('');
+    setErrorType(null);
     const demoEmail = 'demo@tripsplit.app';
     const demoPass = 'TripSplitDemo2026!';
     try {
       await signIn(demoEmail, demoPass);
     } catch (err: any) {
       console.warn('Demo login error:', err);
-      setErrorMsg(err.message || 'Demo login failed');
+      setErrorMsg(err?.message || 'Demo login failed. Please try again.');
+      setErrorType('GENERAL');
     } finally {
       setLoading(false);
     }
@@ -111,50 +201,111 @@ export default function LoginScreen() {
 
           {errorMsg ? (
             <View style={styles.errorBanner}>
-              <MaterialCommunityIcons name="alert-circle" size={18} color={M3Colors.onErrorContainer} />
-              <Text style={styles.errorText}>{errorMsg}</Text>
+              <View style={styles.errorBannerHeader}>
+                <MaterialCommunityIcons
+                  name={
+                    errorType === 'NETWORK'
+                      ? 'wifi-off'
+                      : errorType === 'TOO_MANY_REQUESTS'
+                      ? 'lock-clock'
+                      : errorType === 'NOT_FOUND'
+                      ? 'account-question-outline'
+                      : 'alert-circle-outline'
+                  }
+                  size={20}
+                  color={M3Colors.onErrorContainer}
+                />
+                <Text style={styles.errorText}>{errorMsg}</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setErrorMsg('');
+                    setErrorType(null);
+                  }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <MaterialCommunityIcons name="close" size={18} color={M3Colors.onErrorContainer} />
+                </TouchableOpacity>
+              </View>
+
+              {errorType === 'NOT_FOUND' ? (
+                <TouchableOpacity
+                  style={styles.errorActionBtn}
+                  onPress={() => router.push('/(auth)/register')}
+                >
+                  <MaterialCommunityIcons name="account-plus-outline" size={16} color={M3Colors.primary} />
+                  <Text style={styles.errorActionText}>Create an Account</Text>
+                </TouchableOpacity>
+              ) : null}
+
+              {errorType === 'CREDENTIALS' || errorType === 'TOO_MANY_REQUESTS' ? (
+                <TouchableOpacity
+                  style={styles.errorActionBtn}
+                  onPress={() => router.push('/(auth)/forgot-password')}
+                >
+                  <MaterialCommunityIcons name="lock-reset" size={16} color={M3Colors.primary} />
+                  <Text style={styles.errorActionText}>Reset Your Password</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
 
-          <TextInput
-            label="Email Address"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              if (errorMsg) setErrorMsg('');
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            mode="outlined"
-            style={styles.input}
-            outlineColor={M3Colors.outlineVariant}
-            activeOutlineColor={M3Colors.primary}
-            left={<TextInput.Icon icon="email-outline" />}
-            returnKeyType="next"
-          />
+          <View style={styles.inputWrapper}>
+            <TextInput
+              label="Email Address"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (emailError) setEmailError('');
+                if (errorMsg) setErrorMsg('');
+              }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              mode="outlined"
+              style={styles.input}
+              outlineColor={emailError ? M3Colors.error : M3Colors.outlineVariant}
+              activeOutlineColor={emailError ? M3Colors.error : M3Colors.primary}
+              error={Boolean(emailError)}
+              left={<TextInput.Icon icon="email-outline" color={emailError ? M3Colors.error : undefined} />}
+              returnKeyType="next"
+            />
+            {emailError ? (
+              <HelperText type="error" visible={Boolean(emailError)} style={styles.fieldError}>
+                {emailError}
+              </HelperText>
+            ) : null}
+          </View>
 
-          <TextInput
-            label="Password"
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              if (errorMsg) setErrorMsg('');
-            }}
-            secureTextEntry={!showPassword}
-            mode="outlined"
-            style={styles.input}
-            outlineColor={M3Colors.outlineVariant}
-            activeOutlineColor={M3Colors.primary}
-            left={<TextInput.Icon icon="lock-outline" />}
-            right={
-              <TextInput.Icon
-                icon={showPassword ? 'eye-off' : 'eye'}
-                onPress={() => setShowPassword(!showPassword)}
-              />
-            }
-            returnKeyType="done"
-            onSubmitEditing={handleLogin}
-          />
+          <View style={styles.inputWrapper}>
+            <TextInput
+              label="Password"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (passwordError) setPasswordError('');
+                if (errorMsg) setErrorMsg('');
+              }}
+              secureTextEntry={!showPassword}
+              mode="outlined"
+              style={styles.input}
+              outlineColor={passwordError ? M3Colors.error : M3Colors.outlineVariant}
+              activeOutlineColor={passwordError ? M3Colors.error : M3Colors.primary}
+              error={Boolean(passwordError)}
+              left={<TextInput.Icon icon="lock-outline" color={passwordError ? M3Colors.error : undefined} />}
+              right={
+                <TextInput.Icon
+                  icon={showPassword ? 'eye-off' : 'eye'}
+                  onPress={() => setShowPassword(!showPassword)}
+                />
+              }
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
+            />
+            {passwordError ? (
+              <HelperText type="error" visible={Boolean(passwordError)} style={styles.fieldError}>
+                {passwordError}
+              </HelperText>
+            ) : null}
+          </View>
 
           <TouchableOpacity
             onPress={() => router.push('/(auth)/forgot-password')}
@@ -269,22 +420,58 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: M3Colors.errorContainer,
-    padding: 10,
+    padding: 12,
     borderRadius: M3Shapes.cardSmall,
-    marginBottom: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
+  },
+  errorBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: 8,
   },
   errorText: {
     ...M3Typography.bodySm,
     color: M3Colors.onErrorContainer,
     flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  errorActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: M3Shapes.pill,
+    marginTop: 10,
+    marginLeft: 28,
+    gap: 4,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  errorActionText: {
+    ...M3Typography.labelSm,
+    color: M3Colors.primary,
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  inputWrapper: {
+    marginBottom: 10,
   },
   input: {
-    marginBottom: 14,
     backgroundColor: M3Colors.surfaceContainerLowest,
+  },
+  fieldError: {
+    paddingHorizontal: 4,
+    marginTop: 2,
+    fontSize: 12,
   },
   forgotBtn: {
     alignSelf: 'flex-end',

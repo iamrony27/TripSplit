@@ -8,7 +8,7 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
-import { TextInput, Button } from 'react-native-paper';
+import { TextInput, Button, HelperText } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,8 @@ import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
 import { safeGoBack } from '../../src/utils/navigation';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -30,36 +32,87 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Error states
   const [errorMsg, setErrorMsg] = useState('');
+  const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmError, setConfirmError] = useState('');
 
   const handleRegister = async () => {
-    if (!fullName.trim() || !email.trim() || !password.trim()) {
-      setErrorMsg('Please fill in all required fields.');
-      return;
+    const trimmedName = fullName.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password;
+    const trimmedConfirm = confirmPassword;
+
+    let hasValidationError = false;
+
+    if (!trimmedName) {
+      setNameError('Full name is required.');
+      hasValidationError = true;
+    } else {
+      setNameError('');
     }
-    if (password.length < 6) {
-      setErrorMsg('Password must be at least 6 characters long.');
-      return;
+
+    if (!trimmedEmail) {
+      setEmailError('Email address is required.');
+      hasValidationError = true;
+    } else if (!EMAIL_REGEX.test(trimmedEmail)) {
+      setEmailError('Please enter a valid email address.');
+      hasValidationError = true;
+    } else {
+      setEmailError('');
     }
-    if (password !== confirmPassword) {
-      setErrorMsg('Passwords do not match.');
+
+    if (!trimmedPassword) {
+      setPasswordError('Password is required.');
+      hasValidationError = true;
+    } else if (trimmedPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters long.');
+      hasValidationError = true;
+    } else {
+      setPasswordError('');
+    }
+
+    if (!trimmedConfirm) {
+      setConfirmError('Please confirm your password.');
+      hasValidationError = true;
+    } else if (trimmedPassword !== trimmedConfirm) {
+      setConfirmError('Passwords do not match.');
+      hasValidationError = true;
+    } else {
+      setConfirmError('');
+    }
+
+    if (hasValidationError) {
+      setErrorMsg('Please check the highlighted fields above.');
       return;
     }
 
     setErrorMsg('');
+    setNameError('');
+    setEmailError('');
+    setPasswordError('');
+    setConfirmError('');
     setLoading(true);
+
     try {
-      await signUp(email.trim(), password, fullName.trim());
-      // Navigation handled by AuthContext state listener to /setup-wizard
+      await signUp(trimmedEmail, trimmedPassword, trimmedName);
     } catch (err: any) {
       console.warn('Registration error:', err);
       let msg = 'Failed to create account. Please try again.';
       if (err.code === 'auth/email-already-in-use') {
-        msg = 'An account with this email already exists.';
+        msg = 'An account with this email already exists. Try logging in.';
+        setEmailError('Email already in use');
       } else if (err.code === 'auth/invalid-email') {
         msg = 'Please enter a valid email address.';
+        setEmailError('Invalid email format');
       } else if (err.code === 'auth/weak-password') {
         msg = 'Password is too weak. Please use a stronger password.';
+        setPasswordError('Password too weak');
+      } else if (err.code === 'auth/network-request-failed') {
+        msg = 'Network connection error. Please check your internet connection.';
       }
       setErrorMsg(msg);
     } finally {
@@ -111,76 +164,112 @@ export default function RegisterScreen() {
             </View>
           ) : null}
 
-          <TextInput
-            label="Full Name"
-            value={fullName}
-            onChangeText={(text) => {
-              setFullName(text);
-              if (errorMsg) setErrorMsg('');
-            }}
-            mode="outlined"
-            style={styles.input}
-            outlineColor={M3Colors.outlineVariant}
-            activeOutlineColor={M3Colors.primary}
-            left={<TextInput.Icon icon="account-outline" />}
-            returnKeyType="next"
-          />
+          <View style={styles.inputWrapper}>
+            <TextInput
+              label="Full Name"
+              value={fullName}
+              onChangeText={(text) => {
+                setFullName(text);
+                if (nameError) setNameError('');
+                if (errorMsg) setErrorMsg('');
+              }}
+              mode="outlined"
+              style={styles.input}
+              outlineColor={nameError ? M3Colors.error : M3Colors.outlineVariant}
+              activeOutlineColor={nameError ? M3Colors.error : M3Colors.primary}
+              error={Boolean(nameError)}
+              left={<TextInput.Icon icon="account-outline" color={nameError ? M3Colors.error : undefined} />}
+              returnKeyType="next"
+            />
+            {nameError ? (
+              <HelperText type="error" visible={Boolean(nameError)} style={styles.fieldError}>
+                {nameError}
+              </HelperText>
+            ) : null}
+          </View>
 
-          <TextInput
-            label="Email Address"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              if (errorMsg) setErrorMsg('');
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            mode="outlined"
-            style={styles.input}
-            outlineColor={M3Colors.outlineVariant}
-            activeOutlineColor={M3Colors.primary}
-            left={<TextInput.Icon icon="email-outline" />}
-            returnKeyType="next"
-          />
+          <View style={styles.inputWrapper}>
+            <TextInput
+              label="Email Address"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (emailError) setEmailError('');
+                if (errorMsg) setErrorMsg('');
+              }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              mode="outlined"
+              style={styles.input}
+              outlineColor={emailError ? M3Colors.error : M3Colors.outlineVariant}
+              activeOutlineColor={emailError ? M3Colors.error : M3Colors.primary}
+              error={Boolean(emailError)}
+              left={<TextInput.Icon icon="email-outline" color={emailError ? M3Colors.error : undefined} />}
+              returnKeyType="next"
+            />
+            {emailError ? (
+              <HelperText type="error" visible={Boolean(emailError)} style={styles.fieldError}>
+                {emailError}
+              </HelperText>
+            ) : null}
+          </View>
 
-          <TextInput
-            label="Password (min 6 characters)"
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              if (errorMsg) setErrorMsg('');
-            }}
-            secureTextEntry={!showPassword}
-            mode="outlined"
-            style={styles.input}
-            outlineColor={M3Colors.outlineVariant}
-            activeOutlineColor={M3Colors.primary}
-            left={<TextInput.Icon icon="lock-outline" />}
-            right={
-              <TextInput.Icon
-                icon={showPassword ? 'eye-off' : 'eye'}
-                onPress={() => setShowPassword(!showPassword)}
-              />
-            }
-            returnKeyType="next"
-          />
+          <View style={styles.inputWrapper}>
+            <TextInput
+              label="Password (min 6 characters)"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (passwordError) setPasswordError('');
+                if (errorMsg) setErrorMsg('');
+              }}
+              secureTextEntry={!showPassword}
+              mode="outlined"
+              style={styles.input}
+              outlineColor={passwordError ? M3Colors.error : M3Colors.outlineVariant}
+              activeOutlineColor={passwordError ? M3Colors.error : M3Colors.primary}
+              error={Boolean(passwordError)}
+              left={<TextInput.Icon icon="lock-outline" color={passwordError ? M3Colors.error : undefined} />}
+              right={
+                <TextInput.Icon
+                  icon={showPassword ? 'eye-off' : 'eye'}
+                  onPress={() => setShowPassword(!showPassword)}
+                />
+              }
+              returnKeyType="next"
+            />
+            {passwordError ? (
+              <HelperText type="error" visible={Boolean(passwordError)} style={styles.fieldError}>
+                {passwordError}
+              </HelperText>
+            ) : null}
+          </View>
 
-          <TextInput
-            label="Confirm Password"
-            value={confirmPassword}
-            onChangeText={(text) => {
-              setConfirmPassword(text);
-              if (errorMsg) setErrorMsg('');
-            }}
-            secureTextEntry={!showPassword}
-            mode="outlined"
-            style={styles.input}
-            outlineColor={M3Colors.outlineVariant}
-            activeOutlineColor={M3Colors.primary}
-            left={<TextInput.Icon icon="lock-check-outline" />}
-            returnKeyType="done"
-            onSubmitEditing={handleRegister}
-          />
+          <View style={styles.inputWrapper}>
+            <TextInput
+              label="Confirm Password"
+              value={confirmPassword}
+              onChangeText={(text) => {
+                setConfirmPassword(text);
+                if (confirmError) setConfirmError('');
+                if (errorMsg) setErrorMsg('');
+              }}
+              secureTextEntry={!showPassword}
+              mode="outlined"
+              style={styles.input}
+              outlineColor={confirmError ? M3Colors.error : M3Colors.outlineVariant}
+              activeOutlineColor={confirmError ? M3Colors.error : M3Colors.primary}
+              error={Boolean(confirmError)}
+              left={<TextInput.Icon icon="lock-check-outline" color={confirmError ? M3Colors.error : undefined} />}
+              returnKeyType="done"
+              onSubmitEditing={handleRegister}
+            />
+            {confirmError ? (
+              <HelperText type="error" visible={Boolean(confirmError)} style={styles.fieldError}>
+                {confirmError}
+              </HelperText>
+            ) : null}
+          </View>
 
           <Button
             mode="contained"
@@ -262,9 +351,16 @@ const styles = StyleSheet.create({
     color: M3Colors.onErrorContainer,
     flex: 1,
   },
+  inputWrapper: {
+    marginBottom: 8,
+  },
   input: {
-    marginBottom: 12,
     backgroundColor: M3Colors.surfaceContainerLowest,
+  },
+  fieldError: {
+    paddingHorizontal: 4,
+    marginTop: 2,
+    fontSize: 12,
   },
   registerBtn: {
     borderRadius: M3Shapes.pill,
