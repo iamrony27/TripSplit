@@ -23,6 +23,11 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:123456789012:android:abcdef123456',
 };
 
+export const isFirebaseConfigured =
+  Boolean(process.env.EXPO_PUBLIC_FIREBASE_API_KEY) &&
+  !process.env.EXPO_PUBLIC_FIREBASE_API_KEY?.includes('Dummy');
+
+
 // Singleton App Initialization
 let app: FirebaseApp;
 if (!getApps().length) {

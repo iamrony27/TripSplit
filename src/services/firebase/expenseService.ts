@@ -7,63 +7,108 @@ import {
   onSnapshot,
   query,
   where,
-  orderBy,
   Unsubscribe,
 } from 'firebase/firestore';
-import { db } from './config';
+import { db, isFirebaseConfigured } from './config';
 import { Expense } from '../../types/expense';
+import {
+  saveLocalExpense,
+  deleteLocalExpense,
+  subscribeLocalExpenses,
+  getLocalExpenses,
+} from '../storage/localDatabase';
 
 const EXPENSES_COLLECTION = 'expenses';
 
 export async function createExpenseInFirestore(expense: Expense): Promise<void> {
-  const ref = doc(db, EXPENSES_COLLECTION, expense.id);
-  await setDoc(ref, expense);
+  // Always save locally first
+  await saveLocalExpense(expense);
+
+  if (isFirebaseConfigured) {
+    try {
+      const ref = doc(db, EXPENSES_COLLECTION, expense.id);
+      await setDoc(ref, expense);
+    } catch (err) {
+      console.warn('Firestore createExpense failed, stored in local cache:', err);
+    }
+  }
 }
 
 export async function updateExpenseInFirestore(
   expenseId: string,
   updates: Partial<Expense>
 ): Promise<void> {
-  const ref = doc(db, EXPENSES_COLLECTION, expenseId);
-  await updateDoc(ref, {
-    ...updates,
-    updatedAt: Date.now(),
-  });
+  if (updates.tripId) {
+    const list = await getLocalExpenses(updates.tripId);
+    const existing = list.find((e) => e.id === expenseId);
+    if (existing) {
+      await saveLocalExpense({ ...existing, ...updates, updatedAt: Date.now() });
+    }
+  }
+
+  if (isFirebaseConfigured) {
+    try {
+      const ref = doc(db, EXPENSES_COLLECTION, expenseId);
+      await updateDoc(ref, {
+        ...updates,
+        updatedAt: Date.now(),
+      });
+    } catch (err) {
+      console.warn('Firestore updateExpense failed, stored locally:', err);
+    }
+  }
 }
 
-export async function deleteExpenseInFirestore(expenseId: string): Promise<void> {
-  const ref = doc(db, EXPENSES_COLLECTION, expenseId);
-  await deleteDoc(ref);
+export async function deleteExpenseInFirestore(expenseId: string, tripId?: string): Promise<void> {
+  if (tripId) {
+    await deleteLocalExpense(expenseId, tripId);
+  }
+
+  if (isFirebaseConfigured) {
+    try {
+      const ref = doc(db, EXPENSES_COLLECTION, expenseId);
+      await deleteDoc(ref);
+    } catch (err) {
+      console.warn('Firestore deleteExpense failed, removed locally:', err);
+    }
+  }
 }
 
 export function subscribeTripExpenses(
   tripId: string,
   callback: (expenses: Expense[]) => void
 ): Unsubscribe {
-  const q = query(
-    collection(db, EXPENSES_COLLECTION),
-    where('tripId', '==', tripId)
-  );
+  if (!isFirebaseConfigured || tripId.startsWith('demo_')) {
+    return subscribeLocalExpenses(tripId, callback);
+  }
 
-  return onSnapshot(
-    q,
-    (snap) => {
-      const list: Expense[] = [];
-      snap.forEach((d) => {
-        list.push(d.data() as Expense);
-      });
-      // Sort in memory by expenseDate descending, then createdAt descending
-      list.sort((a, b) => {
-        if (b.expenseDate !== a.expenseDate) {
-          return b.expenseDate.localeCompare(a.expenseDate);
-        }
-        return b.createdAt - a.createdAt;
-      });
-      callback(list);
-    },
-    (err) => {
-      console.warn('Expenses subscription error:', err);
-      callback([]);
-    }
-  );
+  try {
+    const q = query(
+      collection(db, EXPENSES_COLLECTION),
+      where('tripId', '==', tripId)
+    );
+
+    return onSnapshot(
+      q,
+      (snap) => {
+        const list: Expense[] = [];
+        snap.forEach((d) => {
+          list.push(d.data() as Expense);
+        });
+        list.sort((a, b) => {
+          if (b.expenseDate !== a.expenseDate) {
+            return b.expenseDate.localeCompare(a.expenseDate);
+          }
+          return b.createdAt - a.createdAt;
+        });
+        callback(list);
+      },
+      (err) => {
+        console.warn('Expenses subscription error, falling back to local store:', err);
+        subscribeLocalExpenses(tripId, callback);
+      }
+    );
+  } catch {
+    return subscribeLocalExpenses(tripId, callback);
+  }
 }

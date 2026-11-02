@@ -57,16 +57,7 @@ export default function LoginScreen() {
     const demoEmail = 'demo@tripsplit.app';
     const demoPass = 'TripSplitDemo2026!';
     try {
-      try {
-        await signIn(demoEmail, demoPass);
-      } catch (loginErr: any) {
-        // If demo account doesn't exist yet, automatically create it
-        if (loginErr.code === 'auth/user-not-found' || loginErr.code === 'auth/invalid-credential') {
-          await signUp(demoEmail, demoPass, 'Rony (Demo)');
-        } else {
-          throw loginErr;
-        }
-      }
+      await signIn(demoEmail, demoPass);
     } catch (err: any) {
       console.warn('Demo login error:', err);
       setErrorMsg(err.message || 'Demo login failed');

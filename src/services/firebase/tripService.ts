@@ -7,87 +7,148 @@ import {
   onSnapshot,
   query,
   where,
-  orderBy,
   Unsubscribe,
 } from 'firebase/firestore';
-import { db } from './config';
+import { db, isFirebaseConfigured } from './config';
 import { Trip, TripMember } from '../../types/trip';
+import {
+  saveLocalTrip,
+  deleteLocalTrip,
+  subscribeLocalTrips,
+  getLocalTrips,
+} from '../storage/localDatabase';
 
 const TRIPS_COLLECTION = 'trips';
 
 export async function createTripInFirestore(trip: Trip): Promise<void> {
-  const ref = doc(db, TRIPS_COLLECTION, trip.id);
-  await setDoc(ref, trip);
+  // Always persist locally first
+  await saveLocalTrip(trip);
+
+  if (isFirebaseConfigured) {
+    try {
+      const ref = doc(db, TRIPS_COLLECTION, trip.id);
+      await setDoc(ref, trip);
+    } catch (err) {
+      console.warn('Firestore createTrip failed, saved in offline cache:', err);
+    }
+  }
 }
 
 export async function updateTripInFirestore(
   tripId: string,
   updates: Partial<Trip>
 ): Promise<void> {
-  const ref = doc(db, TRIPS_COLLECTION, tripId);
-  await updateDoc(ref, {
-    ...updates,
-    updatedAt: Date.now(),
-  });
+  const all = await getLocalTrips();
+  const existing = all.find((t) => t.id === tripId);
+  if (existing) {
+    const updated = { ...existing, ...updates, updatedAt: Date.now() };
+    await saveLocalTrip(updated);
+  }
+
+  if (isFirebaseConfigured) {
+    try {
+      const ref = doc(db, TRIPS_COLLECTION, tripId);
+      await updateDoc(ref, {
+        ...updates,
+        updatedAt: Date.now(),
+      });
+    } catch (err) {
+      console.warn('Firestore updateTrip failed, saved in offline cache:', err);
+    }
+  }
 }
 
 export async function deleteTripInFirestore(tripId: string): Promise<void> {
-  const ref = doc(db, TRIPS_COLLECTION, tripId);
-  await deleteDoc(ref);
+  await deleteLocalTrip(tripId);
+
+  if (isFirebaseConfigured) {
+    try {
+      const ref = doc(db, TRIPS_COLLECTION, tripId);
+      await deleteDoc(ref);
+    } catch (err) {
+      console.warn('Firestore deleteTrip failed, removed locally:', err);
+    }
+  }
 }
 
 export function subscribeUserTrips(
   userId: string,
   callback: (trips: Trip[]) => void
 ): Unsubscribe {
-  // Query trips where user is a participant or creator
-  const q = query(
-    collection(db, TRIPS_COLLECTION),
-    where('memberIds', 'array-contains', userId)
-  );
+  // If running locally or demo user
+  if (!isFirebaseConfigured || userId.startsWith('local_user_') || userId.startsWith('demo_user_')) {
+    return subscribeLocalTrips(userId, callback);
+  }
 
-  return onSnapshot(
-    q,
-    (snap) => {
-      const list: Trip[] = [];
-      snap.forEach((d) => {
-        list.push(d.data() as Trip);
-      });
-      // Sort in memory by updatedAt descending
-      list.sort((a, b) => b.updatedAt - a.updatedAt);
-      callback(list);
-    },
-    (err) => {
-      console.warn('Trips subscription error:', err);
-      callback([]);
-    }
-  );
+  try {
+    const q = query(
+      collection(db, TRIPS_COLLECTION),
+      where('memberIds', 'array-contains', userId)
+    );
+
+    return onSnapshot(
+      q,
+      (snap) => {
+        const list: Trip[] = [];
+        snap.forEach((d) => {
+          list.push(d.data() as Trip);
+        });
+        list.sort((a, b) => b.updatedAt - a.updatedAt);
+        callback(list);
+      },
+      (err) => {
+        console.warn('Trips Firestore subscription error, using local database:', err);
+        subscribeLocalTrips(userId, callback);
+      }
+    );
+  } catch (error) {
+    console.warn('Trips query error, using local fallback:', error);
+    return subscribeLocalTrips(userId, callback);
+  }
 }
 
 export function subscribeSingleTrip(
   tripId: string,
   callback: (trip: Trip | null) => void
 ): Unsubscribe {
-  const ref = doc(db, TRIPS_COLLECTION, tripId);
-  return onSnapshot(
-    ref,
-    (snap) => {
-      if (snap.exists()) {
-        callback(snap.data() as Trip);
-      } else {
-        callback(null);
+  if (!isFirebaseConfigured) {
+    getLocalTrips().then((list) => {
+      callback(list.find((t) => t.id === tripId) || null);
+    });
+    return () => {};
+  }
+
+  try {
+    const ref = doc(db, TRIPS_COLLECTION, tripId);
+    return onSnapshot(
+      ref,
+      (snap) => {
+        if (snap.exists()) {
+          callback(snap.data() as Trip);
+        } else {
+          callback(null);
+        }
+      },
+      (err) => {
+        console.warn('Single trip subscription error:', err);
+        getLocalTrips().then((list) => {
+          callback(list.find((t) => t.id === tripId) || null);
+        });
       }
-    },
-    (err) => {
-      console.warn('Single trip subscription error:', err);
-      callback(null);
-    }
-  );
+    );
+  } catch {
+    getLocalTrips().then((list) => {
+      callback(list.find((t) => t.id === tripId) || null);
+    });
+    return () => {};
+  }
 }
 
 export async function addMemberToTrip(trip: Trip, newMember: TripMember): Promise<void> {
   const updatedMembers = [...trip.members, newMember];
-  const updatedMemberIds = Array.from(new Set([...trip.memberIds, newMember.id, newMember.userId].filter(Boolean))) as string[];
+  const updatedMemberIds = Array.from(
+    new Set([...trip.memberIds, newMember.id, newMember.userId].filter(Boolean))
+  ) as string[];
 
   await updateTripInFirestore(trip.id, {
     members: updatedMembers,
