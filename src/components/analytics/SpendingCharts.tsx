@@ -62,20 +62,39 @@ export const SpendingCharts: React.FC<SpendingChartsProps> = ({
     onFilterChange?.(val);
   };
 
-  // Prepare Pie Chart Data with high-contrast text per segment
+  const totalCategorySpend = categorySpends.reduce((acc, curr) => acc + curr.amount, 0);
+
+  // Prepare Pie Chart Data with vibrant colors, bold white text, and outward positioning
   const pieData = categorySpends.map((item) => ({
     value: item.amount,
     color: item.color || M3Colors.primary,
     text: item.percentage >= 6 ? `${item.percentage.toFixed(0)}%` : '',
-    textColor: item.textColor || M3Colors.onSurface,
+    textColor: item.textColor || '#FFFFFF',
     textSize: 12,
     fontWeight: '800',
+    labelPosition: 'outward' as const,
   }));
 
-  // Prepare Bar Chart Data with clean first names
+  const MEMBER_BAR_COLORS = [
+    '#006C4C', // Vibrant Emerald
+    '#6750A4', // Royal Purple
+    '#00897B', // Deep Teal
+    '#D84315', // Coral Flame
+    '#0288D1', // Sky Blue
+    '#7B1FA2', // Violet
+  ];
+
+  const maxMemberSpend = Math.max(...memberSpends.map((item) => item.amount), 0);
+  // Add headroom so tallest bar has ample space above it for the top label
+  const rawBarMax = maxMemberSpend > 0 ? maxMemberSpend * 1.3 : 1000;
+  const barStep = Math.ceil(rawBarMax / 4 / 500) * 500 || 500;
+  const barMaxValue = barStep * 4;
+
+  // Prepare Bar Chart Data with clean first names & distinct vibrant colors
   const barData = memberSpends.map((item, index) => {
     const firstName = item.name.trim().split(' ')[0] || item.name;
     const cleanLabel = firstName.length > 7 ? firstName.substring(0, 6) + '…' : firstName;
+    const barColor = MEMBER_BAR_COLORS[index % MEMBER_BAR_COLORS.length];
     return {
       value: item.amount,
       label: cleanLabel,
@@ -84,14 +103,21 @@ export const SpendingCharts: React.FC<SpendingChartsProps> = ({
         fontSize: 11,
         fontWeight: '600' as const,
       },
-      frontColor: index % 2 === 0 ? M3Colors.primary : M3Colors.secondary,
+      frontColor: barColor,
       topLabelComponent: () => (
-        <Text style={styles.chartBarLabel}>
-          {item.amount >= 1000 ? `${(item.amount / 1000).toFixed(1)}k` : Math.round(item.amount)}
-        </Text>
+        <View style={styles.chartBarLabelContainer}>
+          <Text style={styles.chartBarLabel}>
+            {item.amount >= 1000 ? `${(item.amount / 1000).toFixed(1)}k` : Math.round(item.amount)}
+          </Text>
+        </View>
       ),
     };
   });
+
+  const maxDailySpend = Math.max(...dailySpends.map((item) => item.amount), 0);
+  const rawDailyMax = maxDailySpend > 0 ? maxDailySpend * 1.3 : 1000;
+  const dailyStep = Math.ceil(rawDailyMax / 4 / 500) * 500 || 500;
+  const dailyMaxValue = dailyStep * 4;
 
   // Prepare Line Chart Data
   const lineData = dailySpends.map((item) => ({
@@ -159,11 +185,20 @@ export const SpendingCharts: React.FC<SpendingChartsProps> = ({
                 <PieChart
                   data={pieData}
                   donut
-                  radius={80}
-                  innerRadius={50}
+                  radius={92}
+                  innerRadius={54}
                   innerCircleColor={M3Colors.surfaceContainerLow}
                   showText
+                  labelsPosition="outward"
                   focusOnPress
+                  centerLabelComponent={() => (
+                    <View style={styles.pieCenterWrapper}>
+                      <Text style={styles.pieCenterLabel}>TOTAL</Text>
+                      <Text style={styles.pieCenterAmount}>
+                        {formatCurrency(totalCategorySpend, currency).split('.')[0]}
+                      </Text>
+                    </View>
+                  )}
                 />
                 {/* Category Legend list */}
                 <View style={styles.legendContainer}>
@@ -205,6 +240,9 @@ export const SpendingCharts: React.FC<SpendingChartsProps> = ({
                   hideRules
                   yAxisThickness={0}
                   yAxisLabelWidth={44}
+                  maxValue={barMaxValue}
+                  stepValue={barStep}
+                  overflowTop={30}
                   formatYLabel={(val) => {
                     const num = Number(val);
                     return isNaN(num) ? `${val}` : num >= 1000 ? `${(num / 1000).toFixed(0)}k` : `${val}`;
@@ -252,6 +290,9 @@ export const SpendingCharts: React.FC<SpendingChartsProps> = ({
                   hideRules
                   yAxisThickness={0}
                   yAxisLabelWidth={44}
+                  maxValue={dailyMaxValue}
+                  stepValue={dailyStep}
+                  overflowTop={30}
                   formatYLabel={(val) => {
                     const num = Number(val);
                     return isNaN(num) ? `${val}` : num >= 1000 ? `${(num / 1000).toFixed(0)}k` : `${val}`;
@@ -336,8 +377,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   chartTabBtnActive: {
-    backgroundColor: M3Colors.primaryContainer,
-    color: M3Colors.onPrimaryContainer,
+    backgroundColor: M3Colors.primary,
+    color: M3Colors.onPrimary,
     fontWeight: '700',
   },
   chartCard: {
@@ -374,6 +415,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
+  pieCenterWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pieCenterLabel: {
+    ...M3Typography.labelSm,
+    fontSize: 10,
+    color: M3Colors.onSurfaceVariant,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  pieCenterAmount: {
+    ...M3Typography.labelLg,
+    fontSize: 14,
+    color: M3Colors.onSurface,
+    fontWeight: '800',
+    marginTop: 1,
+  },
   legendContainer: {
     width: '100%',
     marginTop: 16,
@@ -406,11 +465,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 8,
   },
+  chartBarLabelContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
   chartBarLabel: {
     fontSize: 10,
     color: M3Colors.onSurface,
-    marginBottom: 2,
     fontWeight: '700',
+    textAlign: 'center',
   },
   lineContainer: {
     alignItems: 'center',
@@ -464,13 +528,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   progressTrack: {
-    height: 6,
+    height: 8,
     backgroundColor: M3Colors.surfaceContainerHigh,
-    borderRadius: 3,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   progressBar: {
-    height: 6,
-    borderRadius: 3,
+    height: 8,
+    borderRadius: 4,
   },
 });

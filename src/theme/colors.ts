@@ -69,25 +69,25 @@ export const M3Colors = {
   settled: '#5A605B',
   settledContainer: '#E1EAE3',
 
-  // Category Pastel Accent Palettes
+  // Rich, Distinct Category Accent Palettes
   categories: {
-    food: { bg: '#EADDFF', text: '#21005D', icon: '#6750A4' },
-    restaurant: { bg: '#EADDFF', text: '#21005D', icon: '#6750A4' },
-    travel: { bg: '#97F0FF', text: '#001F24', icon: '#006874' },
-    transport: { bg: '#97F0FF', text: '#001F24', icon: '#006874' },
-    hotel: { bg: '#B7F397', text: '#0E2004', icon: '#386A20' },
-    accommodation: { bg: '#B7F397', text: '#0E2004', icon: '#386A20' },
-    fuel: { bg: '#FFDCC1', text: '#2E1500', icon: '#8B5000' },
-    shopping: { bg: '#FFD8EC', text: '#37002B', icon: '#904277' },
-    entertainment: { bg: '#E0E0FF', text: '#00105C', icon: '#4355B9' },
-    tickets: { bg: '#E0E0FF', text: '#00105C', icon: '#4355B9' },
-    groceries: { bg: '#CCE8E5', text: '#00201F', icon: '#006A68' },
-    teaCoffee: { bg: '#FFE082', text: '#261900', icon: '#795548' },
-    snacks: { bg: '#FFE0B2', text: '#2E1500', icon: '#E65100' },
-    medical: { bg: '#FFDAD6', text: '#410002', icon: '#BA1A1A' },
-    parking: { bg: '#D1E4FF', text: '#001D36', icon: '#0061A4' },
-    drinks: { bg: '#E1BEE7', text: '#311B92', icon: '#7B1FA2' },
-    other: { bg: '#E0E4DE', text: '#151D19', icon: '#6F7A73' },
+    food: { primary: '#F57C00', bg: '#FFF3E0', text: '#FFFFFF', icon: '#E65100' },
+    restaurant: { primary: '#D84315', bg: '#FBE9E7', text: '#FFFFFF', icon: '#BF360C' },
+    travel: { primary: '#1976D2', bg: '#E3F2FD', text: '#FFFFFF', icon: '#0D47A1' },
+    transport: { primary: '#0288D1', bg: '#E1F5FE', text: '#FFFFFF', icon: '#01579B' },
+    hotel: { primary: '#00897B', bg: '#E0F2F1', text: '#FFFFFF', icon: '#004D40' },
+    accommodation: { primary: '#2E7D32', bg: '#E8F5E9', text: '#FFFFFF', icon: '#1B5E20' },
+    fuel: { primary: '#D32F2F', bg: '#FFEBEE', text: '#FFFFFF', icon: '#B71C1C' },
+    shopping: { primary: '#C2185B', bg: '#FCE4EC', text: '#FFFFFF', icon: '#880E4F' },
+    entertainment: { primary: '#7B1FA2', bg: '#F3E5F5', text: '#FFFFFF', icon: '#4A148C' },
+    tickets: { primary: '#512DA8', bg: '#EDE7F6', text: '#FFFFFF', icon: '#311B92' },
+    groceries: { primary: '#43A047', bg: '#E8F5E9', text: '#FFFFFF', icon: '#1B5E20' },
+    teaCoffee: { primary: '#6D4C41', bg: '#EFEBE9', text: '#FFFFFF', icon: '#3E2723' },
+    snacks: { primary: '#FFA000', bg: '#FFF8E1', text: '#FFFFFF', icon: '#FF6F00' },
+    medical: { primary: '#E53935', bg: '#FFEBEE', text: '#FFFFFF', icon: '#C62828' },
+    parking: { primary: '#455A64', bg: '#ECEFF1', text: '#FFFFFF', icon: '#263238' },
+    drinks: { primary: '#8E24AA', bg: '#F3E5F5', text: '#FFFFFF', icon: '#4A148C' },
+    other: { primary: '#546E7A', bg: '#ECEFF1', text: '#FFFFFF', icon: '#37474F' },
   }
 } as const;
 
