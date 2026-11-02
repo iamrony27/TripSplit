@@ -59,7 +59,6 @@ export default function ActivityScreen() {
       <TopAppBar
         title="Activity Timeline"
         subtitle={activeTrip ? `${activeTrip.title} • History` : 'Audit Log'}
-        avatarUrl={user?.photoUrl}
         onProfilePress={() => router.push('/(tabs)/profile')}
       />
 

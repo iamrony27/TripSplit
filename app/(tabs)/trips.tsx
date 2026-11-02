@@ -56,7 +56,6 @@ export default function TripsScreen() {
       <TopAppBar
         title="My Trips"
         subtitle="TripSplit"
-        avatarUrl={user?.photoUrl}
         onProfilePress={() => router.push('/(tabs)/profile')}
       />
 

@@ -57,7 +57,6 @@ export default function HomeScreen() {
       <TopAppBar
         title={activeTrip ? activeTrip.title : 'TripSplit'}
         subtitle={activeTrip ? `${baseCurrency} • Active Trip` : 'Group Expenses'}
-        avatarUrl={user?.photoUrl}
         onProfilePress={() => router.push('/(tabs)/profile')}
         rightAction={
           <TouchableOpacity

@@ -157,7 +157,6 @@ export default function AnalyticsScreen() {
       <TopAppBar
         title="Analytics & Breakdown"
         subtitle={activeTrip ? `${activeTrip.title} • Insights` : 'TripSplit Insights'}
-        avatarUrl={user?.photoUrl}
         onProfilePress={() => router.push('/(tabs)/profile')}
       />
 

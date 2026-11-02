@@ -5,13 +5,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Alert,
 } from 'react-native';
 import { TextInput, Button, Dialog, Portal } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
-import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { TopAppBar } from '../../src/components/common/TopAppBar';
@@ -23,36 +21,12 @@ import { generateUpiPaymentUri } from '../../src/services/upi/upiLauncher';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, signOut, updateUpi, completeSetup } = useAuth();
+  const { user, signOut, updateUpi } = useAuth();
 
   const [upiDialogVisible, setUpiDialogVisible] = useState(false);
   const [newUpiId, setNewUpiId] = useState(user?.upiId || '');
   const [upiError, setUpiError] = useState('');
   const [savingUpi, setSavingUpi] = useState(false);
-
-  const handlePickAvatar = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0].uri && user) {
-        await completeSetup({
-          fullName: user.fullName,
-          photoUrl: result.assets[0].uri,
-          country: user.country,
-          defaultCurrency: user.defaultCurrency,
-          preferredLanguage: user.preferredLanguage,
-          upiId: user.upiId,
-        });
-      }
-    } catch (err) {
-      console.warn('Avatar pick error:', err);
-    }
-  };
 
   const handleSaveUpi = async () => {
     if (!newUpiId.trim()) {
@@ -112,26 +86,18 @@ export default function ProfileScreen() {
       <TopAppBar
         title="Account Profile"
         subtitle="TripSplit"
-        avatarUrl={user?.photoUrl}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Profile Header Card */}
         <View style={styles.profileCard}>
-          <TouchableOpacity onPress={handlePickAvatar} style={styles.avatarWrapper}>
-            {user?.photoUrl ? (
-              <Image source={{ uri: user.photoUrl }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarInitial}>
-                  {(user?.fullName || 'M').charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            )}
-            <View style={styles.avatarBadge}>
-              <MaterialCommunityIcons name="camera" size={14} color="#FFFFFF" />
+          <View style={styles.avatarWrapper}>
+            <View style={styles.avatarPlaceholder}>
+              <Text style={styles.avatarInitial}>
+                {(user?.fullName || 'M').charAt(0).toUpperCase()}
+              </Text>
             </View>
-          </TouchableOpacity>
+          </View>
 
           <Text style={styles.profileName}>{user?.fullName || 'Member'}</Text>
           <Text style={styles.profileEmail}>{user?.email}</Text>
@@ -343,11 +309,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: 12,
   },
-  avatarImage: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-  },
   avatarPlaceholder: {
     width: 84,
     height: 84,
@@ -360,19 +321,6 @@ const styles = StyleSheet.create({
     ...M3Typography.displaySm,
     color: M3Colors.onPrimaryContainer,
     fontWeight: '800',
-  },
-  avatarBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: M3Colors.primary,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: M3Colors.surfaceContainerLowest,
   },
   profileName: {
     ...M3Typography.headlineSm,

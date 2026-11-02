@@ -7,12 +7,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Image,
   Alert,
 } from 'react-native';
 import { TextInput, Button, Menu } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../src/context/AuthContext';
@@ -31,7 +29,6 @@ export default function SetupWizardScreen() {
   const keyboardInset = useKeyboardBottomInset(80);
 
   const [fullName, setFullName] = useState(user?.fullName || '');
-  const [photoUrl, setPhotoUrl] = useState(user?.photoUrl || '');
   const [country, setCountry] = useState(user?.country || 'India');
   const [currency, setCurrency] = useState(user?.defaultCurrency || 'INR');
   const [language, setLanguage] = useState(user?.preferredLanguage || 'English');
@@ -40,23 +37,6 @@ export default function SetupWizardScreen() {
   const [currencyMenuVisible, setCurrencyMenuVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  const handlePickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0].uri) {
-        setPhotoUrl(result.assets[0].uri);
-      }
-    } catch (err) {
-      console.warn('Image picker error:', err);
-    }
-  };
 
   const handleComplete = async () => {
     if (!fullName.trim()) {
@@ -74,7 +54,6 @@ export default function SetupWizardScreen() {
     try {
       await completeSetup({
         fullName: fullName.trim(),
-        photoUrl: photoUrl || undefined,
         country: country.trim(),
         defaultCurrency: currency,
         preferredLanguage: language,
@@ -116,21 +95,13 @@ export default function SetupWizardScreen() {
           </Text>
         </View>
 
-        {/* Avatar Picker */}
+        {/* User Avatar Initials Preview */}
         <View style={styles.avatarSection}>
-          <TouchableOpacity onPress={handlePickImage} style={styles.avatarBtn} activeOpacity={0.8}>
-            {photoUrl ? (
-              <Image source={{ uri: photoUrl }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <MaterialCommunityIcons name="camera-plus" size={36} color={M3Colors.primary} />
-              </View>
-            )}
-            <View style={styles.editIconBadge}>
-              <MaterialCommunityIcons name="pencil" size={14} color="#FFFFFF" />
-            </View>
-          </TouchableOpacity>
-          <Text style={styles.avatarHint}>Tap to upload photo</Text>
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarInitial}>
+              {(fullName.trim() || user?.fullName || 'U').charAt(0).toUpperCase()}
+            </Text>
+          </View>
         </View>
 
         {/* Form Fields Card */}
@@ -296,39 +267,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  avatarBtn: {
-    position: 'relative',
-  },
   avatarPlaceholder: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: M3Colors.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-  },
-  editIconBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: M3Colors.primary,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: M3Colors.surface,
-  },
-  avatarHint: {
-    ...M3Typography.labelSm,
-    color: M3Colors.onSurfaceVariant,
-    marginTop: 6,
+  avatarInitial: {
+    ...M3Typography.displaySm,
+    color: M3Colors.onPrimaryContainer,
+    fontWeight: '800',
   },
   card: {
     backgroundColor: M3Colors.surfaceContainerLowest,

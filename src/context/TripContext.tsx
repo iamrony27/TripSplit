@@ -176,7 +176,6 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: `member_${user.id}`,
       userId: user.id,
       name: user.fullName || 'Organizer',
-      photoUrl: user.photoUrl,
       upiId: user.upiId,
       totalPaid: 0,
       totalShare: 0,
