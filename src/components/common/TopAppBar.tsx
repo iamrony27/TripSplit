@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { M3Colors } from '../../theme/colors';
 import { M3Typography } from '../../theme/typography';
@@ -28,6 +29,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   rightAction,
 }) => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handleBack = () => {
     if (onBackPress) {
@@ -38,7 +40,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, height: 56 + insets.top }]}>
       <View style={styles.leftContainer}>
         {showBack ? (
           <TouchableOpacity
@@ -64,9 +66,16 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
 
         <View style={styles.titleColumn}>
           {subtitle ? (
-            <Text style={styles.subtitleText}>{subtitle}</Text>
+            <Text style={styles.subtitleText} numberOfLines={1}>
+              {subtitle}
+            </Text>
           ) : null}
-          <Text style={styles.titleText} numberOfLines={1}>
+          <Text
+            style={styles.titleText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
             {title}
           </Text>
         </View>

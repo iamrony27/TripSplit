@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SettlementSuggestion } from '../../types/settlement';
@@ -11,19 +11,33 @@ import { generateUpiPaymentUri, launchUpiPayment } from '../../services/upi/upiL
 
 interface SettlementCardProps {
   suggestion: SettlementSuggestion;
+  currentMemberId?: string;
   currentUserId?: string;
-  isCurrentUserDebtor: boolean;
   onConfirmPaid?: (suggestion: SettlementSuggestion) => void;
   onOpenQrModal?: (suggestion: SettlementSuggestion) => void;
 }
 
 export const SettlementCard: React.FC<SettlementCardProps> = ({
   suggestion,
-  isCurrentUserDebtor,
+  currentMemberId,
+  currentUserId,
   onConfirmPaid,
   onOpenQrModal,
 }) => {
   const [isPaidLocally, setIsPaidLocally] = useState(false);
+
+  // Determine user relationship to this settlement
+  const isPayer = Boolean(
+    (currentMemberId && suggestion.fromMemberId === currentMemberId) ||
+    (currentUserId && suggestion.fromMemberId === currentUserId) ||
+    (currentUserId && suggestion.fromMemberId.includes(currentUserId))
+  );
+
+  const isReceiver = Boolean(
+    (currentMemberId && suggestion.toMemberId === currentMemberId) ||
+    (currentUserId && suggestion.toMemberId === currentUserId) ||
+    (currentUserId && suggestion.toMemberId.includes(currentUserId))
+  );
 
   const upiId = suggestion.toUpiId || `${suggestion.toName.toLowerCase().replace(/\s+/g, '')}@okaxis`;
   const upiUri = generateUpiPaymentUri({
@@ -42,41 +56,43 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
     }
   };
 
+  // Human-readable summary
+  let relationshipSummary = `${suggestion.fromName} will pay ${formatCurrency(suggestion.amount, suggestion.currency)} to ${suggestion.toName}`;
+  let badgeText = 'Group Transfer';
+  let badgeBg: string = M3Colors.surfaceContainerHigh;
+  let badgeColor: string = M3Colors.onSurfaceVariant;
+
+  if (isPayer) {
+    badgeText = 'You Owe Money';
+    badgeBg = M3Colors.errorContainer;
+    badgeColor = M3Colors.onErrorContainer;
+    relationshipSummary = `You need to pay ${formatCurrency(suggestion.amount, suggestion.currency)} to ${suggestion.toName}`;
+  } else if (isReceiver) {
+    badgeText = 'Payment to Receive';
+    badgeBg = M3Colors.primaryFixed;
+    badgeColor = M3Colors.onPrimaryFixed;
+    relationshipSummary = `${suggestion.fromName} owes you ${formatCurrency(suggestion.amount, suggestion.currency)}`;
+  }
+
   return (
     <View style={styles.card}>
-      {/* Status Header */}
+      {/* 1. Header with Status & Pending state */}
       <View style={styles.statusRow}>
-        <View
-          style={[
-            styles.statusTag,
-            {
-              backgroundColor: isCurrentUserDebtor
-                ? M3Colors.errorContainer
-                : M3Colors.primaryFixed,
-            },
-          ]}
-        >
+        <View style={[styles.statusTag, { backgroundColor: badgeBg }]}>
           <View
             style={[
               styles.pulseDot,
               {
-                backgroundColor: isCurrentUserDebtor
+                backgroundColor: isPayer
                   ? M3Colors.error
-                  : M3Colors.primary,
+                  : isReceiver
+                  ? M3Colors.primary
+                  : M3Colors.onSurfaceVariant,
               },
             ]}
           />
-          <Text
-            style={[
-              styles.statusTagText,
-              {
-                color: isCurrentUserDebtor
-                  ? M3Colors.onErrorContainer
-                  : M3Colors.onPrimaryFixed,
-              },
-            ]}
-          >
-            {isCurrentUserDebtor ? 'You Owe Money' : 'Payment to Receive'}
+          <Text style={[styles.statusTagText, { color: badgeColor }]}>
+            {badgeText}
           </Text>
         </View>
 
@@ -97,46 +113,64 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
         </View>
       </View>
 
-      {/* Recipient Profile & Amount Row */}
-      <View style={styles.recipientRow}>
-        <View style={styles.recipientInfo}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatarFallback}>
-              <Text style={styles.avatarText}>
-                {suggestion.toName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.verifiedBadge}>
-              <MaterialCommunityIcons name="check" size={10} color={M3Colors.primary} />
-            </View>
-          </View>
-
-          <View style={styles.nameColumn}>
-            <Text style={styles.recipientName} numberOfLines={1}>
-              {suggestion.toName}
+      {/* 2. Visual Transfer Flow Box (From Payer ➔ To Receiver) */}
+      <View style={styles.flowContainer}>
+        {/* Payer (Left) */}
+        <View style={styles.memberBlock}>
+          <Text style={styles.roleLabel}>PAYER (দেবে)</Text>
+          <View style={styles.payerAvatar}>
+            <Text style={styles.payerAvatarText}>
+              {suggestion.fromName.charAt(0).toUpperCase()}
             </Text>
-            <View style={styles.upiIdRow}>
-              <Text style={styles.upiIdText} numberOfLines={1}>
-                {upiId}
-              </Text>
-            </View>
           </View>
+          <Text style={styles.memberName} numberOfLines={1}>
+            {isPayer ? `${suggestion.fromName} (You)` : suggestion.fromName}
+          </Text>
+          <Text style={styles.memberSubtext}>Debtor</Text>
         </View>
 
-        <View style={styles.amountColumn}>
-          <Text style={styles.amountLabel}>AMOUNT</Text>
+        {/* Central Arrow & Amount */}
+        <View style={styles.arrowBlock}>
           <Text
             style={[
               styles.amountText,
-              isCurrentUserDebtor ? styles.amountDebit : styles.amountCredit,
+              isPayer ? styles.amountDebit : styles.amountCredit,
             ]}
           >
             {formatCurrency(suggestion.amount, suggestion.currency)}
           </Text>
+          <View style={styles.arrowPill}>
+            <MaterialCommunityIcons name="arrow-right-bold" size={20} color={M3Colors.primary} />
+          </View>
+        </View>
+
+        {/* Receiver (Right) */}
+        <View style={styles.memberBlock}>
+          <Text style={styles.roleLabel}>RECEIVER (পাবে)</Text>
+          <View style={styles.receiverAvatar}>
+            <Text style={styles.receiverAvatarText}>
+              {suggestion.toName.charAt(0).toUpperCase()}
+            </Text>
+            <View style={styles.verifiedCheck}>
+              <MaterialCommunityIcons name="check" size={9} color="#FFFFFF" />
+            </View>
+          </View>
+          <Text style={styles.memberName} numberOfLines={1}>
+            {isReceiver ? `${suggestion.toName} (You)` : suggestion.toName}
+          </Text>
+          <Text style={styles.memberSubtext}>Creditor</Text>
         </View>
       </View>
 
-      {/* Dynamic QR Code Drawer */}
+      {/* 3. Explicit Plain-Language Sentence */}
+      <View style={styles.explanationBanner}>
+        <MaterialCommunityIcons name="information-outline" size={16} color={M3Colors.primary} />
+        <Text style={styles.explanationText}>
+          {relationshipSummary}
+        </Text>
+      </View>
+
+      {/* 4. Payee UPI Info & QR Code Drawer */}
       <TouchableOpacity
         style={styles.qrDrawer}
         onPress={() => onOpenQrModal && onOpenQrModal(suggestion)}
@@ -145,24 +179,31 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
         <View style={styles.qrWrapper}>
           <QRCode
             value={upiUri}
-            size={90}
+            size={74}
             color={M3Colors.onSurface}
             backgroundColor={M3Colors.surfaceContainerLowest}
           />
         </View>
         <View style={styles.qrTextCol}>
           <View style={styles.qrTitleRow}>
-            <MaterialCommunityIcons name="qrcode-scan" size={16} color={M3Colors.primary} />
-            <Text style={styles.qrTitle}>Tap to Enlarge QR Code</Text>
+            <MaterialCommunityIcons name="qrcode-scan" size={15} color={M3Colors.primary} />
+            <Text style={styles.qrTitle}>
+              {isReceiver ? 'Your UPI QR Code' : `Pay ${suggestion.toName} via UPI`}
+            </Text>
           </View>
+          <Text style={styles.upiIdDisplay} numberOfLines={1}>
+            UPI ID: {upiId}
+          </Text>
           <Text style={styles.qrSubtitle}>
-            Scan with GPay, PhonePe, Paytm or BHIM
+            {isReceiver
+              ? `Show to ${suggestion.fromName} to collect money`
+              : 'Scan with GPay, PhonePe, Paytm or BHIM'}
           </Text>
         </View>
       </TouchableOpacity>
 
-      {/* Quick Launchers (For Debtor) */}
-      {isCurrentUserDebtor && (
+      {/* 5. 1-Tap UPI Launchers (for Payer) */}
+      {isPayer && (
         <View style={styles.launchersRow}>
           <TouchableOpacity
             style={styles.gpayBtn}
@@ -196,7 +237,7 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
         </View>
       )}
 
-      {/* Manual Verification Action Checkbox */}
+      {/* 6. Mark as Paid / Settled Confirmation Checkbox */}
       <TouchableOpacity
         style={styles.markPaidRow}
         onPress={handleTogglePaid}
@@ -208,7 +249,11 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
           color={isPaidLocally ? M3Colors.primary : M3Colors.outline}
         />
         <Text style={styles.markPaidLabel}>
-          {isCurrentUserDebtor ? 'Mark as Paid after bank transfer' : 'Mark as Received & Settle'}
+          {isPayer
+            ? `Mark as Paid to ${suggestion.toName}`
+            : isReceiver
+            ? `Mark as Received from ${suggestion.fromName}`
+            : 'Mark as Settled'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -259,73 +304,102 @@ const styles = StyleSheet.create({
     ...M3Typography.labelSm,
     color: M3Colors.outline,
   },
-  recipientRow: {
+  flowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: M3Shapes.spacing.md,
+    backgroundColor: M3Colors.surfaceContainerLowest,
+    borderRadius: M3Shapes.card,
+    padding: M3Shapes.spacing.sm,
+    borderWidth: 1,
+    borderColor: M3Colors.surfaceContainerHigh,
+    marginBottom: 8,
   },
-  recipientInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  memberBlock: {
     flex: 1,
-    gap: M3Shapes.spacing.sm,
+    alignItems: 'center',
   },
-  avatarContainer: {
+  roleLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: M3Colors.onSurfaceVariant,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  payerAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFEBEE',
+    borderWidth: 1.5,
+    borderColor: '#EF9A9A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  payerAvatarText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: M3Colors.error,
+  },
+  receiverAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#E8F5E9',
+    borderWidth: 1.5,
+    borderColor: '#A5D6A7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
     position: 'relative',
   },
-  avatarFallback: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: M3Colors.secondaryContainer,
+  receiverAvatarText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: M3Colors.primary,
+  },
+  verifiedCheck: {
+    position: 'absolute',
+    bottom: -1,
+    right: -1,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: M3Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    ...M3Typography.titleMd,
-    color: M3Colors.onSecondaryContainer,
+  memberName: {
+    ...M3Typography.labelMd,
     fontWeight: '700',
-  },
-  verifiedBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    backgroundColor: M3Colors.surfaceContainerLowest,
-    borderRadius: 8,
-    padding: 2,
-    elevation: 2,
-  },
-  nameColumn: {
-    flex: 1,
-  },
-  recipientName: {
-    ...M3Typography.titleMd,
     color: M3Colors.onSurface,
-    fontWeight: '700',
+    textAlign: 'center',
+    maxWidth: 95,
   },
-  upiIdRow: {
-    flexDirection: 'row',
+  memberSubtext: {
+    fontSize: 10,
+    color: M3Colors.outline,
+    marginTop: 1,
+  },
+  arrowBlock: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  arrowPill: {
+    width: 32,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: M3Colors.primaryFixed,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 2,
   },
-  upiIdText: {
-    ...M3Typography.labelSm,
-    color: M3Colors.onSurfaceVariant,
-  },
-  amountColumn: {
-    alignItems: 'flex-end',
-    marginLeft: M3Shapes.spacing.sm,
-  },
-  amountLabel: {
-    ...M3Typography.labelSm,
-    color: M3Colors.onSurfaceVariant,
-    fontSize: 10,
-    letterSpacing: 0.5,
-  },
   amountText: {
-    ...M3Typography.headlineSm,
-    fontWeight: '800',
+    ...M3Typography.titleMedium,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   amountDebit: {
     color: M3Colors.error,
@@ -333,21 +407,37 @@ const styles = StyleSheet.create({
   amountCredit: {
     color: M3Colors.primary,
   },
+  explanationBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: M3Colors.surfaceContainerHigh,
+    paddingHorizontal: M3Shapes.spacing.sm,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 6,
+    marginBottom: 8,
+  },
+  explanationText: {
+    ...M3Typography.bodySm,
+    color: M3Colors.onSurface,
+    fontWeight: '600',
+    flex: 1,
+  },
   qrDrawer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: M3Colors.surfaceContainerLowest,
     padding: M3Shapes.spacing.sm,
     borderRadius: M3Shapes.card,
-    gap: M3Shapes.spacing.md,
+    gap: M3Shapes.spacing.sm,
     borderWidth: 1,
     borderColor: M3Colors.surfaceContainerHigh,
     marginBottom: M3Shapes.spacing.sm,
   },
   qrWrapper: {
-    padding: 4,
+    padding: 3,
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 6,
   },
   qrTextCol: {
     flex: 1,
@@ -360,10 +450,18 @@ const styles = StyleSheet.create({
   qrTitle: {
     ...M3Typography.titleSm,
     color: M3Colors.onSurface,
+    fontWeight: '700',
+  },
+  upiIdDisplay: {
+    ...M3Typography.labelSm,
+    color: M3Colors.primary,
+    fontWeight: '700',
+    marginTop: 2,
   },
   qrSubtitle: {
     ...M3Typography.bodySm,
     color: M3Colors.onSurfaceVariant,
+    fontSize: 11,
     marginTop: 2,
   },
   launchersRow: {
@@ -373,7 +471,7 @@ const styles = StyleSheet.create({
   },
   gpayBtn: {
     flex: 1,
-    height: 40,
+    height: 38,
     borderRadius: M3Shapes.pill,
     backgroundColor: M3Colors.surfaceContainerHigh,
     flexDirection: 'row',
@@ -383,7 +481,7 @@ const styles = StyleSheet.create({
   },
   phonepeBtn: {
     flex: 1,
-    height: 40,
+    height: 38,
     borderRadius: M3Shapes.pill,
     backgroundColor: M3Colors.secondaryFixed,
     flexDirection: 'row',
@@ -408,6 +506,6 @@ const styles = StyleSheet.create({
   markPaidLabel: {
     ...M3Typography.bodySm,
     color: M3Colors.onSurface,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });

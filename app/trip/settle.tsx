@@ -56,7 +56,11 @@ export default function SmartSettlementScreen() {
   );
 
   const currentMember = activeTrip.members.find(
-    (m) => m.userId === user?.id || m.id === `member_${user?.id}`
+    (m) =>
+      m.id === user?.id ||
+      m.userId === user?.id ||
+      m.id === `member_${user?.id}` ||
+      (user?.fullName && m.name.toLowerCase() === user.fullName.toLowerCase())
   );
 
   const handleConfirmPaid = (suggestion: SettlementSuggestion) => {
@@ -97,7 +101,7 @@ export default function SmartSettlementScreen() {
   return (
     <View style={styles.container}>
       <TopAppBar
-        title="Smart Settlement & UPI"
+        title="Settlement & UPI"
         subtitle={activeTrip.title}
         showBack
         onBackPress={() => router.back()}
@@ -160,12 +164,12 @@ export default function SmartSettlementScreen() {
               </View>
             ) : (
               settlementSuggestions.map((suggestion) => {
-                const isCurrentUserDebtor = suggestion.fromMemberId === currentMember?.id;
                 return (
                   <SettlementCard
                     key={suggestion.id}
                     suggestion={suggestion}
-                    isCurrentUserDebtor={isCurrentUserDebtor}
+                    currentMemberId={currentMember?.id}
+                    currentUserId={user?.id}
                     onConfirmPaid={handleConfirmPaid}
                     onOpenQrModal={handleOpenQr}
                   />

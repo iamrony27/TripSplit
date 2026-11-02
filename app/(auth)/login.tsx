@@ -12,6 +12,7 @@ import {
 import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/context/AuthContext';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
@@ -19,7 +20,8 @@ import { M3Shapes } from '../../src/theme/shapes';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn, signUp } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { signIn } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -72,7 +74,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: Math.max(insets.top, 24) }]}
         keyboardShouldPersistTaps="handled"
       >
         {/* Brand Header */}

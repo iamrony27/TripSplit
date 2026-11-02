@@ -12,6 +12,7 @@ import { TextInput, Button, Menu } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../src/context/AuthContext';
 import { M3Colors } from '../src/theme/colors';
 import { M3Typography } from '../src/theme/typography';
@@ -21,6 +22,7 @@ import { isValidUpiId } from '../src/services/upi/upiParser';
 
 export default function SetupWizardScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, completeSetup } = useAuth();
 
   const [fullName, setFullName] = useState(user?.fullName || '');
@@ -83,7 +85,10 @@ export default function SetupWizardScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.scrollContent, { paddingTop: Math.max(insets.top + 16, 32) }]}
+    >
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.stepBadge}>

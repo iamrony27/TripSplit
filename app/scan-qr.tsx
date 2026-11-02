@@ -10,6 +10,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../src/context/AuthContext';
 import { parseUpiUri, isValidUpiId } from '../src/services/upi/upiParser';
 import { M3Colors } from '../src/theme/colors';
@@ -21,6 +22,7 @@ const SCAN_BOX_SIZE = Math.min(SCREEN_WIDTH * 0.72, 280);
 
 export default function ScanQrScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { returnTarget } = useLocalSearchParams<{ returnTarget?: string }>();
   const { updateUpi } = useAuth();
 
@@ -125,7 +127,7 @@ export default function ScanQrScreen() {
       />
 
       {/* Top Controls Overlay */}
-      <View style={styles.topOverlay}>
+      <View style={[styles.topOverlay, { top: Math.max(insets.top + 8, 44) }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.iconCircle}>
           <MaterialCommunityIcons name="close" size={24} color="#FFFFFF" />
         </TouchableOpacity>
