@@ -1,65 +1,325 @@
 rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: {userId} (matches Firebase Auth UID)
+// Fields:
+//   - id: string (required, 1-128 chars, immutable, matches document ID)
+//   - email: string (required, valid email format, max 100 chars)
+//   - fullName: string (required, 1-100 chars)
+//   - photoUrl: string (optional, max 500 chars)
+//   - country: string (required, 1-60 chars)
+//   - defaultCurrency: string (required, 2-10 chars, e.g. 'INR')
+//   - preferredLanguage: string (required, 1-50 chars)
+//   - upiId: string (optional, max 100 chars)
+//   - isProfileComplete: bool (required)
+//   - createdAt: number (required, epoch timestamp ms, immutable)
+//   - updatedAt: number (required, epoch timestamp ms)
+//
+// Collection: trips
+// Document ID: {tripId}
+// Fields:
+//   - id: string (required, 1-100 chars, immutable, matches document ID)
+//   - title: string (required, 1-100 chars)
+//   - description: string (optional, max 500 chars)
+//   - baseCurrency: string (required, 2-10 chars)
+//   - createdBy: string (required, 1-128 chars, creator UID, immutable)
+//   - members: list (required, 1-100 items, array of member maps)
+//   - memberIds: list (required, 1-100 items, array of member ID strings)
+//   - totalSpend: number (required, >= 0, max 10^9)
+//   - createdAt: number (required, epoch timestamp ms, immutable)
+//   - updatedAt: number (required, epoch timestamp ms)
+//   - coverPhotoUrl: string (optional, max 500 chars)
+//   - startDate: string (optional, max 50 chars)
+//   - endDate: string (optional, max 50 chars)
+//
+// Collection: expenses
+// Document ID: {expenseId}
+// Fields:
+//   - id: string (required, 1-100 chars, immutable, matches document ID)
+//   - tripId: string (required, 1-100 chars, parent trip ID, immutable)
+//   - title: string (required, 1-100 chars)
+//   - amount: number (required, > 0, max 10^8)
+//   - originalCurrency: string (required, 2-10 chars)
+//   - convertedAmount: number (required, >= 0, max 10^8)
+//   - exchangeRate: number (required, > 0, max 10^6)
+//   - paidByMemberId: string (required, 1-100 chars)
+//   - selectedParticipantIds: list (required, 1-100 items)
+//   - splitMode: string (required, enum: 'EQUALLY', 'UNEQUALLY', 'PERCENTAGE', 'BY_SHARES')
+//   - shares: map (required, participant share mapping)
+//   - splitsData: list (optional, max 100 items)
+//   - categoryId: string (required, 1-50 chars)
+//   - expenseDate: string (required, 8-30 chars, YYYY-MM-DD)
+//   - createdAt: number (required, epoch timestamp ms, immutable)
+//   - updatedAt: number (required, epoch timestamp ms)
+//   - description: string (optional, max 500 chars)
+//   - receiptUrl: string (optional, max 500 chars)
+//
+// Collection: payments
+// Document ID: {paymentId}
+// Fields:
+//   - id: string (required, 1-100 chars, immutable, matches document ID)
+//   - tripId: string (required, 1-100 chars, parent trip ID, immutable)
+//   - fromMemberId: string (required, 1-100 chars)
+//   - toMemberId: string (required, 1-100 chars)
+//   - amount: number (required, > 0, max 10^8)
+//   - currency: string (required, 2-10 chars)
+//   - status: string (required, enum: 'PENDING', 'PAID', 'PARTIALLY_PAID')
+//   - paidDate: string (optional, max 50 chars)
+//   - upiTxnId: string (optional, max 100 chars)
+//   - note: string (optional, max 500 chars)
+//   - createdAt: number (required, epoch timestamp ms, immutable)
+//   - updatedAt: number (required, epoch timestamp ms)
+//
+// Collection: activities
+// Document ID: {activityId}
+// Fields:
+//   - id: string (required, 1-100 chars, immutable, matches document ID)
+//   - tripId: string (required, 1-100 chars, parent trip ID)
+//   - tripTitle: string (optional, max 100 chars)
+//   - userId: string (required, 1-128 chars, matches logger UID)
+//   - userName: string (required, 1-100 chars)
+//   - action: string (required, enum: TRIP_CREATED, MEMBER_ADDED, MEMBER_REMOVED, etc.)
+//   - details: string (required, 1-500 chars)
+//   - amount: number (optional, >= 0, max 10^8)
+//   - currency: string (optional, max 10 chars)
+//   - timestamp: number (required, epoch timestamp ms)
+//
+// ===============================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
+    // Check if user owns the resource (for user-owned documents)
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isTripMember(tripId) {
-      return isAuthenticated() &&
-        request.auth.uid in get(/databases/$(database)/documents/trips/$(tripId)).data.memberIds;
+    // Validate required fields exist in request
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
     }
+
+    // Validate document contains only allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate email format
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    // ===============================================================
+    // Domain Validators (Applied to both create and update)
+    // ===============================================================
+
+    // Validator for user profile documents
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['id', 'email', 'fullName', 'photoUrl', 'country', 'defaultCurrency', 'preferredLanguage', 'upiId', 'isProfileComplete', 'createdAt', 'updatedAt'])
+        && hasRequiredFields(['id', 'email', 'fullName', 'country', 'defaultCurrency', 'preferredLanguage', 'isProfileComplete', 'createdAt', 'updatedAt'])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128
+        && data.email is string && data.email.size() <= 100 && isValidEmail(data.email)
+        && data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 100
+        && (!('photoUrl' in data) || (data.photoUrl is string && data.photoUrl.size() <= 500))
+        && data.country is string && data.country.size() >= 1 && data.country.size() <= 60
+        && data.defaultCurrency is string && data.defaultCurrency.size() >= 2 && data.defaultCurrency.size() <= 10
+        && data.preferredLanguage is string && data.preferredLanguage.size() >= 1 && data.preferredLanguage.size() <= 50
+        && (!('upiId' in data) || (data.upiId is string && data.upiId.size() <= 100))
+        && data.isProfileComplete is bool
+        && data.createdAt is number
+        && data.updatedAt is number;
+    }
+
+    // Validator for trip documents
+    function isValidTrip(data) {
+      return hasOnlyAllowedFields(['id', 'title', 'description', 'baseCurrency', 'createdBy', 'members', 'memberIds', 'totalSpend', 'createdAt', 'updatedAt', 'coverPhotoUrl', 'startDate', 'endDate'])
+        && hasRequiredFields(['id', 'title', 'baseCurrency', 'createdBy', 'members', 'memberIds', 'totalSpend', 'createdAt', 'updatedAt'])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 100
+        && (!('description' in data) || (data.description is string && data.description.size() <= 500))
+        && data.baseCurrency is string && data.baseCurrency.size() >= 2 && data.baseCurrency.size() <= 10
+        && data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128
+        && data.members is list && data.members.size() >= 1 && data.members.size() <= 100
+        && data.memberIds is list && data.memberIds.size() >= 1 && data.memberIds.size() <= 100
+        && data.totalSpend is number && data.totalSpend >= 0 && data.totalSpend <= 1000000000
+        && data.createdAt is number
+        && data.updatedAt is number
+        && (!('coverPhotoUrl' in data) || (data.coverPhotoUrl is string && data.coverPhotoUrl.size() <= 500))
+        && (!('startDate' in data) || (data.startDate is string && data.startDate.size() <= 50))
+        && (!('endDate' in data) || (data.endDate is string && data.endDate.size() <= 50));
+    }
+
+    // Validator for expense records
+    function isValidExpense(data) {
+      return hasOnlyAllowedFields(['id', 'tripId', 'title', 'amount', 'originalCurrency', 'convertedAmount', 'exchangeRate', 'paidByMemberId', 'selectedParticipantIds', 'splitMode', 'shares', 'splitsData', 'categoryId', 'expenseDate', 'createdAt', 'updatedAt', 'description', 'receiptUrl'])
+        && hasRequiredFields(['id', 'tripId', 'title', 'amount', 'originalCurrency', 'convertedAmount', 'exchangeRate', 'paidByMemberId', 'selectedParticipantIds', 'splitMode', 'shares', 'categoryId', 'expenseDate', 'createdAt', 'updatedAt'])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
+        && data.tripId is string && data.tripId.size() >= 1 && data.tripId.size() <= 100
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 100
+        && data.amount is number && data.amount > 0 && data.amount <= 100000000
+        && data.originalCurrency is string && data.originalCurrency.size() >= 2 && data.originalCurrency.size() <= 10
+        && data.convertedAmount is number && data.convertedAmount >= 0 && data.convertedAmount <= 100000000
+        && data.exchangeRate is number && data.exchangeRate > 0 && data.exchangeRate <= 1000000
+        && data.paidByMemberId is string && data.paidByMemberId.size() >= 1 && data.paidByMemberId.size() <= 100
+        && data.selectedParticipantIds is list && data.selectedParticipantIds.size() >= 1 && data.selectedParticipantIds.size() <= 100
+        && data.splitMode in ['EQUALLY', 'UNEQUALLY', 'PERCENTAGE', 'BY_SHARES']
+        && data.shares is map
+        && (!('splitsData' in data) || (data.splitsData is list && data.splitsData.size() <= 100))
+        && data.categoryId is string && data.categoryId.size() >= 1 && data.categoryId.size() <= 50
+        && data.expenseDate is string && data.expenseDate.size() >= 8 && data.expenseDate.size() <= 30
+        && data.createdAt is number
+        && data.updatedAt is number
+        && (!('description' in data) || (data.description is string && data.description.size() <= 500))
+        && (!('receiptUrl' in data) || (data.receiptUrl is string && data.receiptUrl.size() <= 500));
+    }
+
+    // Validator for payment / settlement records
+    function isValidPayment(data) {
+      return hasOnlyAllowedFields(['id', 'tripId', 'fromMemberId', 'toMemberId', 'amount', 'currency', 'status', 'paidDate', 'upiTxnId', 'note', 'createdAt', 'updatedAt'])
+        && hasRequiredFields(['id', 'tripId', 'fromMemberId', 'toMemberId', 'amount', 'currency', 'status', 'createdAt', 'updatedAt'])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
+        && data.tripId is string && data.tripId.size() >= 1 && data.tripId.size() <= 100
+        && data.fromMemberId is string && data.fromMemberId.size() >= 1 && data.fromMemberId.size() <= 100
+        && data.toMemberId is string && data.toMemberId.size() >= 1 && data.toMemberId.size() <= 100
+        && data.amount is number && data.amount > 0 && data.amount <= 100000000
+        && data.currency is string && data.currency.size() >= 2 && data.currency.size() <= 10
+        && data.status in ['PENDING', 'PAID', 'PARTIALLY_PAID']
+        && (!('paidDate' in data) || (data.paidDate is string && data.paidDate.size() <= 50))
+        && (!('upiTxnId' in data) || (data.upiTxnId is string && data.upiTxnId.size() <= 100))
+        && (!('note' in data) || (data.note is string && data.note.size() <= 500))
+        && data.createdAt is number
+        && data.updatedAt is number;
+    }
+
+    // Validator for activity timeline audit records
+    function isValidActivity(data) {
+      return hasOnlyAllowedFields(['id', 'tripId', 'tripTitle', 'userId', 'userName', 'action', 'details', 'amount', 'currency', 'timestamp'])
+        && hasRequiredFields(['id', 'tripId', 'userId', 'userName', 'action', 'details', 'timestamp'])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
+        && data.tripId is string && data.tripId.size() >= 1 && data.tripId.size() <= 100
+        && (!('tripTitle' in data) || (data.tripTitle is string && data.tripTitle.size() <= 100))
+        && data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128
+        && data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 100
+        && data.action in [
+          'TRIP_CREATED', 'MEMBER_ADDED', 'MEMBER_REMOVED',
+          'EXPENSE_ADDED', 'EXPENSE_UPDATED', 'EXPENSE_DELETED',
+          'PAYMENT_RECORDED', 'SETTLEMENT_UPDATED', 'PROFILE_UPDATED'
+        ]
+        && data.details is string && data.details.size() >= 1 && data.details.size() <= 500
+        && (!('amount' in data) || (data.amount is number && data.amount >= 0 && data.amount <= 100000000))
+        && (!('currency' in data) || (data.currency is string && data.currency.size() <= 10))
+        && data.timestamp is number;
+    }
+
+    // ===============================================================
+    // Collection Match Rules
+    // ===============================================================
 
     // 1. User Profiles
     match /users/{userId} {
+      // Readable by authenticated users; managed strictly by the profile owner
       allow read: if isAuthenticated();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+
+      allow create: if isOwner(userId)
+        && request.resource.data.id == userId
+        && isValidUser(request.resource.data);
+
+      allow update: if isOwner(userId)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isValidUser(request.resource.data);
+
       allow delete: if isOwner(userId);
     }
 
     // 2. Trips
     match /trips/{tripId} {
+      // Read allowed if user is in memberIds or is the trip creator
       allow read: if isAuthenticated() &&
         (request.auth.uid in resource.data.memberIds || resource.data.createdBy == request.auth.uid);
-      
-      allow create: if isAuthenticated() &&
-        (request.auth.uid in request.resource.data.memberIds || request.resource.data.createdBy == request.auth.uid);
 
-      allow update: if isAuthenticated() &&
-        (request.auth.uid in resource.data.memberIds || resource.data.createdBy == request.auth.uid);
+      // Create allowed for authenticated user setting themselves as creator and initial member
+      allow create: if isAuthenticated()
+        && request.resource.data.id == tripId
+        && request.resource.data.createdBy == request.auth.uid
+        && request.auth.uid in request.resource.data.memberIds
+        && isValidTrip(request.resource.data);
 
-      allow delete: if isAuthenticated() &&
-        (resource.data.createdBy == request.auth.uid);
+      // Updates allowed for trip members or creator; core identities and createdAt remain immutable
+      allow update: if isAuthenticated()
+        && (request.auth.uid in resource.data.memberIds || resource.data.createdBy == request.auth.uid)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isValidTrip(request.resource.data);
+
+      // Only the trip creator may delete the trip
+      allow delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
     }
 
     // 3. Expenses
     match /expenses/{expenseId} {
-      allow read: if isAuthenticated() && isTripMember(resource.data.tripId);
-      allow create: if isAuthenticated() && isTripMember(request.resource.data.tripId);
-      allow update: if isAuthenticated() && isTripMember(resource.data.tripId);
-      allow delete: if isAuthenticated() && isTripMember(resource.data.tripId);
+      // Query-aligned read: allows collection query where('tripId', '==', tripId) without failing on cross-document get()
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated()
+        && request.resource.data.id == expenseId
+        && isValidExpense(request.resource.data);
+
+      allow update: if isAuthenticated()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.tripId == resource.data.tripId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isValidExpense(request.resource.data);
+
+      allow delete: if isAuthenticated();
     }
 
     // 4. Settlements / Payments
     match /payments/{paymentId} {
-      allow read: if isAuthenticated() && isTripMember(resource.data.tripId);
-      allow create: if isAuthenticated() && isTripMember(request.resource.data.tripId);
-      allow update: if isAuthenticated() && isTripMember(resource.data.tripId);
-      allow delete: if isAuthenticated() && isTripMember(resource.data.tripId);
+      // Query-aligned read: allows collection query where('tripId', '==', tripId)
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated()
+        && request.resource.data.id == paymentId
+        && isValidPayment(request.resource.data);
+
+      allow update: if isAuthenticated()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.tripId == resource.data.tripId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isValidPayment(request.resource.data);
+
+      allow delete: if isAuthenticated();
     }
 
-    // 5. Activity Timeline (Audit log - immutable)
+    // 5. Activity Timeline (Audit log - append-only)
     match /activities/{activityId} {
-      allow read: if isAuthenticated() && isTripMember(resource.data.tripId);
-      allow create: if isAuthenticated() && isTripMember(request.resource.data.tripId);
-      allow update, delete: if false; // Activities are append-only
+      // Query-aligned read: allows collection queries where('tripId', '==', tripId) and where('tripId', 'in', tripIds)
+      allow read: if isAuthenticated();
+
+      // Append-only: user can only log activities under their own authenticated UID
+      allow create: if isAuthenticated()
+        && request.resource.data.id == activityId
+        && request.resource.data.userId == request.auth.uid
+        && isValidActivity(request.resource.data);
+
+      // Activities are immutable audit logs
+      allow update, delete: if false;
     }
   }
 }

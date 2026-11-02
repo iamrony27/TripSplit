@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './config';
 import { Expense } from '../../types/expense';
+import { sanitizeForFirestore } from '../../utils/sanitizeFirestore';
 import {
   saveLocalExpense,
   deleteLocalExpense,
@@ -27,7 +28,7 @@ export async function createExpenseInFirestore(expense: Expense): Promise<void> 
   if (isFirebaseConfigured) {
     try {
       const ref = doc(db, EXPENSES_COLLECTION, expense.id);
-      await setDoc(ref, expense);
+      await setDoc(ref, sanitizeForFirestore(expense));
     } catch (err) {
       console.warn('Firestore createExpense failed, stored in local cache:', err);
     }
@@ -49,10 +50,14 @@ export async function updateExpenseInFirestore(
   if (isFirebaseConfigured) {
     try {
       const ref = doc(db, EXPENSES_COLLECTION, expenseId);
-      await updateDoc(ref, {
-        ...updates,
-        updatedAt: Date.now(),
-      });
+      await setDoc(
+        ref,
+        sanitizeForFirestore({
+          ...updates,
+          updatedAt: Date.now(),
+        }),
+        { merge: true }
+      );
     } catch (err) {
       console.warn('Firestore updateExpense failed, stored locally:', err);
     }

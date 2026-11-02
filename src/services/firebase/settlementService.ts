@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './config';
 import { PaymentRecord, PaymentStatus } from '../../types/settlement';
+import { sanitizeForFirestore } from '../../utils/sanitizeFirestore';
 import {
   saveLocalPayment,
   subscribeLocalPayments,
@@ -24,7 +25,7 @@ export async function recordPaymentInFirestore(payment: PaymentRecord): Promise<
   if (isFirebaseConfigured) {
     try {
       const ref = doc(db, PAYMENTS_COLLECTION, payment.id);
-      await setDoc(ref, payment);
+      await setDoc(ref, sanitizeForFirestore(payment));
     } catch (err) {
       console.warn('Firestore recordPayment failed, stored locally:', err);
     }
@@ -54,12 +55,16 @@ export async function updatePaymentStatusInFirestore(
   if (isFirebaseConfigured) {
     try {
       const ref = doc(db, PAYMENTS_COLLECTION, paymentId);
-      await updateDoc(ref, {
-        status,
-        ...(upiTxnId ? { upiTxnId } : {}),
-        ...(status === 'PAID' ? { paidDate: new Date().toISOString() } : {}),
-        updatedAt: Date.now(),
-      });
+      await setDoc(
+        ref,
+        sanitizeForFirestore({
+          status,
+          ...(upiTxnId ? { upiTxnId } : {}),
+          ...(status === 'PAID' ? { paidDate: new Date().toISOString() } : {}),
+          updatedAt: Date.now(),
+        }),
+        { merge: true }
+      );
     } catch (err) {
       console.warn('Firestore updatePaymentStatus failed, stored locally:', err);
     }

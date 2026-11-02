@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './config';
 import { Trip, TripMember } from '../../types/trip';
+import { sanitizeForFirestore } from '../../utils/sanitizeFirestore';
 import {
   saveLocalTrip,
   deleteLocalTrip,
@@ -27,7 +28,7 @@ export async function createTripInFirestore(trip: Trip): Promise<void> {
   if (isFirebaseConfigured) {
     try {
       const ref = doc(db, TRIPS_COLLECTION, trip.id);
-      await setDoc(ref, trip);
+      await setDoc(ref, sanitizeForFirestore(trip));
     } catch (err) {
       console.warn('Firestore createTrip failed, saved in offline cache:', err);
     }
@@ -48,10 +49,14 @@ export async function updateTripInFirestore(
   if (isFirebaseConfigured) {
     try {
       const ref = doc(db, TRIPS_COLLECTION, tripId);
-      await updateDoc(ref, {
-        ...updates,
-        updatedAt: Date.now(),
-      });
+      await setDoc(
+        ref,
+        sanitizeForFirestore({
+          ...updates,
+          updatedAt: Date.now(),
+        }),
+        { merge: true }
+      );
     } catch (err) {
       console.warn('Firestore updateTrip failed, saved in offline cache:', err);
     }

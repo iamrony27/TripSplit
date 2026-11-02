@@ -2,7 +2,7 @@ import { ExpenseCategory } from '../types/expense';
 import { M3Colors } from '../theme/colors';
 
 export const DEFAULT_CATEGORIES: ExpenseCategory[] = [
-  { id: 'food', name: 'Food & Dining', icon: 'restaurant', color: M3Colors.categories.food.bg },
+  { id: 'food', name: 'Food & Dining', icon: 'food-fork-drink', color: M3Colors.categories.food.bg },
   { id: 'restaurant', name: 'Restaurant', icon: 'silverware-fork-knife', color: M3Colors.categories.restaurant.bg },
   { id: 'travel', name: 'Travel & Flights', icon: 'airplane', color: M3Colors.categories.travel.bg },
   { id: 'transport', name: 'Transport & Cab', icon: 'taxi', color: M3Colors.categories.transport.bg },

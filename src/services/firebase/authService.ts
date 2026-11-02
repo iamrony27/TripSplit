@@ -10,6 +10,7 @@ import {
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from './config';
 import { UserProfile, SetupWizardData } from '../../types/user';
+import { sanitizeForFirestore } from '../../utils/sanitizeFirestore';
 import {
   getLocalCurrentUser,
   setLocalCurrentUser,
@@ -91,7 +92,7 @@ export async function signUpWithEmail(
 
   if (isFirebaseConfigured && !uid.startsWith('local_user_')) {
     try {
-      await setDoc(doc(db, USERS_COLLECTION, uid), profile);
+      await setDoc(doc(db, USERS_COLLECTION, uid), sanitizeForFirestore(profile));
     } catch (dbErr) {
       console.warn('Firestore setDoc failed, saved in local cache:', dbErr);
     }
@@ -229,13 +230,17 @@ export async function saveSetupWizardData(
   if (isFirebaseConfigured && !userId.startsWith('local_user_') && !userId.startsWith('demo_user_')) {
     try {
       const ref = doc(db, USERS_COLLECTION, userId);
-      await updateDoc(ref, {
-        ...data,
-        isProfileComplete: true,
-        updatedAt: Date.now(),
-      });
+      await setDoc(
+        ref,
+        sanitizeForFirestore({
+          ...data,
+          isProfileComplete: true,
+          updatedAt: Date.now(),
+        }),
+        { merge: true }
+      );
     } catch (err) {
-      console.warn('Firestore updateDoc failed, stored locally:', err);
+      console.warn('Firestore setDoc/updateDoc failed, stored locally:', err);
     }
   }
 }
@@ -251,10 +256,14 @@ export async function updateUserUpiId(userId: string, upiId: string): Promise<vo
   if (isFirebaseConfigured && !userId.startsWith('local_user_') && !userId.startsWith('demo_user_')) {
     try {
       const ref = doc(db, USERS_COLLECTION, userId);
-      await updateDoc(ref, {
-        upiId: upiId.trim(),
-        updatedAt: Date.now(),
-      });
+      await setDoc(
+        ref,
+        sanitizeForFirestore({
+          upiId: upiId.trim(),
+          updatedAt: Date.now(),
+        }),
+        { merge: true }
+      );
     } catch (err) {
       console.warn('Firestore updateUserUpiId failed, stored locally:', err);
     }

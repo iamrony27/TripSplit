@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './config';
 import { ActivityEvent } from '../../types/activity';
+import { sanitizeForFirestore } from '../../utils/sanitizeFirestore';
 import {
   saveLocalActivity,
   subscribeLocalActivities,
@@ -23,7 +24,7 @@ export async function logActivityInFirestore(event: ActivityEvent): Promise<void
   if (isFirebaseConfigured) {
     try {
       const ref = doc(db, ACTIVITIES_COLLECTION, event.id);
-      await setDoc(ref, event);
+      await setDoc(ref, sanitizeForFirestore(event));
     } catch (err) {
       console.warn('Firestore logActivity failed, stored locally:', err);
     }

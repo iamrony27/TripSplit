@@ -47,16 +47,12 @@ try {
   auth = getAuth(app);
 }
 
-// Firestore Initialization with persistent local cache for Offline-First operations
+// Firestore Initialization
 let db: Firestore;
 try {
-  db = initializeFirestore(app, {
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager(),
-    }),
-  });
-} catch {
   db = getFirestore(app);
+} catch {
+  db = initializeFirestore(app, {});
 }
 
 // Storage Initialization

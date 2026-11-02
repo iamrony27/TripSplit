@@ -10,6 +10,10 @@ import { TripProvider } from '../src/context/TripContext';
 import { paperTheme } from '../src/theme/paperTheme';
 import { M3Colors } from '../src/theme/colors';
 
+export const unstable_settings = {
+  initialRouteName: '(tabs)',
+};
+
 function RootNavigation() {
   const { firebaseUser, loading, needsSetup } = useAuth();
   const segments = useSegments();
@@ -43,14 +47,20 @@ function RootNavigation() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+        presentation: 'card',
+      }}
+    >
+      <Stack.Screen name="(tabs)" options={{ headerShown: false, presentation: 'card' }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'card' }} />
       <Stack.Screen
         name="setup-wizard"
         options={{
           headerShown: false,
-          presentation: 'modal',
+          presentation: 'card',
         }}
       />
       <Stack.Screen
@@ -58,12 +68,14 @@ function RootNavigation() {
         options={{
           headerShown: false,
           presentation: 'modal',
+          animation: 'slide_from_bottom',
         }}
       />
       <Stack.Screen
         name="trip/[id]"
         options={{
           headerShown: false,
+          presentation: 'card',
         }}
       />
       <Stack.Screen
@@ -71,12 +83,14 @@ function RootNavigation() {
         options={{
           headerShown: false,
           presentation: 'modal',
+          animation: 'slide_from_bottom',
         }}
       />
       <Stack.Screen
         name="trip/settle"
         options={{
           headerShown: false,
+          presentation: 'card',
         }}
       />
       <Stack.Screen
