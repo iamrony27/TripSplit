@@ -28,6 +28,7 @@ import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
 import { useKeyboardBottomInset } from '../../src/hooks/useKeyboardBottomInset';
 import { safeGoBack } from '../../src/utils/navigation';
+import { suggestCategoryFromTitle, getSmartSuggestions, SmartExpenseSuggestion } from '../../src/services/expense/categorySuggestor';
 
 export default function AddExpenseScreen() {
   const router = useRouter();
@@ -75,6 +76,24 @@ export default function AddExpenseScreen() {
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Auto-category suggestion engine & quick templates
+  const smartSuggestions = useMemo(() => getSmartSuggestions(title), [title]);
+
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+    if (errorMsg) setErrorMsg('');
+    const detectedCategory = suggestCategoryFromTitle(newTitle);
+    if (detectedCategory) {
+      setCategoryId(detectedCategory);
+    }
+  };
+
+  const applySuggestion = (suggestion: SmartExpenseSuggestion) => {
+    setTitle(suggestion.title);
+    setCategoryId(suggestion.categoryId);
+    if (errorMsg) setErrorMsg('');
+  };
 
   const numAmount = parseFloat(amountStr) || 0;
 
@@ -259,18 +278,42 @@ export default function AddExpenseScreen() {
         <View style={styles.card}>
           <TextInput
             label="What was this for? *"
-            placeholder="e.g. Dinner, Fuel, Flight Tickets"
+            placeholder="e.g. Dinner, Pizza, Uber, Petrol, Hotel"
             value={title}
-            onChangeText={(t) => {
-              setTitle(t);
-              if (errorMsg) setErrorMsg('');
-            }}
+            onChangeText={handleTitleChange}
             mode="outlined"
             style={styles.input}
             outlineColor={M3Colors.outlineVariant}
             activeOutlineColor={M3Colors.primary}
             left={<TextInput.Icon icon="tag-outline" />}
           />
+
+          {/* Smart Auto-Suggestions Horizontal Bar */}
+          {smartSuggestions.length > 0 && (
+            <View style={styles.suggestionsContainer}>
+              <View style={styles.suggestionsHeader}>
+                <MaterialCommunityIcons name="lightning-bolt" size={14} color={M3Colors.primary} />
+                <Text style={styles.suggestionsTitle}>Quick Suggestions</Text>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.suggestionsRow}
+              >
+                {smartSuggestions.map((sug, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.suggestionChip}
+                    onPress={() => applySuggestion(sug)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.suggestionEmoji}>{sug.emoji}</Text>
+                    <Text style={styles.suggestionText}>{sug.title}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
           {/* Category Picker */}
           <CategoryPicker
@@ -570,6 +613,49 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: M3Colors.surfaceContainerLowest,
+  },
+  suggestionsContainer: {
+    marginTop: -2,
+    marginBottom: 4,
+  },
+  suggestionsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 6,
+  },
+  suggestionsTitle: {
+    ...M3Typography.labelSmall,
+    color: M3Colors.primary,
+    fontWeight: '700',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  suggestionsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  suggestionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: M3Colors.primaryContainer,
+    borderColor: 'rgba(0, 33, 20, 0.12)',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  suggestionEmoji: {
+    fontSize: 13,
+  },
+  suggestionText: {
+    ...M3Typography.labelMedium,
+    color: M3Colors.onPrimaryContainer,
+    fontWeight: '600',
+    fontSize: 11.5,
   },
   fieldLabel: {
     ...M3Typography.titleSm,

@@ -15,7 +15,6 @@ import { TopAppBar } from '../../src/components/common/TopAppBar';
 import { StatusBadge } from '../../src/components/common/StatusBadge';
 import { AvatarStack } from '../../src/components/common/AvatarStack';
 import { ExpenseTile } from '../../src/components/expense/ExpenseTile';
-import { ExtendedFAB } from '../../src/components/common/ExtendedFAB';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
@@ -321,15 +320,6 @@ export default function HomeScreen() {
           </>
         )}
       </ScrollView>
-
-      {/* Extended Floating Action Button */}
-      {activeTrip && (
-        <ExtendedFAB
-          label="Add Expense"
-          icon="plus"
-          onPress={() => router.push('/trip/add-expense')}
-        />
-      )}
     </View>
   );
 }

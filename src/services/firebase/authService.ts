@@ -29,7 +29,6 @@ import {
   getLocalUserProfile,
   saveLocalUserProfile,
   subscribeLocalAuth,
-  seedDemoDataIfEmpty,
   getLocalTrips,
   saveLocalTrip,
 } from '../storage/localDatabase';
@@ -126,29 +125,6 @@ export async function signUpWithEmail(
 
 export async function signInWithEmail(email: string, pass: string): Promise<User> {
   const emailAddr = email.trim();
-
-  // Special Demo User Bypass: Works completely offline out-of-the-box
-  if (emailAddr === 'demo@tripsplit.app') {
-    const demoUid = 'demo_user_rony_101';
-    const demoName = 'Rony (Demo)';
-    const demoProfile: UserProfile = {
-      id: demoUid,
-      email: emailAddr,
-      fullName: demoName,
-      upiId: 'rony@okhdfcbank',
-      country: 'India',
-      defaultCurrency: 'INR',
-      preferredLanguage: 'English',
-      isProfileComplete: true,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    await saveLocalUserProfile(demoProfile);
-    await seedDemoDataIfEmpty(demoUid, demoName, 'rony@okhdfcbank');
-    const mockUser = createMockFirebaseUser(demoUid, emailAddr, demoName);
-    await setLocalCurrentUser(mockUser);
-    return mockUser;
-  }
 
   if (isFirebaseConfigured) {
     try {

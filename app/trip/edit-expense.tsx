@@ -28,6 +28,7 @@ import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
 import { useKeyboardBottomInset } from '../../src/hooks/useKeyboardBottomInset';
 import { safeGoBack } from '../../src/utils/navigation';
+import { suggestCategoryFromTitle, getSmartSuggestions, SmartExpenseSuggestion } from '../../src/services/expense/categorySuggestor';
 
 export default function EditExpenseScreen() {
   const router = useRouter();
@@ -58,6 +59,24 @@ export default function EditExpenseScreen() {
   const [editReason, setEditReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Auto-category suggestion
+  const smartSuggestions = useMemo(() => getSmartSuggestions(title), [title]);
+
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+    if (errorMsg) setErrorMsg('');
+    const autoCat = suggestCategoryFromTitle(newTitle);
+    if (autoCat) {
+      setCategoryId(autoCat);
+    }
+  };
+
+  const applySuggestion = (sug: SmartExpenseSuggestion) => {
+    setTitle(sug.title);
+    setCategoryId(sug.categoryId);
+    if (errorMsg) setErrorMsg('');
+  };
 
   // Edit history audit logs
   const [editHistory, setEditHistory] = useState<TransactionEditRecord[]>([]);
@@ -281,18 +300,41 @@ export default function EditExpenseScreen() {
           <TextInput
             label="Title *"
             value={title}
-            onChangeText={(t) => {
-              setTitle(t);
-              if (errorMsg) setErrorMsg('');
-            }}
+            onChangeText={handleTitleChange}
             mode="outlined"
             style={styles.input}
             outlineColor={M3Colors.outlineVariant}
             activeOutlineColor={M3Colors.primary}
           />
 
+          {/* Smart Quick Suggestions */}
+          {smartSuggestions.length > 0 && (
+            <View style={styles.suggestionsContainer}>
+              <View style={styles.suggestionsHeader}>
+                <MaterialCommunityIcons name="lightning-bolt" size={13} color={M3Colors.primary} />
+                <Text style={styles.suggestionsTitle}>Quick Suggestions</Text>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.suggestionsRow}
+              >
+                {smartSuggestions.map((sug, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.suggestionChip}
+                    onPress={() => applySuggestion(sug)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.suggestionEmoji}>{sug.emoji}</Text>
+                    <Text style={styles.suggestionText}>{sug.title}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           <View style={{ marginVertical: 4 }}>
-            <Text style={styles.fieldLabel}>Category</Text>
             <CategoryPicker selectedCategoryId={categoryId} onSelectCategory={setCategoryId} />
           </View>
 
@@ -774,5 +816,48 @@ const styles = StyleSheet.create({
     ...M3Typography.labelMedium,
     fontWeight: '700',
     marginTop: 1,
+  },
+  suggestionsContainer: {
+    marginTop: -2,
+    marginBottom: 4,
+  },
+  suggestionsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 6,
+  },
+  suggestionsTitle: {
+    ...M3Typography.labelSmall,
+    color: M3Colors.primary,
+    fontWeight: '700',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  suggestionsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  suggestionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: M3Colors.primaryContainer,
+    borderColor: 'rgba(0, 33, 20, 0.12)',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  suggestionEmoji: {
+    fontSize: 13,
+  },
+  suggestionText: {
+    ...M3Typography.labelMedium,
+    color: M3Colors.onPrimaryContainer,
+    fontWeight: '600',
+    fontSize: 11.5,
   },
 });

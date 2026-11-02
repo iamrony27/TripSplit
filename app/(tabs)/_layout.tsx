@@ -1,12 +1,32 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 
+interface CenterAddButtonProps {
+  onPress: () => void;
+}
+
+const CenterAddButton: React.FC<CenterAddButtonProps> = ({ onPress }) => {
+  return (
+    <View style={styles.centerButtonWrapper} pointerEvents="box-none">
+      <TouchableOpacity
+        onPress={onPress}
+        style={styles.centerButton}
+        activeOpacity={0.85}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <MaterialCommunityIcons name="plus" size={30} color={M3Colors.onPrimary} />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 export default function TabLayout() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomInset = Math.max(insets.bottom, Platform.OS === 'android' ? 14 : 8);
 
@@ -27,6 +47,7 @@ export default function TabLayout() {
         tabBarItemStyle: styles.tabBarItem,
       }}
     >
+      {/* 1. Home Tab */}
       <Tabs.Screen
         name="index"
         options={{
@@ -42,6 +63,8 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* 2. Trips Tab */}
       <Tabs.Screen
         name="trips"
         options={{
@@ -57,21 +80,26 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* 3. Center Raised Floating + Action Button */}
       <Tabs.Screen
-        name="analytics"
+        name="add"
         options={{
-          title: 'Analytics',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <MaterialCommunityIcons
-                name={focused ? 'chart-box' : 'chart-box-outline'}
-                size={22}
-                color={focused ? M3Colors.primary : ((color as string) || M3Colors.onSurfaceVariant)}
-              />
-            </View>
+          title: '',
+          tabBarLabel: () => null,
+          tabBarButton: () => (
+            <CenterAddButton onPress={() => router.push('/trip/add-expense')} />
           ),
         }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            router.push('/trip/add-expense');
+          },
+        }}
       />
+
+      {/* 4. Activity Tab */}
       <Tabs.Screen
         name="activity"
         options={{
@@ -87,6 +115,8 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* 5. Profile Tab */}
       <Tabs.Screen
         name="profile"
         options={{
@@ -100,6 +130,14 @@ export default function TabLayout() {
               />
             </View>
           ),
+        }}
+      />
+
+      {/* Analytics (accessible from within the app, hidden from tab bar to keep 5 slots) */}
+      <Tabs.Screen
+        name="analytics"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
@@ -135,5 +173,26 @@ const styles = StyleSheet.create({
   },
   activeIconContainer: {
     backgroundColor: M3Colors.primaryContainer,
+  },
+  centerButtonWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 64,
+  },
+  centerButton: {
+    top: -14,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: M3Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 8,
+    shadowColor: M3Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    borderWidth: 3.5,
+    borderColor: M3Colors.surfaceContainerLow,
   },
 });

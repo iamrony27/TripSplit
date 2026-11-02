@@ -6,27 +6,37 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Linking,
 } from 'react-native';
 import { TextInput, Button, Dialog, Portal } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
+import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
+import { useToast } from '../../src/context/ToastContext';
 import { TopAppBar } from '../../src/components/common/TopAppBar';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
 import { isValidUpiId } from '../../src/services/upi/upiParser';
-import { generateUpiPaymentUri } from '../../src/services/upi/upiLauncher';
+import { generateUpiPaymentUri, launchUpiPayment } from '../../src/services/upi/upiLauncher';
+
+const DEVELOPER_UPI = 'rony@okhdfcbank';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut, updateUpi } = useAuth();
+  const { showToast } = useToast();
 
   const [upiDialogVisible, setUpiDialogVisible] = useState(false);
   const [newUpiId, setNewUpiId] = useState(user?.upiId || '');
   const [upiError, setUpiError] = useState('');
   const [savingUpi, setSavingUpi] = useState(false);
+
+  // Developer Support State
+  const [supportQrModalVisible, setSupportQrModalVisible] = useState(false);
+  const [tipAmount, setTipAmount] = useState<number>(100);
 
   const handleSaveUpi = async () => {
     if (!newUpiId.trim()) {
@@ -102,6 +112,38 @@ export default function ProfileScreen() {
         note: 'TripSplit Payment',
       })
     : '';
+
+  const handleCopyDeveloperUpi = async () => {
+    await Clipboard.setStringAsync(DEVELOPER_UPI);
+    showToast({
+      type: 'success',
+      title: 'UPI ID Copied',
+      message: `${DEVELOPER_UPI} copied to clipboard!`,
+    });
+  };
+
+  const handlePayDeveloperTip = async (amt: number) => {
+    await launchUpiPayment({
+      upiId: DEVELOPER_UPI,
+      payeeName: 'Rony (TripSplit Developer)',
+      amount: amt,
+      note: 'Supporting TripSplit Developer',
+    });
+  };
+
+  const handleOpenGitHub = () => {
+    Linking.openURL('https://github.com/iamrony27/TripSplit').catch(() => {
+      Alert.alert('Notice', 'Could not open GitHub link in browser.');
+    });
+  };
+
+  const developerUpiUri = generateUpiPaymentUri({
+    upiId: DEVELOPER_UPI,
+    payeeName: 'Rony (TripSplit Developer)',
+    amount: tipAmount,
+    currency: 'INR',
+    note: 'TripSplit Support',
+  });
 
   return (
     <View style={styles.container}>
@@ -249,6 +291,92 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Support the Developer Card */}
+        <View style={styles.supportCard}>
+          <View style={styles.supportHeader}>
+            <View style={styles.heartIconCircle}>
+              <MaterialCommunityIcons name="heart-pulse" size={24} color="#EF4444" />
+            </View>
+            <View style={styles.supportHeaderTextWrap}>
+              <Text style={styles.supportTitle}>Support the Developer ☕</Text>
+              <Text style={styles.supportSubtitle}>Handcrafted with love by Rony</Text>
+            </View>
+          </View>
+
+          <Text style={styles.supportMessage}>
+            "Hi there! I'm Rony, an independent developer pouring hundreds of late nights and endless dedication into building TripSplit completely free, without annoying ads or paywalls. Every feature is hand-crafted to make travel with your loved ones simple and memorable. If TripSplit has helped you split expenses and keep friendships stress-free, a small coffee or tip goes a very long way in keeping this project alive and growing. Your warmth and generosity mean everything to me! ❤️"
+          </Text>
+
+          <View style={styles.devUpiPill}>
+            <MaterialCommunityIcons name="bank-transfer" size={16} color={M3Colors.primary} />
+            <Text style={styles.devUpiText}>UPI: {DEVELOPER_UPI}</Text>
+            <TouchableOpacity onPress={handleCopyDeveloperUpi} style={styles.copyPillBtn}>
+              <MaterialCommunityIcons name="content-copy" size={13} color={M3Colors.primary} />
+              <Text style={styles.copyPillBtnText}>Copy</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Tip Amount Selection */}
+          <Text style={styles.tipSelectorLabel}>Select a tip amount:</Text>
+          <View style={styles.tipAmountRow}>
+            {[50, 100, 200, 500].map((amt) => {
+              const isSelected = tipAmount === amt;
+              return (
+                <TouchableOpacity
+                  key={amt}
+                  onPress={() => setTipAmount(amt)}
+                  style={[styles.tipChip, isSelected && styles.tipChipSelected]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.tipChipText, isSelected && styles.tipChipTextSelected]}>
+                    ₹{amt}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.supportActionsRow}>
+            <Button
+              mode="contained"
+              icon="send"
+              onPress={() => handlePayDeveloperTip(tipAmount)}
+              buttonColor={M3Colors.primary}
+              textColor={M3Colors.onPrimary}
+              style={styles.payTipBtn}
+            >
+              Tip ₹{tipAmount} via UPI
+            </Button>
+            <Button
+              mode="outlined"
+              icon="qrcode"
+              onPress={() => setSupportQrModalVisible(true)}
+              textColor={M3Colors.primary}
+              style={styles.qrTipBtn}
+            >
+              Scan QR
+            </Button>
+          </View>
+        </View>
+
+        {/* GitHub & Open Source Card */}
+        <View style={styles.githubCard}>
+          <View style={styles.githubLeft}>
+            <View style={styles.githubIconWrap}>
+              <MaterialCommunityIcons name="github" size={26} color="#FFFFFF" />
+            </View>
+            <View style={styles.githubTextWrap}>
+              <Text style={styles.githubTitle}>Find on GitHub</Text>
+              <Text style={styles.githubDesc}>Star, contribute, or view open-source code</Text>
+            </View>
+          </View>
+          <TouchableOpacity onPress={handleOpenGitHub} style={styles.githubBtn} activeOpacity={0.8}>
+            <Text style={styles.githubBtnText}>View Repo</Text>
+            <MaterialCommunityIcons name="open-in-new" size={14} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+
         {/* Log Out Button */}
         <TouchableOpacity onPress={handleSignOut} style={styles.logoutBtn}>
           <MaterialCommunityIcons name="logout" size={20} color={M3Colors.error} />
@@ -327,6 +455,39 @@ export default function ProfileScreen() {
               textColor={M3Colors.onPrimary}
             >
               Save
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        {/* Developer Support QR Dialog */}
+        <Dialog
+          visible={supportQrModalVisible}
+          onDismiss={() => setSupportQrModalVisible(false)}
+          style={styles.dialog}
+        >
+          <Dialog.Title style={styles.dialogTitle}>
+            Support Developer ☕
+          </Dialog.Title>
+          <Dialog.Content style={{ alignItems: 'center', paddingVertical: 10 }}>
+            <View style={styles.devQrBox}>
+              <QRCode
+                value={developerUpiUri}
+                size={180}
+                backgroundColor="#FFFFFF"
+                color="#000000"
+              />
+            </View>
+            <Text style={styles.devQrUpiText}>{DEVELOPER_UPI}</Text>
+            <Text style={styles.devQrSubtext}>
+              Scan using Google Pay, PhonePe, Paytm, or BHIM to send ₹{tipAmount}. Thank you for your kindness and support! ❤️
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={handleCopyDeveloperUpi} textColor={M3Colors.primary}>
+              Copy UPI ID
+            </Button>
+            <Button onPress={() => setSupportQrModalVisible(false)} textColor={M3Colors.onSurfaceVariant}>
+              Close
             </Button>
           </Dialog.Actions>
         </Dialog>
@@ -646,5 +807,203 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 15,
     marginTop: 2,
+  },
+  supportCard: {
+    backgroundColor: '#FFF7ED', // Warm peach tint
+    borderRadius: M3Shapes.cardLarge,
+    padding: M3Shapes.spacing.lg,
+    elevation: 3,
+    shadowColor: '#EA580C',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#FED7AA',
+    gap: 12,
+  },
+  supportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  heartIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  supportHeaderTextWrap: {
+    flex: 1,
+  },
+  supportTitle: {
+    ...M3Typography.titleMedium,
+    color: '#9A3412',
+    fontWeight: '800',
+  },
+  supportSubtitle: {
+    ...M3Typography.bodySmall,
+    color: '#C2410C',
+    fontSize: 12,
+  },
+  supportMessage: {
+    ...M3Typography.bodyMedium,
+    color: '#431407',
+    lineHeight: 21,
+    fontSize: 13,
+    fontStyle: 'italic',
+  },
+  devUpiPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+  },
+  devUpiText: {
+    ...M3Typography.labelMedium,
+    color: '#7C2D12',
+    fontWeight: '700',
+    flex: 1,
+  },
+  copyPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: M3Colors.primaryContainer,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  copyPillBtnText: {
+    ...M3Typography.labelSmall,
+    color: M3Colors.primary,
+    fontWeight: '700',
+  },
+  tipSelectorLabel: {
+    ...M3Typography.labelMedium,
+    color: '#9A3412',
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  tipAmountRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tipChip: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+  },
+  tipChipSelected: {
+    backgroundColor: '#EA580C',
+    borderColor: '#C2410C',
+  },
+  tipChipText: {
+    ...M3Typography.labelMedium,
+    color: '#9A3412',
+    fontWeight: '700',
+  },
+  tipChipTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  supportActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  payTipBtn: {
+    flex: 1.6,
+    borderRadius: M3Shapes.pill,
+  },
+  qrTipBtn: {
+    flex: 1,
+    borderRadius: M3Shapes.pill,
+    borderColor: M3Colors.primary,
+  },
+  githubCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#1E293B',
+    borderRadius: M3Shapes.cardLarge,
+    padding: M3Shapes.spacing.md,
+    elevation: 2,
+    gap: 12,
+  },
+  githubLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  githubIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#0F172A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  githubTextWrap: {
+    flex: 1,
+  },
+  githubTitle: {
+    ...M3Typography.titleMedium,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  githubDesc: {
+    ...M3Typography.bodySmall,
+    color: '#94A3B8',
+    fontSize: 11,
+  },
+  githubBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#334155',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+  },
+  githubBtnText: {
+    ...M3Typography.labelMedium,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  devQrBox: {
+    backgroundColor: '#FFFFFF',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: M3Colors.outlineVariant,
+    marginBottom: 10,
+    elevation: 3,
+  },
+  devQrUpiText: {
+    ...M3Typography.labelLarge,
+    color: M3Colors.onSurface,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+  devQrSubtext: {
+    ...M3Typography.bodySmall,
+    color: M3Colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 16,
+    paddingHorizontal: 12,
   },
 });
