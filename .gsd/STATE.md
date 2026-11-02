@@ -1,20 +1,48 @@
 # STATE.md — Current Session Memory
 
 **Project**: TripSplit (Android Group Expense Management App)
-**Current Phase**: Phase 2 (Expo Setup & Project Architecture)
-**Last Completed**: Phase 1 (Design Inspection & Asset Ingestion)
+**Status**: All 12 Phases Implemented & Empirically Verified
+**Latest Commit**: `9750966` (`feat(phase-3): complete expo router screens, m3 stitch navigation, auth flow, and upi scanner`)
 
-## Completed Work
-- Inspected all 6 Google Stitch screens:
-  - Home Dashboard (`c16ee4b3e48441c79d6426ea540ecd41`)
-  - Add Expense & Split (`53ed5fdcc8a149638af21e5e026eb4c9`)
-  - Smart Settlement & UPI (`51f7de8cd96c4cd483bd1a5e383d3d1c`)
-  - Analytics & Breakdown (`80054f72abcf48ff889391677e6ea384`)
-  - Member Profile & UPI (`ea26f5c060b04b93a2aadaba00e7d184`)
-  - App Icon & Logo (`24ae4f3c87224680a2a2982e0a05275c`)
-- Extracted and stored full Material 3 design tokens in `designs/DESIGN.md`.
-- Finalized requirements in `.gsd/SPEC.md`.
-- Formulated 12-stage plan in `.gsd/ROADMAP.md`.
+## Completed Milestones
 
-## Active Focus
-- Phase 2: Initialize Expo project with Expo Router, TypeScript, and install necessary dependencies for React Native Paper, Reanimated, Gesture Handler, Camera, Image Picker, SVG, QR, and Charts.
+1. **Design System & Asset Fidelity**:
+   - Google Stitch tokens faithfully extracted and applied to `src/theme/` (colors, typography, shapes, paper theme).
+   - All 6 Stitch screens mapped and realized with Material 3 styling.
+
+2. **Core Computational Engines**:
+   - `src/engine/expenseCalculator.ts`: Exact cent distribution across 4 split modes (Equal, Unequal, Percentage, By Shares) with zero floating point drift.
+   - `src/engine/debtSimplifier.ts`: Minimum Cash Flow greedy matching algorithm reducing complex circular debts into minimum transfers.
+   - 11 unit tests running in Jest (`PASS 11/11`).
+
+3. **UPI Payment & QR System**:
+   - `src/services/upi/upiParser.ts`: NPCI compliant parser for `upi://pay` URIs and VPA validation.
+   - `src/services/upi/upiLauncher.ts`: Android deep linking to Google Pay, PhonePe, and Paytm.
+   - `src/components/settlement/UpiQrModal.tsx`: Dynamic SVG QR code generator with NPCI URI payload.
+   - `app/scan-qr.tsx`: Device camera QR scanner powered by `expo-camera` CameraView.
+
+4. **Firebase Cloud Synchronization & Security**:
+   - Firebase Authentication (Email/Password, Demo instant login, persistent sessions via AsyncStorage).
+   - Cloud Firestore with `persistentLocalCache` for full offline-first durability and background sync.
+   - `firestore.rules`: Scoped member authorization on trips, expenses, payments, and immutable audit logs.
+   - `storage.rules`: Hardened image size and content-type validation for avatars and receipts.
+
+5. **Screen Hierarchy (Expo Router)**:
+   - `app/_layout.tsx`: Root providers and modal stacks.
+   - `app/(auth)/login.tsx`, `register.tsx`, `forgot-password.tsx`.
+   - `app/setup-wizard.tsx`: First-time setup wizard (photo, currency, UPI ID).
+   - `app/(tabs)/index.tsx`: Stitch Screen 1 Home Dashboard (financial hero cards, quick action pills, recent expenses).
+   - `app/(tabs)/trips.tsx`: Trip CRUD with search and switch-active capability.
+   - `app/(tabs)/analytics.tsx`: Stitch Screen 4 Analytics & Breakdown (Bento summary, category donut, member bar, daily trend line charts).
+   - `app/(tabs)/activity.tsx`: Group audit event timeline.
+   - `app/(tabs)/profile.tsx`: Stitch Screen 5 Profile & Member UPI QR card with live QR matrix.
+   - `app/trip/create.tsx`: Trip creator with base currency picker and participant onboarding.
+   - `app/trip/[id].tsx`: Detailed trip view with member balance cards and expense ledger.
+   - `app/trip/add-expense.tsx`: Stitch Screen 2 Add Expense & Split (live computed shares, 16 category pills, receipt picker).
+   - `app/trip/settle.tsx`: Stitch Screen 3 Smart Settlement & UPI (debt reduction graph, Pay Now, Show QR, Mark as Paid).
+   - `app/scan-qr.tsx`: Full-screen camera QR scanner.
+
+## Empirical Verification Proof
+- `npm test`: **11 passed, 0 failed, 2 test suites**.
+- `npx tsc --noEmit`: **0 errors**.
+- `npx expo export --platform android --no-bytecode`: **1834 modules bundled successfully**.
