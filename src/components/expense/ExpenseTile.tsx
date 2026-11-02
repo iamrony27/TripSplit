@@ -47,11 +47,20 @@ export const ExpenseTile: React.FC<ExpenseTileProps> = ({
         </View>
 
         <View style={styles.textColumn}>
-          <Text style={styles.titleText} numberOfLines={1}>
-            {expense.title}
-          </Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.titleText} numberOfLines={1}>
+              {expense.title}
+            </Text>
+            {expense.isEdited && (
+              <View style={styles.editedBadge}>
+                <MaterialCommunityIcons name="pencil" size={10} color={M3Colors.primary} />
+                <Text style={styles.editedText}>Edited</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.subtitleText} numberOfLines={1}>
             {tripTitle ? `${tripTitle} • ` : ''}Paid by {payerName || 'Member'}
+            {expense.lastEditedAt ? ` • Edited ${new Date(expense.lastEditedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}` : ''}
           </Text>
         </View>
       </View>
@@ -102,9 +111,29 @@ const styles = StyleSheet.create({
   textColumn: {
     flex: 1,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  editedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#FFE0B2',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: M3Shapes.pill,
+  },
+  editedText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#E65100',
+  },
   titleText: {
     ...M3Typography.titleSm,
     color: M3Colors.onSurface,
+    flexShrink: 1,
   },
   subtitleText: {
     ...M3Typography.bodySm,

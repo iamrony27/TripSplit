@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { useAuth } from './AuthContext';
-import { Trip, TripMember } from '../types/trip';
-import { Expense } from '../types/expense';
+import { Trip, TripMember, MemberRole } from '../types/trip';
+import { Expense, SplitMode, ParticipantSplit } from '../types/expense';
 import { PaymentRecord, PaymentStatus, MemberBalance, SettlementSuggestion } from '../types/settlement';
 import { ActivityEvent } from '../types/activity';
+import { JoinRequest } from '../types/joinRequest';
+import { GroupInvitation } from '../types/invitation';
+import { AppNotification } from '../types/notification';
 import {
   createTripInFirestore,
   updateTripInFirestore,
@@ -32,6 +35,26 @@ import {
   subscribeTripActivities,
 } from '../services/firebase/activityService';
 import {
+  getOrCreateTripInvitation,
+} from '../services/firebase/invitationService';
+import {
+  subscribeTripJoinRequests,
+  approveJoinRequest as approveJoinRequestInService,
+  rejectJoinRequest as rejectJoinRequestInService,
+} from '../services/firebase/joinRequestService';
+import {
+  adminEditExpense as adminEditExpenseInService,
+} from '../services/firebase/expenseEditService';
+import {
+  executeMemberMerge,
+  previewMemberMerge,
+} from '../services/firebase/memberMergeService';
+import {
+  subscribeUserNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+} from '../services/firebase/notificationService';
+import {
   calculateMemberBalances,
   calculateExpenseShares,
   round2,
@@ -52,8 +75,46 @@ interface TripContextType {
   settlementSuggestions: SettlementSuggestion[];
   totalTripSpend: number;
   isTripAdmin: boolean;
+  isGroupOwner: boolean;
   currentMember: TripMember | null;
+  currentMemberRole: MemberRole;
   pendingApprovalsCount: number;
+
+  // Join Requests
+  joinRequests: JoinRequest[];
+  pendingJoinRequestsCount: number;
+  approveJoinRequest: (request: JoinRequest, role?: MemberRole) => Promise<void>;
+  rejectJoinRequest: (request: JoinRequest, reason?: string) => Promise<void>;
+
+  // Invitations
+  getTripInvitation: (tripId?: string) => Promise<GroupInvitation>;
+
+  // Notifications
+  notifications: AppNotification[];
+  unreadNotificationsCount: number;
+  markNotificationRead: (notificationId: string) => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
+
+  // Admin Expense Editing & Member Merging
+  adminEditExpense: (params: {
+    expenseId: string;
+    updates: {
+      title?: string;
+      amount?: number;
+      categoryId?: string;
+      paidByMemberId?: string;
+      selectedParticipantIds?: string[];
+      expenseDate?: string;
+      description?: string;
+      splitMode?: SplitMode;
+      splitsData?: ParticipantSplit[];
+    };
+    reason?: string;
+  }) => Promise<Expense>;
+  mergeMembers: (sourceMemberId: string, targetMemberId: string, notes?: string) => Promise<void>;
+  previewMerge: (sourceMemberId: string, targetMemberId: string) => Promise<any>;
+
+  // Existing operations
   createNewTrip: (
     title: string,
     description?: string,
@@ -97,6 +158,8 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
+  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   // 1. Subscribe to User's Trips
@@ -129,12 +192,13 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return trips.find((t) => t.id === activeTripId) || null;
   }, [trips, activeTripId]);
 
-  // 2. Subscribe to Expenses, Payments, and Activities for Active Trip
+  // 2. Subscribe to Expenses, Payments, Activities, and Join Requests for Active Trip
   useEffect(() => {
     if (!activeTripId) {
       setExpenses([]);
       setPayments([]);
       setActivities([]);
+      setJoinRequests([]);
       return;
     }
 
@@ -150,14 +214,33 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setActivities(acts);
     });
 
+    const unsubJoinRequests = subscribeTripJoinRequests(activeTripId, (reqs) => {
+      setJoinRequests(reqs);
+    });
+
     return () => {
       unsubExpenses();
       unsubPayments();
       unsubActivities();
+      unsubJoinRequests();
     };
   }, [activeTripId]);
 
-  // 3. Dynamic Accounting & Debt Simplification Engine
+  // 3. Subscribe to In-App Notifications for Current User
+  useEffect(() => {
+    if (!user?.id) {
+      setNotifications([]);
+      return;
+    }
+
+    const unsubscribe = subscribeUserNotifications(user.id, (notes) => {
+      setNotifications(notes);
+    });
+
+    return () => unsubscribe();
+  }, [user?.id]);
+
+  // 4. Dynamic Accounting & Debt Simplification Engine
   const memberBalances = useMemo(() => {
     if (!activeTrip) return [];
     return calculateMemberBalances(activeTrip.members, expenses, payments);
@@ -169,7 +252,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [activeTrip, memberBalances]);
 
   const totalTripSpend = useMemo(() => {
-    return round2(expenses.reduce((sum, e) => sum + (e.convertedAmount ?? e.amount), 0));
+    return expenses.reduce((acc, curr) => acc + (curr.convertedAmount || curr.amount), 0);
   }, [expenses]);
 
   const currentMember = useMemo(() => {
@@ -177,15 +260,15 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return (
       activeTrip.members.find(
         (m) =>
-          m.id === user.id ||
           m.userId === user.id ||
+          m.id === user.id ||
           m.id === `member_${user.id}` ||
           (user.fullName && m.name.toLowerCase() === user.fullName.toLowerCase())
       ) || null
     );
   }, [activeTrip, user]);
 
-  const isTripAdmin = useMemo(() => {
+  const isGroupOwner = useMemo(() => {
     if (!activeTrip || !user) return false;
     return Boolean(
       activeTrip.createdBy === user.id ||
@@ -194,13 +277,131 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   }, [activeTrip, user, currentMember]);
 
+  const isTripAdmin = useMemo(() => {
+    if (!activeTrip || !user) return false;
+    if (isGroupOwner) return true;
+    return Boolean(
+      currentMember && (currentMember.role === 'ADMIN' || currentMember.role === 'CREATOR')
+    );
+  }, [activeTrip, user, isGroupOwner, currentMember]);
+
+  const currentMemberRole = useMemo<MemberRole>(() => {
+    if (isGroupOwner) return 'CREATOR';
+    return currentMember?.role || 'MEMBER';
+  }, [isGroupOwner, currentMember]);
+
   const pendingApprovalsCount = useMemo(() => {
     return payments.filter(
       (p) => p.status === 'PENDING_ADMIN_APPROVAL' || p.status === 'PENDING'
     ).length;
   }, [payments]);
 
-  // 4. Operations
+  const pendingJoinRequestsCount = useMemo(() => {
+    return joinRequests.filter((r) => r.status === 'PENDING').length;
+  }, [joinRequests]);
+
+  const unreadNotificationsCount = useMemo(() => {
+    return notifications.filter((n) => !n.isRead).length;
+  }, [notifications]);
+
+  // 5. Invitations
+  const getTripInvitation = async (tripId?: string): Promise<GroupInvitation> => {
+    const targetTrip = tripId ? trips.find((t) => t.id === tripId) : activeTrip;
+    if (!targetTrip || !user) throw new Error('No active trip or user found.');
+    return getOrCreateTripInvitation(
+      targetTrip.id,
+      targetTrip.title,
+      user.id,
+      user.fullName || 'Admin'
+    );
+  };
+
+  // 6. Join Requests Operations
+  const approveJoinRequest = async (request: JoinRequest, role: MemberRole = 'MEMBER') => {
+    if (!user) throw new Error('User not authenticated');
+    await approveJoinRequestInService({
+      request,
+      adminUserId: user.id,
+      adminName: user.fullName || 'Admin',
+      role,
+    });
+  };
+
+  const rejectJoinRequest = async (request: JoinRequest, reason?: string) => {
+    if (!user) throw new Error('User not authenticated');
+    await rejectJoinRequestInService({
+      request,
+      adminUserId: user.id,
+      adminName: user.fullName || 'Admin',
+      reason,
+    });
+  };
+
+  // 7. Admin Expense Editing
+  const adminEditExpense = async (params: {
+    expenseId: string;
+    updates: {
+      title?: string;
+      amount?: number;
+      categoryId?: string;
+      paidByMemberId?: string;
+      selectedParticipantIds?: string[];
+      expenseDate?: string;
+      description?: string;
+      splitMode?: SplitMode;
+      splitsData?: ParticipantSplit[];
+    };
+    reason?: string;
+  }): Promise<Expense> => {
+    if (!activeTrip || !user) throw new Error('No active trip or user');
+    if (!isTripAdmin) throw new Error('Only a group administrator can edit transactions.');
+
+    return adminEditExpenseInService({
+      expenseId: params.expenseId,
+      tripId: activeTrip.id,
+      adminUserId: user.id,
+      adminName: user.fullName || 'Admin',
+      reason: params.reason,
+      updates: params.updates,
+    });
+  };
+
+  // 8. Member Profile Merging
+  const mergeMembers = async (sourceMemberId: string, targetMemberId: string, notes?: string) => {
+    if (!activeTrip || !user) throw new Error('No active trip or user');
+    if (!isTripAdmin) throw new Error('Only a group administrator can merge member profiles.');
+
+    await executeMemberMerge({
+      tripId: activeTrip.id,
+      sourceMemberId,
+      targetMemberId,
+      adminUserId: user.id,
+      adminName: user.fullName || 'Admin',
+      notes,
+    });
+  };
+
+  const previewMerge = async (sourceMemberId: string, targetMemberId: string) => {
+    if (!activeTrip) throw new Error('No active trip');
+    return previewMemberMerge({
+      tripId: activeTrip.id,
+      sourceMemberId,
+      targetMemberId,
+    });
+  };
+
+  // 9. Notifications Operations
+  const markNotificationRead = async (notificationId: string) => {
+    await markNotificationAsRead(notificationId, user?.id);
+  };
+
+  const markAllNotificationsRead = async () => {
+    if (user?.id) {
+      await markAllNotificationsAsRead(user.id);
+    }
+  };
+
+  // 10. Standard Trip Operations
   const createNewTrip = async (
     title: string,
     description: string = '',
@@ -217,10 +418,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: `member_${user.id}`,
       userId: user.id,
       name: user.fullName || 'Organizer',
+      role: 'CREATOR',
       upiId: user.upiId,
       totalPaid: 0,
       totalShare: 0,
       netBalance: 0,
+      joinedAt: Date.now(),
     };
 
     const allMembers = [creatorMember, ...(initialMembers || [])];
@@ -238,25 +441,27 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: Date.now(),
       updatedAt: Date.now(),
       coverPhotoUrl,
-      startDate: startDate || new Date().toISOString().split('T')[0],
-      endDate: endDate || '',
+      startDate,
+      endDate,
     };
 
     await createTripInFirestore(newTrip);
 
-    // Log Activity
+    // Seed initial invitation code for the group
+    await getOrCreateTripInvitation(tripId, newTrip.title, user.id, user.fullName || 'Organizer');
+
     await logActivityInFirestore({
       id: `act_${Date.now()}`,
-      tripId,
-      tripTitle: title,
+      tripId: newTrip.id,
+      tripTitle: newTrip.title,
       userId: user.id,
-      userName: user.fullName,
+      userName: user.fullName || 'Organizer',
       action: 'TRIP_CREATED',
-      details: `${user.fullName} created trip "${title}"`,
+      details: `Created new group "${newTrip.title}"`,
       timestamp: Date.now(),
     });
 
-    setActiveTripId(tripId);
+    setActiveTripId(newTrip.id);
     return newTrip;
   };
 
@@ -267,44 +472,47 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteTrip = async (tripId: string) => {
     await deleteTripInFirestore(tripId);
     if (activeTripId === tripId) {
-      setActiveTripId(null);
+      const remaining = trips.filter((t) => t.id !== tripId);
+      setActiveTripId(remaining.length > 0 ? remaining[0].id : null);
     }
   };
 
   const addMember = async (tripId: string, member: TripMember) => {
-    const target = trips.find((t) => t.id === tripId);
-    if (!target) return;
-    await addMemberToTrip(target, member);
+    const targetTrip = trips.find((t) => t.id === tripId);
+    if (!targetTrip) throw new Error('Trip not found');
+
+    await addMemberToTrip(targetTrip, member);
 
     if (user) {
       await logActivityInFirestore({
         id: `act_${Date.now()}`,
         tripId,
-        tripTitle: target.title,
+        tripTitle: targetTrip.title,
         userId: user.id,
         userName: user.fullName,
         action: 'MEMBER_ADDED',
-        details: `${member.name} joined the trip`,
+        details: `Added ${member.name} to "${targetTrip.title}"`,
         timestamp: Date.now(),
       });
     }
   };
 
   const removeMember = async (tripId: string, memberId: string) => {
-    const target = trips.find((t) => t.id === tripId);
-    if (!target) return;
-    const removedName = target.members.find((m) => m.id === memberId)?.name || 'Member';
-    await removeMemberFromTrip(target, memberId);
+    const targetTrip = trips.find((t) => t.id === tripId);
+    if (!targetTrip) throw new Error('Trip not found');
+
+    const memberName = targetTrip.members.find((m) => m.id === memberId)?.name || 'Member';
+    await removeMemberFromTrip(targetTrip, memberId);
 
     if (user) {
       await logActivityInFirestore({
         id: `act_${Date.now()}`,
         tripId,
-        tripTitle: target.title,
+        tripTitle: targetTrip.title,
         userId: user.id,
         userName: user.fullName,
         action: 'MEMBER_REMOVED',
-        details: `${removedName} was removed from the trip`,
+        details: `Removed ${memberName} from "${targetTrip.title}"`,
         timestamp: Date.now(),
       });
     }
@@ -316,24 +524,20 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!activeTrip || !user) throw new Error('No active trip or user');
 
     const expenseId = `exp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-    
-    // Currency conversion
-    const baseCurrency = activeTrip.baseCurrency || 'INR';
     const { convertedAmount, exchangeRate } = convertCurrency(
       expenseData.amount,
       expenseData.originalCurrency,
-      baseCurrency
+      activeTrip.baseCurrency || 'INR'
     );
 
-    // Compute exact participant shares using Engine
     const shares = calculateExpenseShares(
-      convertedAmount,
+      expenseData.amount,
       expenseData.splitMode,
       expenseData.selectedParticipantIds,
       expenseData.splitsData
     );
 
-    const expense: Expense = {
+    const newExpense: Expense = {
       ...expenseData,
       id: expenseId,
       convertedAmount,
@@ -343,14 +547,8 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updatedAt: Date.now(),
     };
 
-    await createExpenseInFirestore(expense);
+    await createExpenseInFirestore(newExpense);
 
-    // Update trip spend
-    await updateTripInFirestore(activeTrip.id, {
-      totalSpend: round2(totalTripSpend + convertedAmount),
-    });
-
-    // Log Activity
     const payer = activeTrip.members.find((m) => m.id === expenseData.paidByMemberId)?.name || 'Someone';
     await logActivityInFirestore({
       id: `act_${Date.now()}`,
@@ -359,46 +557,22 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       userId: user.id,
       userName: user.fullName,
       action: 'EXPENSE_ADDED',
-      details: `${payer} added "${expenseData.title}" (${baseCurrency} ${convertedAmount.toFixed(2)})`,
-      amount: convertedAmount,
-      currency: baseCurrency,
+      details: `${payer} added "${expenseData.title}"`,
+      amount: expenseData.amount,
+      currency: expenseData.originalCurrency,
       timestamp: Date.now(),
     });
   };
 
   const updateExpense = async (expenseId: string, updates: Partial<Expense>) => {
-    if (!activeTrip) return;
-
-    if (updates.amount !== undefined || updates.splitMode || updates.selectedParticipantIds || updates.splitsData) {
-      const existing = expenses.find((e) => e.id === expenseId);
-      if (existing) {
-        const merged = { ...existing, ...updates };
-        const baseCurrency = activeTrip.baseCurrency || 'INR';
-        const { convertedAmount } = convertCurrency(
-          merged.amount,
-          merged.originalCurrency,
-          baseCurrency,
-          merged.exchangeRate
-        );
-        const shares = calculateExpenseShares(
-          convertedAmount,
-          merged.splitMode,
-          merged.selectedParticipantIds,
-          merged.splitsData
-        );
-        updates.convertedAmount = convertedAmount;
-        updates.shares = shares;
-      }
-    }
-
-    await updateExpenseInFirestore(expenseId, updates);
+    await updateExpenseInFirestore(expenseId, { ...updates, tripId: activeTripId || undefined });
   };
 
   const deleteExpense = async (expenseId: string) => {
-    const existing = expenses.find((e) => e.id === expenseId);
-    await deleteExpenseInFirestore(expenseId);
+    const expense = expenses.find((e) => e.id === expenseId);
+    await deleteExpenseInFirestore(expenseId, activeTripId || undefined);
 
-    if (activeTrip && existing && user) {
+    if (activeTrip && user && expense) {
       await logActivityInFirestore({
         id: `act_${Date.now()}`,
         tripId: activeTrip.id,
@@ -406,7 +580,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userId: user.id,
         userName: user.fullName,
         action: 'EXPENSE_DELETED',
-        details: `Expense "${existing.title}" was deleted`,
+        details: `${user.fullName} deleted "${expense.title}"`,
         timestamp: Date.now(),
       });
     }
@@ -417,7 +591,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ) => {
     if (!activeTrip || !user) throw new Error('No active trip or user');
 
-    const paymentId = `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const paymentId = `pay_dec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const fromName =
       declarationData.payerName ||
       activeTrip.members.find((m) => m.id === declarationData.fromMemberId)?.name ||
@@ -434,7 +608,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       paymentId,
       tripId: activeTrip.id,
       groupId: activeTrip.id,
-      payerUid: declarationData.payerUid || user.id,
+      payerUid: user.id,
       payerName: fromName,
       receiverName: toName,
       status: 'PENDING_ADMIN_APPROVAL',
@@ -522,17 +696,20 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!activeTrip || !user) throw new Error('No active trip or user');
 
     const paymentId = `pay_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-    const payment: PaymentRecord = {
+    const newPayment: PaymentRecord = {
       ...paymentData,
       id: paymentId,
+      paymentId,
+      tripId: activeTrip.id,
+      groupId: activeTrip.id,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
 
-    await recordPaymentInFirestore(payment);
+    await recordPaymentInFirestore(newPayment);
 
-    const fromName = activeTrip.members.find((m) => m.id === paymentData.fromMemberId)?.name || 'Member';
-    const toName = activeTrip.members.find((m) => m.id === paymentData.toMemberId)?.name || 'Member';
+    const from = activeTrip.members.find((m) => m.id === paymentData.fromMemberId)?.name || 'Someone';
+    const to = activeTrip.members.find((m) => m.id === paymentData.toMemberId)?.name || 'Someone';
 
     await logActivityInFirestore({
       id: `act_${Date.now()}`,
@@ -541,7 +718,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       userId: user.id,
       userName: user.fullName,
       action: 'PAYMENT_RECORDED',
-      details: `${fromName} paid ${toName} ${paymentData.currency} ${paymentData.amount.toFixed(2)}`,
+      details: `${from} recorded payment of ${paymentData.currency} ${paymentData.amount.toFixed(2)} to ${to}`,
       amount: paymentData.amount,
       currency: paymentData.currency,
       timestamp: Date.now(),
@@ -571,8 +748,27 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         settlementSuggestions,
         totalTripSpend,
         isTripAdmin,
+        isGroupOwner,
         currentMember,
+        currentMemberRole,
         pendingApprovalsCount,
+
+        joinRequests,
+        pendingJoinRequestsCount,
+        approveJoinRequest,
+        rejectJoinRequest,
+
+        getTripInvitation,
+
+        notifications,
+        unreadNotificationsCount,
+        markNotificationRead,
+        markAllNotificationsRead,
+
+        adminEditExpense,
+        mergeMembers,
+        previewMerge,
+
         createNewTrip,
         updateTrip,
         deleteTrip,

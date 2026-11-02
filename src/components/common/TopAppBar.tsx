@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { M3Colors } from '../../theme/colors';
 import { M3Typography } from '../../theme/typography';
 import { M3Shapes } from '../../theme/shapes';
+import { useTrips } from '../../context/TripContext';
 
 interface TopAppBarProps {
   title: string;
@@ -23,6 +24,7 @@ interface TopAppBarProps {
   avatarUrl?: string;
   onProfilePress?: () => void;
   onNotificationPress?: () => void;
+  unreadNotifications?: number;
   rightAction?: React.ReactNode;
 }
 
@@ -34,6 +36,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   avatarUrl,
   onProfilePress,
   onNotificationPress,
+  unreadNotifications,
   rightAction,
 }) => {
   const router = useRouter();
@@ -41,11 +44,29 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
   const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 0;
   const topInset = Math.max(insets.top, statusBarHeight);
 
+  let unreadCount = unreadNotifications;
+  try {
+    const tripsContext = useTrips();
+    if (unreadCount === undefined && tripsContext) {
+      unreadCount = tripsContext.unreadNotificationsCount;
+    }
+  } catch {
+    // TopAppBar used outside TripProvider
+  }
+
   const handleBack = () => {
     if (onBackPress) {
       onBackPress();
     } else {
       router.back();
+    }
+  };
+
+  const handleNotificationPress = () => {
+    if (onNotificationPress) {
+      onNotificationPress();
+    } else {
+      router.push('/notifications' as any);
     }
   };
 
@@ -98,7 +119,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
         ) : (
           <>
             <TouchableOpacity
-              onPress={onNotificationPress}
+              onPress={handleNotificationPress}
               style={styles.iconButton}
               accessibilityLabel="Notifications"
             >
@@ -107,6 +128,13 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
                 size={22}
                 color={M3Colors.onSurfaceVariant}
               />
+              {Boolean(unreadCount && unreadCount > 0) && (
+                <View style={styles.badgeContainer}>
+                  <Text style={styles.badgeText}>
+                    {unreadCount! > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -185,6 +213,25 @@ const styles = StyleSheet.create({
     borderRadius: M3Shapes.pill,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: M3Colors.error,
+    borderRadius: M3Shapes.pill,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: M3Colors.onError,
+    fontSize: 9,
+    fontWeight: '700',
+    lineHeight: 12,
   },
   avatarButton: {
     width: 36,

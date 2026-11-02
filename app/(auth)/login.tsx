@@ -90,6 +90,48 @@ export default function LoginScreen() {
           </Text>
         </View>
 
+        {/* Entry 3-Way Choice Bar */}
+        <View style={styles.entryOptionsRow}>
+          <View style={[styles.entryChoiceBtn, styles.entryChoiceBtnActive]}>
+            <MaterialCommunityIcons name="login" size={16} color={M3Colors.onPrimary} />
+            <Text style={styles.entryChoiceTextActive}>Login</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.entryChoiceBtn}
+            onPress={() => router.push('/(auth)/register')}
+          >
+            <MaterialCommunityIcons name="account-plus" size={16} color={M3Colors.onSurfaceVariant} />
+            <Text style={styles.entryChoiceText}>Create Account</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.entryChoiceBtn, styles.entryChoiceBtnHighlight]}
+            onPress={() => router.push('/join-group')}
+          >
+            <MaterialCommunityIcons name="qrcode-scan" size={16} color={M3Colors.primary} />
+            <Text style={styles.entryChoiceTextHighlight}>Join a Group</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Join a Group Direct Card Banner */}
+        <TouchableOpacity
+          style={styles.joinGroupBanner}
+          onPress={() => router.push('/join-group')}
+          activeOpacity={0.85}
+        >
+          <View style={styles.joinGroupIconBox}>
+            <MaterialCommunityIcons name="qrcode-scan" size={22} color={M3Colors.onPrimary} />
+          </View>
+          <View style={styles.joinGroupTextCol}>
+            <Text style={styles.joinGroupTitle}>Have a Group QR or Invite Code?</Text>
+            <Text style={styles.joinGroupSubtitle}>
+              Join an existing trip without creating an account first
+            </Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={22} color={M3Colors.primary} />
+        </TouchableOpacity>
+
         {/* Login Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Welcome Back</Text>
@@ -317,5 +359,81 @@ const styles = StyleSheet.create({
     ...M3Typography.bodyMedium,
     color: M3Colors.primary,
     fontWeight: '700',
+  },
+  entryOptionsRow: {
+    flexDirection: 'row',
+    backgroundColor: M3Colors.surfaceContainerHigh,
+    borderRadius: M3Shapes.pill,
+    padding: 4,
+    marginBottom: 14,
+    gap: 4,
+  },
+  entryChoiceBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: M3Shapes.pill,
+    gap: 4,
+  },
+  entryChoiceBtnActive: {
+    backgroundColor: M3Colors.primary,
+  },
+  entryChoiceTextActive: {
+    ...M3Typography.labelSm,
+    color: M3Colors.onPrimary,
+    fontWeight: '700',
+  },
+  entryChoiceText: {
+    ...M3Typography.labelSm,
+    color: M3Colors.onSurfaceVariant,
+    fontWeight: '600',
+  },
+  entryChoiceBtnHighlight: {
+    backgroundColor: M3Colors.primaryContainer,
+  },
+  entryChoiceTextHighlight: {
+    ...M3Typography.labelSm,
+    color: M3Colors.onPrimaryContainer,
+    fontWeight: '800',
+  },
+  joinGroupBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: M3Colors.surfaceContainerLowest,
+    borderRadius: M3Shapes.cardMedium,
+    padding: 12,
+    marginBottom: 16,
+    gap: 12,
+    borderWidth: 1.5,
+    borderColor: M3Colors.primaryFixed,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  joinGroupIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: M3Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  joinGroupTextCol: {
+    flex: 1,
+  },
+  joinGroupTitle: {
+    ...M3Typography.titleSm,
+    color: M3Colors.onSurface,
+    fontWeight: '800',
+  },
+  joinGroupSubtitle: {
+    ...M3Typography.bodySm,
+    color: M3Colors.onSurfaceVariant,
+    fontSize: 11,
+    marginTop: 2,
   },
 });

@@ -23,8 +23,9 @@ function RootNavigation() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const isPublicRoute = segments[0] === 'join-group' || segments[0] === 'scan-qr';
 
-    if (!firebaseUser && !inAuthGroup) {
+    if (!firebaseUser && !inAuthGroup && !isPublicRoute) {
       // Redirect to login if unauthenticated
       router.replace('/(auth)/login');
     } else if (firebaseUser && inAuthGroup) {
@@ -57,6 +58,13 @@ function RootNavigation() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false, presentation: 'card' }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'card' }} />
       <Stack.Screen
+        name="join-group"
+        options={{
+          headerShown: false,
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
         name="setup-wizard"
         options={{
           headerShown: false,
@@ -79,7 +87,22 @@ function RootNavigation() {
         }}
       />
       <Stack.Screen
+        name="trip/members"
+        options={{
+          headerShown: false,
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
         name="trip/add-expense"
+        options={{
+          headerShown: false,
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="trip/edit-expense"
         options={{
           headerShown: false,
           presentation: 'modal',
@@ -98,6 +121,20 @@ function RootNavigation() {
         options={{
           headerShown: false,
           presentation: 'fullScreenModal',
+        }}
+      />
+      <Stack.Screen
+        name="notifications"
+        options={{
+          headerShown: false,
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="my-dashboard"
+        options={{
+          headerShown: false,
+          presentation: 'card',
         }}
       />
     </Stack>

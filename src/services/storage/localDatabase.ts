@@ -4,6 +4,11 @@ import { Trip, TripMember } from '../../types/trip';
 import { Expense } from '../../types/expense';
 import { PaymentRecord } from '../../types/settlement';
 import { ActivityEvent } from '../../types/activity';
+import { GroupInvitation } from '../../types/invitation';
+import { JoinRequest } from '../../types/joinRequest';
+import { TransactionEditRecord } from '../../types/editHistory';
+import { MemberMergeRecord } from '../../types/mergeHistory';
+import { AppNotification } from '../../types/notification';
 
 const STORAGE_KEYS = {
   CURRENT_USER: '@tripsplit_local_current_user',
@@ -12,6 +17,11 @@ const STORAGE_KEYS = {
   EXPENSES: '@tripsplit_local_expenses',
   PAYMENTS: '@tripsplit_local_payments',
   ACTIVITIES: '@tripsplit_local_activities',
+  INVITATIONS: '@tripsplit_local_invitations',
+  JOIN_REQUESTS: '@tripsplit_local_join_requests',
+  EDIT_HISTORY: '@tripsplit_local_edit_history',
+  MERGE_HISTORY: '@tripsplit_local_merge_history',
+  NOTIFICATIONS: '@tripsplit_local_notifications',
 };
 
 // Event emitter callbacks for real-time local updates
@@ -415,3 +425,137 @@ export async function seedDemoDataIfEmpty(
 
   return demoTrip;
 }
+
+// --- Invitations Management ---
+export async function getLocalInvitations(): Promise<GroupInvitation[]> {
+  const json = await AsyncStorage.getItem(STORAGE_KEYS.INVITATIONS);
+  return json ? JSON.parse(json) : [];
+}
+
+export async function saveLocalInvitation(invitation: GroupInvitation): Promise<void> {
+  const list = await getLocalInvitations();
+  const idx = list.findIndex((i) => i.id === invitation.id || i.code === invitation.code);
+  if (idx >= 0) {
+    list[idx] = invitation;
+  } else {
+    list.unshift(invitation);
+  }
+  await AsyncStorage.setItem(STORAGE_KEYS.INVITATIONS, JSON.stringify(list));
+}
+
+// --- Join Requests Management ---
+const joinRequestListeners = new Map<string, Set<Listener<JoinRequest[]>>>();
+
+export async function getLocalJoinRequests(tripId?: string): Promise<JoinRequest[]> {
+  const json = await AsyncStorage.getItem(STORAGE_KEYS.JOIN_REQUESTS);
+  const list: JoinRequest[] = json ? JSON.parse(json) : [];
+  if (tripId) {
+    return list.filter((r) => r.tripId === tripId);
+  }
+  return list;
+}
+
+export async function saveLocalJoinRequest(request: JoinRequest): Promise<void> {
+  const list = await getLocalJoinRequests();
+  const idx = list.findIndex((r) => r.id === request.id);
+  if (idx >= 0) {
+    list[idx] = request;
+  } else {
+    list.unshift(request);
+  }
+  await AsyncStorage.setItem(STORAGE_KEYS.JOIN_REQUESTS, JSON.stringify(list));
+  const listeners = joinRequestListeners.get(request.tripId);
+  if (listeners) {
+    const tripRequests = list.filter((r) => r.tripId === request.tripId);
+    listeners.forEach((cb) => cb(tripRequests));
+  }
+}
+
+export function subscribeLocalJoinRequests(
+  tripId: string,
+  callback: (requests: JoinRequest[]) => void
+): () => void {
+  if (!joinRequestListeners.has(tripId)) {
+    joinRequestListeners.set(tripId, new Set());
+  }
+  const set = joinRequestListeners.get(tripId)!;
+  set.add(callback);
+  getLocalJoinRequests(tripId).then(callback);
+  return () => {
+    set.delete(callback);
+  };
+}
+
+// --- Transaction Edit History Management ---
+export async function getLocalEditHistory(expenseId?: string): Promise<TransactionEditRecord[]> {
+  const json = await AsyncStorage.getItem(STORAGE_KEYS.EDIT_HISTORY);
+  const list: TransactionEditRecord[] = json ? JSON.parse(json) : [];
+  if (expenseId) {
+    return list.filter((e) => e.expenseId === expenseId);
+  }
+  return list;
+}
+
+export async function saveLocalEditRecord(record: TransactionEditRecord): Promise<void> {
+  const list = await getLocalEditHistory();
+  list.unshift(record);
+  await AsyncStorage.setItem(STORAGE_KEYS.EDIT_HISTORY, JSON.stringify(list));
+}
+
+// --- Member Merge History Management ---
+export async function getLocalMergeHistory(tripId?: string): Promise<MemberMergeRecord[]> {
+  const json = await AsyncStorage.getItem(STORAGE_KEYS.MERGE_HISTORY);
+  const list: MemberMergeRecord[] = json ? JSON.parse(json) : [];
+  if (tripId) {
+    return list.filter((m) => m.tripId === tripId);
+  }
+  return list;
+}
+
+export async function saveLocalMergeRecord(record: MemberMergeRecord): Promise<void> {
+  const list = await getLocalMergeHistory();
+  list.unshift(record);
+  await AsyncStorage.setItem(STORAGE_KEYS.MERGE_HISTORY, JSON.stringify(list));
+}
+
+// --- In-App Notifications Management ---
+const notificationListeners = new Map<string, Set<Listener<AppNotification[]>>>();
+
+export async function getLocalNotifications(userId: string): Promise<AppNotification[]> {
+  const json = await AsyncStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
+  const list: AppNotification[] = json ? JSON.parse(json) : [];
+  return list.filter((n) => n.userId === userId || n.userId === 'all');
+}
+
+export async function saveLocalNotification(notification: AppNotification): Promise<void> {
+  const json = await AsyncStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
+  const list: AppNotification[] = json ? JSON.parse(json) : [];
+  const idx = list.findIndex((n) => n.id === notification.id);
+  if (idx >= 0) {
+    list[idx] = notification;
+  } else {
+    list.unshift(notification);
+  }
+  await AsyncStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(list));
+  const set = notificationListeners.get(notification.userId);
+  if (set) {
+    const userNotes = list.filter((n) => n.userId === notification.userId || n.userId === 'all');
+    set.forEach((cb) => cb(userNotes));
+  }
+}
+
+export function subscribeLocalNotifications(
+  userId: string,
+  callback: (notifications: AppNotification[]) => void
+): () => void {
+  if (!notificationListeners.has(userId)) {
+    notificationListeners.set(userId, new Set());
+  }
+  const set = notificationListeners.get(userId)!;
+  set.add(callback);
+  getLocalNotifications(userId).then(callback);
+  return () => {
+    set.delete(callback);
+  };
+}
+

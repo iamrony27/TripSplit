@@ -73,10 +73,24 @@ export default function ScanQrScreen() {
         extractedUpiId = data.trim();
       }
 
+      // Check if this is a group invitation QR code
+      let groupInviteCode = '';
+      if (data.includes('tripsplit://join') || data.includes('code=')) {
+        const match = data.match(/code=([A-Za-z0-9]+)/);
+        if (match) groupInviteCode = match[1];
+      } else if (/^[2-9A-Z]{8,10}$/i.test(data.trim())) {
+        groupInviteCode = data.trim().toUpperCase();
+      }
+
+      if (groupInviteCode) {
+        router.replace({ pathname: '/join-group', params: { code: groupInviteCode } });
+        return;
+      }
+
       if (!extractedUpiId) {
         Alert.alert(
           'Unsupported QR Code',
-          'This QR code does not contain a valid UPI payment address. Please scan a Google Pay, PhonePe, Paytm or BHIM QR code.',
+          'This QR code is neither a valid UPI address nor a TripSplit group invitation. Please scan a valid UPI or Group QR code.',
           [{ text: 'Scan Again', onPress: () => setScanned(false) }]
         );
         return;

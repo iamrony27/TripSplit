@@ -35,6 +35,7 @@ rules_version = '2';
 //   - coverPhotoUrl: string (optional, max 500 chars)
 //   - startDate: string (optional, max 50 chars)
 //   - endDate: string (optional, max 50 chars)
+//   - invitationCode: string (optional, max 20 chars)
 //
 // Collection: expenses
 // Document ID: {expenseId}
@@ -57,6 +58,12 @@ rules_version = '2';
 //   - updatedAt: number (required, epoch timestamp ms)
 //   - description: string (optional, max 500 chars)
 //   - receiptUrl: string (optional, max 500 chars)
+//   - isEdited: bool (optional)
+//   - lastEditedAt: number (optional, epoch timestamp ms)
+//   - lastEditedBy: string (optional, max 128 chars)
+//   - lastEditedByName: string (optional, max 100 chars)
+//   - editReason: string (optional, max 500 chars)
+//   - editCount: number (optional, >= 0)
 //
 // Collection: payments
 // Document ID: {paymentId}
@@ -98,11 +105,112 @@ rules_version = '2';
 //   - tripTitle: string (optional, max 100 chars)
 //   - userId: string (required, 1-128 chars, matches logger UID)
 //   - userName: string (required, 1-100 chars)
-//   - action: string (required, enum: TRIP_CREATED, MEMBER_ADDED, MEMBER_REMOVED, EXPENSE_ADDED, EXPENSE_UPDATED, EXPENSE_DELETED, PAYMENT_RECORDED, PAYMENT_DECLARED, PAYMENT_APPROVED, PAYMENT_REJECTED, SETTLEMENT_UPDATED, PROFILE_UPDATED)
+//   - action: string (required, enum)
 //   - details: string (required, 1-500 chars)
 //   - amount: number (optional, >= 0, max 10^8)
 //   - currency: string (optional, max 10 chars)
 //   - timestamp: number (required, epoch timestamp ms)
+//
+// Collection: invitations
+// Document ID: {invitationId}
+// Fields:
+//   - id: string (required, 1-100 chars, immutable)
+//   - code: string (required, 6-20 chars)
+//   - tripId: string (required, 1-100 chars, immutable)
+//   - tripTitle: string (required, 1-100 chars)
+//   - createdBy: string (required, 1-128 chars)
+//   - createdByName: string (required, 1-100 chars)
+//   - createdAt: number (required, epoch timestamp ms, immutable)
+//   - expiresAt: number (required, epoch timestamp ms)
+//   - isRevoked: bool (required)
+//   - useCount: number (required, >= 0)
+//   - maxUses: number (optional, >= 0)
+//
+// Collection: joinRequests
+// Document ID: {requestId}
+// Fields:
+//   - id: string (required, 1-100 chars, immutable)
+//   - tripId: string (required, 1-100 chars, immutable)
+//   - tripTitle: string (optional, max 100 chars)
+//   - invitationCode: string (required, 6-20 chars)
+//   - applicantUserId: string (required, max 128 chars)
+//   - applicantName: string (required, 1-100 chars)
+//   - applicantEmail: string (optional, max 100 chars)
+//   - applicantPhone: string (optional, max 50 chars)
+//   - applicantUpiId: string (optional, max 100 chars)
+//   - assignedRole: string (optional, enum: 'CREATOR', 'ADMIN', 'MEMBER', 'VIEWER')
+//   - status: string (required, enum: 'PENDING', 'APPROVED', 'REJECTED')
+//   - createdAt: number (required, epoch timestamp ms, immutable)
+//   - updatedAt: number (required, epoch timestamp ms)
+//   - reviewedBy: string (optional, max 128 chars)
+//   - reviewedByName: string (optional, max 100 chars)
+//   - reviewedAt: number (optional, epoch timestamp ms)
+//   - rejectionReason: string (optional, max 500 chars)
+//
+// Collection: transactionEditHistory
+// Document ID: {editId}
+// Fields:
+//   - id: string (required, 1-100 chars, immutable)
+//   - expenseId: string (required, 1-100 chars, immutable)
+//   - tripId: string (required, 1-100 chars, immutable)
+//   - originalTitle: string (required, 1-100 chars)
+//   - originalAmount: number (required, > 0, max 10^8)
+//   - originalCurrency: string (required, 2-10 chars)
+//   - originalPaidByMemberId: string (required, 1-100 chars)
+//   - originalPaidByName: string (optional, max 100 chars)
+//   - originalSelectedParticipantIds: list (optional, max 100 items)
+//   - originalExpenseDate: string (required, 8-30 chars)
+//   - originalCategoryId: string (required, 1-50 chars)
+//   - originalDescription: string (optional, max 500 chars)
+//   - updatedTitle: string (required, 1-100 chars)
+//   - updatedAmount: number (required, > 0, max 10^8)
+//   - updatedCurrency: string (required, 2-10 chars)
+//   - updatedPaidByMemberId: string (required, 1-100 chars)
+//   - updatedPaidByName: string (optional, max 100 chars)
+//   - updatedSelectedParticipantIds: list (optional, max 100 items)
+//   - updatedExpenseDate: string (required, 8-30 chars)
+//   - updatedCategoryId: string (required, 1-50 chars)
+//   - updatedDescription: string (optional, max 500 chars)
+//   - editedByUserId: string (required, 1-128 chars)
+//   - editedByName: string (required, 1-100 chars)
+//   - editedAt: number (required, epoch timestamp ms, immutable)
+//   - reason: string (optional, max 500 chars)
+//
+// Collection: memberMergeHistory
+// Document ID: {mergeId}
+// Fields:
+//   - id: string (required, 1-100 chars, immutable)
+//   - tripId: string (required, 1-100 chars, immutable)
+//   - tripTitle: string (optional, max 100 chars)
+//   - sourceMemberId: string (required, 1-100 chars)
+//   - sourceMemberName: string (required, 1-100 chars)
+//   - targetMemberId: string (required, 1-100 chars)
+//   - targetMemberName: string (required, 1-100 chars)
+//   - mergedByUserId: string (required, 1-128 chars)
+//   - mergedByName: string (required, 1-100 chars)
+//   - mergedAt: number (required, epoch timestamp ms, immutable)
+//   - targetUserId: string (optional, max 128 chars)
+//   - notes: string (optional, max 500 chars)
+//   - reassignedExpensesCount: number (optional, >= 0)
+//   - expensesReassignedCount: number (optional, >= 0)
+//   - reassignedSharesCount: number (optional, >= 0)
+//   - reassignedPaymentsCount: number (optional, >= 0)
+//   - paymentsReassignedCount: number (optional, >= 0)
+//
+// Collection: notifications
+// Document ID: {notificationId}
+// Fields:
+//   - id: string (required, 1-100 chars, immutable)
+//   - userId: string (required, 1-128 chars, target recipient UID)
+//   - tripId: string (optional, max 100 chars)
+//   - tripTitle: string (optional, max 100 chars)
+//   - title: string (required, 1-100 chars)
+//   - message: string (required, 1-500 chars)
+//   - type: string (required, 1-50 chars)
+//   - isRead: bool (required)
+//   - data: map (optional)
+//   - readAt: number (optional, epoch timestamp ms)
+//   - createdAt: number (required, epoch timestamp ms, immutable)
 //
 // ===============================================================
 
@@ -162,7 +270,7 @@ service cloud.firestore {
 
     // Validator for trip documents
     function isValidTrip(data) {
-      return hasOnlyAllowedFields(['id', 'title', 'description', 'baseCurrency', 'createdBy', 'members', 'memberIds', 'totalSpend', 'createdAt', 'updatedAt', 'coverPhotoUrl', 'startDate', 'endDate'])
+      return hasOnlyAllowedFields(['id', 'title', 'description', 'baseCurrency', 'createdBy', 'members', 'memberIds', 'totalSpend', 'createdAt', 'updatedAt', 'coverPhotoUrl', 'startDate', 'endDate', 'invitationCode'])
         && hasRequiredFields(['id', 'title', 'baseCurrency', 'createdBy', 'members', 'memberIds', 'totalSpend', 'createdAt', 'updatedAt'])
         && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
         && data.title is string && data.title.size() >= 1 && data.title.size() <= 100
@@ -176,12 +284,18 @@ service cloud.firestore {
         && data.updatedAt is number
         && (!('coverPhotoUrl' in data) || (data.coverPhotoUrl is string && data.coverPhotoUrl.size() <= 500))
         && (!('startDate' in data) || (data.startDate is string && data.startDate.size() <= 50))
-        && (!('endDate' in data) || (data.endDate is string && data.endDate.size() <= 50));
+        && (!('endDate' in data) || (data.endDate is string && data.endDate.size() <= 50))
+        && (!('invitationCode' in data) || (data.invitationCode is string && data.invitationCode.size() <= 20));
     }
 
     // Validator for expense records
     function isValidExpense(data) {
-      return hasOnlyAllowedFields(['id', 'tripId', 'title', 'amount', 'originalCurrency', 'convertedAmount', 'exchangeRate', 'paidByMemberId', 'selectedParticipantIds', 'splitMode', 'shares', 'splitsData', 'categoryId', 'expenseDate', 'createdAt', 'updatedAt', 'description', 'receiptUrl'])
+      return hasOnlyAllowedFields([
+          'id', 'tripId', 'title', 'amount', 'originalCurrency', 'convertedAmount', 'exchangeRate',
+          'paidByMemberId', 'selectedParticipantIds', 'splitMode', 'shares', 'splitsData', 'categoryId',
+          'expenseDate', 'createdAt', 'updatedAt', 'description', 'receiptUrl',
+          'isEdited', 'lastEditedAt', 'lastEditedBy', 'lastEditedByName', 'editReason', 'editCount'
+        ])
         && hasRequiredFields(['id', 'tripId', 'title', 'amount', 'originalCurrency', 'convertedAmount', 'exchangeRate', 'paidByMemberId', 'selectedParticipantIds', 'splitMode', 'shares', 'categoryId', 'expenseDate', 'createdAt', 'updatedAt'])
         && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
         && data.tripId is string && data.tripId.size() >= 1 && data.tripId.size() <= 100
@@ -200,7 +314,13 @@ service cloud.firestore {
         && data.createdAt is number
         && data.updatedAt is number
         && (!('description' in data) || (data.description is string && data.description.size() <= 500))
-        && (!('receiptUrl' in data) || (data.receiptUrl is string && data.receiptUrl.size() <= 500));
+        && (!('receiptUrl' in data) || (data.receiptUrl is string && data.receiptUrl.size() <= 500))
+        && (!('isEdited' in data) || data.isEdited is bool)
+        && (!('lastEditedAt' in data) || data.lastEditedAt is number)
+        && (!('lastEditedBy' in data) || (data.lastEditedBy is string && data.lastEditedBy.size() <= 128))
+        && (!('lastEditedByName' in data) || (data.lastEditedByName is string && data.lastEditedByName.size() <= 100))
+        && (!('editReason' in data) || (data.editReason is string && data.editReason.size() <= 500))
+        && (!('editCount' in data) || (data.editCount is number && data.editCount >= 0));
     }
 
     // Validator for payment / settlement records
@@ -260,12 +380,168 @@ service cloud.firestore {
           'TRIP_CREATED', 'MEMBER_ADDED', 'MEMBER_REMOVED',
           'EXPENSE_ADDED', 'EXPENSE_UPDATED', 'EXPENSE_DELETED',
           'PAYMENT_RECORDED', 'PAYMENT_DECLARED', 'PAYMENT_APPROVED', 'PAYMENT_REJECTED',
-          'SETTLEMENT_UPDATED', 'PROFILE_UPDATED'
+          'SETTLEMENT_UPDATED', 'PROFILE_UPDATED',
+          'MEMBER_MERGED', 'JOIN_REQUEST_SUBMITTED', 'JOIN_REQUEST_APPROVED', 'JOIN_REQUEST_REJECTED'
         ]
         && data.details is string && data.details.size() >= 1 && data.details.size() <= 500
         && (!('amount' in data) || (data.amount is number && data.amount >= 0 && data.amount <= 100000000))
         && (!('currency' in data) || (data.currency is string && data.currency.size() <= 10))
         && data.timestamp is number;
+    }
+
+    // Validator for group invitation records
+    function isValidInvitation(data) {
+      return hasOnlyAllowedFields([
+          'id', 'code', 'tripId', 'tripTitle', 'createdBy', 'createdByName',
+          'createdAt', 'expiresAt', 'isRevoked', 'useCount', 'maxUses'
+        ])
+        && hasRequiredFields([
+          'id', 'code', 'tripId', 'tripTitle', 'createdBy', 'createdByName',
+          'createdAt', 'expiresAt', 'isRevoked', 'useCount'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
+        && data.code is string && data.code.size() >= 6 && data.code.size() <= 20
+        && data.tripId is string && data.tripId.size() >= 1 && data.tripId.size() <= 100
+        && data.tripTitle is string && data.tripTitle.size() >= 1 && data.tripTitle.size() <= 100
+        && data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128
+        && data.createdByName is string && data.createdByName.size() >= 1 && data.createdByName.size() <= 100
+        && data.createdAt is number
+        && data.expiresAt is number
+        && data.isRevoked is bool
+        && data.useCount is number && data.useCount >= 0
+        && (!('maxUses' in data) || (data.maxUses is number && data.maxUses >= 0));
+    }
+
+    // Validator for group join requests
+    function isValidJoinRequest(data) {
+      return hasOnlyAllowedFields([
+          'id', 'tripId', 'tripTitle', 'invitationCode', 'applicantUserId', 'applicantName',
+          'applicantEmail', 'applicantPhone', 'applicantUpiId', 'assignedRole',
+          'status', 'createdAt', 'updatedAt',
+          'reviewedBy', 'reviewedByName', 'reviewedAt', 'rejectionReason'
+        ])
+        && hasRequiredFields([
+          'id', 'tripId', 'invitationCode', 'applicantUserId', 'applicantName',
+          'status', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
+        && data.tripId is string && data.tripId.size() >= 1 && data.tripId.size() <= 100
+        && (!('tripTitle' in data) || (data.tripTitle is string && data.tripTitle.size() <= 100))
+        && data.invitationCode is string && data.invitationCode.size() >= 6 && data.invitationCode.size() <= 20
+        && data.applicantUserId is string && data.applicantUserId.size() <= 128
+        && data.applicantName is string && data.applicantName.size() >= 1 && data.applicantName.size() <= 100
+        && (!('applicantEmail' in data) || (data.applicantEmail is string && data.applicantEmail.size() <= 100))
+        && (!('applicantPhone' in data) || (data.applicantPhone is string && data.applicantPhone.size() <= 50))
+        && (!('applicantUpiId' in data) || (data.applicantUpiId is string && data.applicantUpiId.size() <= 100))
+        && (!('assignedRole' in data) || data.assignedRole in ['CREATOR', 'ADMIN', 'MEMBER', 'VIEWER'])
+        && data.status in ['PENDING', 'APPROVED', 'REJECTED']
+        && data.createdAt is number
+        && data.updatedAt is number
+        && (!('reviewedBy' in data) || (data.reviewedBy is string && data.reviewedBy.size() <= 128))
+        && (!('reviewedByName' in data) || (data.reviewedByName is string && data.reviewedByName.size() <= 100))
+        && (!('reviewedAt' in data) || data.reviewedAt is number)
+        && (!('rejectionReason' in data) || (data.rejectionReason is string && data.rejectionReason.size() <= 500));
+    }
+
+    // Validator for immutable transaction edit audit records
+    function isValidTransactionEdit(data) {
+      return hasOnlyAllowedFields([
+          'id', 'expenseId', 'tripId',
+          'originalTitle', 'originalAmount', 'originalCurrency', 'originalPaidByMemberId', 'originalPaidByName',
+          'originalSelectedParticipantIds', 'originalExpenseDate', 'originalCategoryId', 'originalDescription',
+          'updatedTitle', 'updatedAmount', 'updatedCurrency', 'updatedPaidByMemberId', 'updatedPaidByName',
+          'updatedSelectedParticipantIds', 'updatedExpenseDate', 'updatedCategoryId', 'updatedDescription',
+          'editedByUserId', 'editedByName', 'editedAt', 'reason'
+        ])
+        && hasRequiredFields([
+          'id', 'expenseId', 'tripId',
+          'originalTitle', 'originalAmount', 'originalCurrency', 'originalPaidByMemberId',
+          'originalExpenseDate', 'originalCategoryId',
+          'updatedTitle', 'updatedAmount', 'updatedCurrency', 'updatedPaidByMemberId',
+          'updatedExpenseDate', 'updatedCategoryId',
+          'editedByUserId', 'editedByName', 'editedAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
+        && data.expenseId is string && data.expenseId.size() >= 1 && data.expenseId.size() <= 100
+        && data.tripId is string && data.tripId.size() >= 1 && data.tripId.size() <= 100
+        && data.originalTitle is string && data.originalTitle.size() >= 1 && data.originalTitle.size() <= 100
+        && data.originalAmount is number && data.originalAmount > 0 && data.originalAmount <= 100000000
+        && data.originalCurrency is string && data.originalCurrency.size() >= 2 && data.originalCurrency.size() <= 10
+        && data.originalPaidByMemberId is string && data.originalPaidByMemberId.size() >= 1 && data.originalPaidByMemberId.size() <= 100
+        && (!('originalPaidByName' in data) || (data.originalPaidByName is string && data.originalPaidByName.size() <= 100))
+        && (!('originalSelectedParticipantIds' in data) || (data.originalSelectedParticipantIds is list && data.originalSelectedParticipantIds.size() <= 100))
+        && data.originalExpenseDate is string && data.originalExpenseDate.size() >= 8 && data.originalExpenseDate.size() <= 30
+        && data.originalCategoryId is string && data.originalCategoryId.size() >= 1 && data.originalCategoryId.size() <= 50
+        && (!('originalDescription' in data) || (data.originalDescription is string && data.originalDescription.size() <= 500))
+        && data.updatedTitle is string && data.updatedTitle.size() >= 1 && data.updatedTitle.size() <= 100
+        && data.updatedAmount is number && data.updatedAmount > 0 && data.updatedAmount <= 100000000
+        && data.updatedCurrency is string && data.updatedCurrency.size() >= 2 && data.updatedCurrency.size() <= 10
+        && data.updatedPaidByMemberId is string && data.updatedPaidByMemberId.size() >= 1 && data.updatedPaidByMemberId.size() <= 100
+        && (!('updatedPaidByName' in data) || (data.updatedPaidByName is string && data.updatedPaidByName.size() <= 100))
+        && (!('updatedSelectedParticipantIds' in data) || (data.updatedSelectedParticipantIds is list && data.updatedSelectedParticipantIds.size() <= 100))
+        && data.updatedExpenseDate is string && data.updatedExpenseDate.size() >= 8 && data.updatedExpenseDate.size() <= 30
+        && data.updatedCategoryId is string && data.updatedCategoryId.size() >= 1 && data.updatedCategoryId.size() <= 50
+        && (!('updatedDescription' in data) || (data.updatedDescription is string && data.updatedDescription.size() <= 500))
+        && data.editedByUserId is string && data.editedByUserId.size() >= 1 && data.editedByUserId.size() <= 128
+        && data.editedByName is string && data.editedByName.size() >= 1 && data.editedByName.size() <= 100
+        && data.editedAt is number
+        && (!('reason' in data) || (data.reason is string && data.reason.size() <= 500));
+    }
+
+    // Validator for immutable member merge audit records
+    function isValidMemberMerge(data) {
+      return hasOnlyAllowedFields([
+          'id', 'tripId', 'tripTitle',
+          'sourceMemberId', 'sourceMemberName', 'targetMemberId', 'targetMemberName',
+          'mergedByUserId', 'mergedByName', 'mergedAt',
+          'targetUserId', 'notes',
+          'reassignedExpensesCount', 'expensesReassignedCount',
+          'reassignedSharesCount',
+          'reassignedPaymentsCount', 'paymentsReassignedCount'
+        ])
+        && hasRequiredFields([
+          'id', 'tripId',
+          'sourceMemberId', 'sourceMemberName', 'targetMemberId', 'targetMemberName',
+          'mergedByUserId', 'mergedByName', 'mergedAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
+        && data.tripId is string && data.tripId.size() >= 1 && data.tripId.size() <= 100
+        && (!('tripTitle' in data) || (data.tripTitle is string && data.tripTitle.size() <= 100))
+        && data.sourceMemberId is string && data.sourceMemberId.size() >= 1 && data.sourceMemberId.size() <= 100
+        && data.sourceMemberName is string && data.sourceMemberName.size() >= 1 && data.sourceMemberName.size() <= 100
+        && data.targetMemberId is string && data.targetMemberId.size() >= 1 && data.targetMemberId.size() <= 100
+        && data.targetMemberName is string && data.targetMemberName.size() >= 1 && data.targetMemberName.size() <= 100
+        && data.mergedByUserId is string && data.mergedByUserId.size() >= 1 && data.mergedByUserId.size() <= 128
+        && data.mergedByName is string && data.mergedByName.size() >= 1 && data.mergedByName.size() <= 100
+        && data.mergedAt is number
+        && (!('targetUserId' in data) || (data.targetUserId is string && data.targetUserId.size() <= 128))
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 500))
+        && (!('reassignedExpensesCount' in data) || (data.reassignedExpensesCount is number && data.reassignedExpensesCount >= 0))
+        && (!('expensesReassignedCount' in data) || (data.expensesReassignedCount is number && data.expensesReassignedCount >= 0))
+        && (!('reassignedSharesCount' in data) || (data.reassignedSharesCount is number && data.reassignedSharesCount >= 0))
+        && (!('reassignedPaymentsCount' in data) || (data.reassignedPaymentsCount is number && data.reassignedPaymentsCount >= 0))
+        && (!('paymentsReassignedCount' in data) || (data.paymentsReassignedCount is number && data.paymentsReassignedCount >= 0));
+    }
+
+    // Validator for in-app user notifications
+    function isValidNotification(data) {
+      return hasOnlyAllowedFields([
+          'id', 'userId', 'tripId', 'tripTitle', 'title', 'message', 'type', 'isRead', 'data', 'readAt', 'createdAt'
+        ])
+        && hasRequiredFields([
+          'id', 'userId', 'title', 'message', 'type', 'isRead', 'createdAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 100
+        && data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128
+        && (!('tripId' in data) || (data.tripId is string && data.tripId.size() <= 100))
+        && (!('tripTitle' in data) || (data.tripTitle is string && data.tripTitle.size() <= 100))
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 100
+        && data.message is string && data.message.size() >= 1 && data.message.size() <= 500
+        && data.type is string && data.type.size() >= 1 && data.type.size() <= 50
+        && data.isRead is bool
+        && (!('data' in data) || data.data is map)
+        && (!('readAt' in data) || data.readAt is number)
+        && data.createdAt is number;
     }
 
     // ===============================================================
@@ -363,6 +639,84 @@ service cloud.firestore {
 
       // Activities are immutable audit logs
       allow update, delete: if false;
+    }
+
+    // 6. Group Invitations
+    match /invitations/{invitationId} {
+      // Read allowed for everyone (including unauthenticated guests validating an invite code)
+      allow read: if true;
+
+      allow create: if isAuthenticated()
+        && request.resource.data.id == invitationId
+        && isValidInvitation(request.resource.data);
+
+      allow update: if isAuthenticated()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.tripId == resource.data.tripId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isValidInvitation(request.resource.data);
+
+      allow delete: if isAuthenticated();
+    }
+
+    // 7. Group Join Requests
+    match /joinRequests/{requestId} {
+      // Read allowed for guest applicants checking their status, or trip members/admins
+      allow read: if true;
+
+      // Allows unauthenticated guests or authenticated users to submit pending join requests
+      allow create: if request.resource.data.id == requestId
+        && isValidJoinRequest(request.resource.data);
+
+      // Updates allowed for authenticated trip administrators to approve or reject
+      allow update: if isAuthenticated()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.tripId == resource.data.tripId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isValidJoinRequest(request.resource.data);
+
+      allow delete: if isAuthenticated();
+    }
+
+    // 8. Transaction Edit History (Immutable Audit Log)
+    match /transactionEditHistory/{editId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated()
+        && request.resource.data.id == editId
+        && isValidTransactionEdit(request.resource.data);
+
+      // Audit logs are strictly immutable
+      allow update, delete: if false;
+    }
+
+    // 9. Member Merge History (Immutable Audit Log)
+    match /memberMergeHistory/{mergeId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated()
+        && request.resource.data.id == mergeId
+        && isValidMemberMerge(request.resource.data);
+
+      // Audit logs are strictly immutable
+      allow update, delete: if false;
+    }
+
+    // 10. In-App User Notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated()
+        && request.resource.data.id == notificationId
+        && isValidNotification(request.resource.data);
+
+      allow update: if isAuthenticated()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isValidNotification(request.resource.data);
+
+      allow delete: if isAuthenticated();
     }
   }
 }

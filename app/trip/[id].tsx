@@ -15,7 +15,9 @@ import { useAuth } from '../../src/context/AuthContext';
 import { TopAppBar } from '../../src/components/common/TopAppBar';
 import { StatusBadge } from '../../src/components/common/StatusBadge';
 import { ExpenseTile } from '../../src/components/expense/ExpenseTile';
+import { GroupInviteModal } from '../../src/components/trip/GroupInviteModal';
 import { TripMember } from '../../src/types/trip';
+import { Expense } from '../../src/types/expense';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
@@ -33,6 +35,8 @@ export default function TripDetailsScreen() {
     totalTripSpend,
     payments,
     isTripAdmin,
+    pendingJoinRequestsCount,
+    currentMember,
     addMember,
     removeMember,
     deleteExpense,
@@ -41,6 +45,7 @@ export default function TripDetailsScreen() {
   const trip = trips.find((t) => t.id === id);
 
   const [addMemberDialogVisible, setAddMemberDialogVisible] = useState(false);
+  const [inviteModalVisible, setInviteModalVisible] = useState(false);
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberUpi, setNewMemberUpi] = useState('');
   const [addingMember, setAddingMember] = useState(false);
@@ -120,6 +125,40 @@ export default function TripDetailsScreen() {
     ]);
   };
 
+  const handleExpensePress = (exp: Expense) => {
+    const isPayer = exp.paidByMemberId === currentMember?.id || (user?.id && exp.paidByMemberId === user.id);
+    const canEdit = isTripAdmin;
+    const canDelete = isTripAdmin || isPayer;
+
+    if (canEdit) {
+      Alert.alert(
+        exp.title,
+        `Amount: ${formatCurrency(exp.amount, exp.originalCurrency)}${exp.isEdited ? '\nStatus: Edited with audit log' : ''}\nChoose an action:`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Edit Transaction',
+            onPress: () =>
+              router.push(`/trip/edit-expense?expenseId=${exp.id}&tripId=${trip.id}` as any),
+          },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => handleDeleteExpense(exp.id, exp.title),
+          },
+        ]
+      );
+    } else if (canDelete) {
+      handleDeleteExpense(exp.id, exp.title);
+    } else {
+      Alert.alert(
+        exp.title,
+        `Amount: ${formatCurrency(exp.amount, exp.originalCurrency)}\n${exp.description || ''}`,
+        [{ text: 'Close' }]
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       <TopAppBar
@@ -128,12 +167,24 @@ export default function TripDetailsScreen() {
         showBack
         onBackPress={() => router.back()}
         rightAction={
-          <TouchableOpacity
-            onPress={() => router.push('/trip/settle')}
-            style={styles.settleIconBtn}
-          >
-            <MaterialCommunityIcons name="hand-coin" size={20} color={M3Colors.secondary} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {isTripAdmin && (
+              <TouchableOpacity
+                onPress={() => setInviteModalVisible(true)}
+                style={styles.settleIconBtn}
+                accessibilityLabel="Group Invite QR"
+              >
+                <MaterialCommunityIcons name="qrcode-scan" size={18} color={M3Colors.primary} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={() => router.push('/trip/settle')}
+              style={styles.settleIconBtn}
+              accessibilityLabel="Settle"
+            >
+              <MaterialCommunityIcons name="hand-coin" size={20} color={M3Colors.secondary} />
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -252,14 +303,37 @@ export default function TripDetailsScreen() {
         {/* Member Balances Section */}
         <View style={styles.card}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.cardTitle}>Member Balances</Text>
-            <TouchableOpacity
-              onPress={() => setAddMemberDialogVisible(true)}
-              style={styles.addMemberHeaderBtn}
-            >
-              <MaterialCommunityIcons name="account-plus" size={16} color={M3Colors.primary} />
-              <Text style={styles.addMemberHeaderText}>Add Member</Text>
-            </TouchableOpacity>
+            <Text style={styles.cardTitle}>Member Balances ({trip.members.length})</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {isTripAdmin && (
+                <TouchableOpacity
+                  onPress={() => setInviteModalVisible(true)}
+                  style={styles.headerActionBtn}
+                >
+                  <MaterialCommunityIcons name="qrcode" size={15} color={M3Colors.primary} />
+                  <Text style={styles.headerActionText}>Invite</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                onPress={() => router.push(`/trip/members?id=${trip.id}` as any)}
+                style={styles.headerActionBtn}
+              >
+                <MaterialCommunityIcons name="account-group" size={15} color={M3Colors.primary} />
+                <Text style={styles.headerActionText}>Manage</Text>
+                {pendingJoinRequestsCount > 0 && (
+                  <View style={styles.badgePillMini}>
+                    <Text style={styles.badgePillMiniText}>{pendingJoinRequestsCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setAddMemberDialogVisible(true)}
+                style={styles.addMemberHeaderBtn}
+              >
+                <MaterialCommunityIcons name="account-plus" size={15} color={M3Colors.primary} />
+                <Text style={styles.addMemberHeaderText}>Add</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {trip.members.map((member) => {
@@ -315,7 +389,7 @@ export default function TripDetailsScreen() {
                     <ExpenseTile
                       expense={expense}
                       payerName={payer}
-                      onPress={() => handleDeleteExpense(expense.id, expense.title)}
+                      onPress={() => handleExpensePress(expense)}
                     />
                   </View>
                 </View>
@@ -375,6 +449,14 @@ export default function TripDetailsScreen() {
           </Dialog.Actions>
         </Dialog>
       </Portal>
+
+      {/* Group Invite QR Modal */}
+      <GroupInviteModal
+        visible={inviteModalVisible}
+        tripId={trip.id}
+        tripTitle={trip.title}
+        onDismiss={() => setInviteModalVisible(false)}
+      />
     </View>
   );
 }
@@ -635,5 +717,30 @@ const styles = StyleSheet.create({
     height: 32,
     backgroundColor: M3Colors.outlineVariant,
     opacity: 0.5,
+  },
+  headerActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: M3Colors.primaryContainer,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: M3Shapes.pill,
+  },
+  headerActionText: {
+    color: M3Colors.primary,
+    fontWeight: '700',
+    fontSize: 11,
+  },
+  badgePillMini: {
+    backgroundColor: '#E65100',
+    borderRadius: 8,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  badgePillMiniText: {
+    color: '#FFF',
+    fontSize: 9,
+    fontWeight: '800',
   },
 });

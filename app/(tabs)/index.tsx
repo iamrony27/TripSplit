@@ -83,13 +83,22 @@ export default function HomeScreen() {
         subtitle={activeTrip ? `${baseCurrency} • Active Trip` : 'Group Expenses'}
         onProfilePress={() => router.push('/(tabs)/profile')}
         rightAction={
-          <TouchableOpacity
-            onPress={() => router.push('/(tabs)/trips')}
-            style={styles.switchTripBtn}
-          >
-            <MaterialCommunityIcons name="swap-horizontal" size={18} color={M3Colors.primary} />
-            <Text style={styles.switchTripText}>Trips</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <TouchableOpacity
+              onPress={() => router.push('/notifications' as any)}
+              style={styles.switchTripBtn}
+              accessibilityLabel="Notifications"
+            >
+              <MaterialCommunityIcons name="bell-outline" size={18} color={M3Colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/trips')}
+              style={styles.switchTripBtn}
+            >
+              <MaterialCommunityIcons name="swap-horizontal" size={18} color={M3Colors.primary} />
+              <Text style={styles.switchTripText}>Trips</Text>
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -107,7 +116,7 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.noTripTitle}>No Active Trip Found</Text>
             <Text style={styles.noTripSubtitle}>
-              Create a trip to start adding expenses, splitting bills, and settling up with friends.
+              Create a trip to start adding expenses, splitting bills, or join an existing group with a QR code.
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/trip/create')}
@@ -115,6 +124,16 @@ export default function HomeScreen() {
             >
               <MaterialCommunityIcons name="plus" size={20} color={M3Colors.onPrimary} />
               <Text style={styles.createTripBtnText}>Create New Trip</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push('/join-group')}
+              style={[styles.createTripBtn, { backgroundColor: M3Colors.secondaryContainer, marginTop: 10 }]}
+            >
+              <MaterialCommunityIcons name="qrcode-scan" size={20} color={M3Colors.onSecondaryContainer} />
+              <Text style={[styles.createTripBtnText, { color: M3Colors.onSecondaryContainer }]}>
+                Join an Existing Group
+              </Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -153,6 +172,17 @@ export default function HomeScreen() {
                 </View>
                 <StatusBadge amount={myNetBalance} currency={baseCurrency} variant="expanded" />
               </View>
+
+              <TouchableOpacity
+                onPress={() => router.push('/my-dashboard' as any)}
+                style={styles.myDashboardBanner}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <MaterialCommunityIcons name="view-dashboard-outline" size={16} color={M3Colors.primary} />
+                  <Text style={styles.myDashboardBannerText}>My Personal Expense Dashboard</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={18} color={M3Colors.primary} />
+              </TouchableOpacity>
             </View>
 
             {/* Quick Action Pills Row */}
@@ -174,11 +204,11 @@ export default function HomeScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => router.push({ pathname: '/scan-qr', params: { returnTarget: 'home' } })}
+                onPress={() => router.push('/join-group' as any)}
                 style={[styles.actionPill, styles.actionPillTertiary]}
               >
                 <MaterialCommunityIcons name="qrcode-scan" size={18} color={M3Colors.onTertiary} />
-                <Text style={styles.actionPillTextTertiary}>Scan QR</Text>
+                <Text style={styles.actionPillTextTertiary}>Join Group</Text>
               </TouchableOpacity>
             </View>
 
@@ -460,6 +490,21 @@ const styles = StyleSheet.create({
   },
   balanceNeutral: {
     color: M3Colors.onPrimaryContainer,
+  },
+  myDashboardBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: M3Shapes.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 14,
+  },
+  myDashboardBannerText: {
+    ...M3Typography.labelSmall,
+    color: M3Colors.primary,
+    fontWeight: '700',
   },
   quickActionsRow: {
     flexDirection: 'row',

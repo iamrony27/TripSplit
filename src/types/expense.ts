@@ -28,6 +28,14 @@ export interface Expense {
   updatedAt: number;
   description?: string;         // Optional note
   receiptUrl?: string;          // Optional receipt image link
+
+  // Admin Editing & Audit Trail
+  isEdited?: boolean;
+  lastEditedAt?: number;
+  lastEditedBy?: string;
+  lastEditedByName?: string;
+  editReason?: string;
+  editCount?: number;
 }
 
 export interface ExpenseCategory {
