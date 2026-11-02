@@ -52,6 +52,7 @@ import {
 } from '../services/firebase/memberMergeService';
 import {
   subscribeUserNotifications,
+  createNotificationInFirestore,
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from '../services/firebase/notificationService';
@@ -212,6 +213,18 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [trips, activeTripId]);
 
   // 2. Subscribe to Expenses, Payments, Activities, and Join Requests for Active Trip
+  const isFirstLoadTripDataRef = useRef(true);
+  const prevExpensesCountRef = useRef(0);
+  const prevPaymentsCountRef = useRef(0);
+  const prevJoinRequestsCountRef = useRef(0);
+
+  useEffect(() => {
+    isFirstLoadTripDataRef.current = true;
+    prevExpensesCountRef.current = 0;
+    prevPaymentsCountRef.current = 0;
+    prevJoinRequestsCountRef.current = 0;
+  }, [activeTripId]);
+
   useEffect(() => {
     if (!activeTripId) {
       setExpenses([]);
@@ -222,10 +235,18 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const unsubExpenses = subscribeTripExpenses(activeTripId, (exps) => {
+      if (!isFirstLoadTripDataRef.current && exps.length > prevExpensesCountRef.current) {
+        playNotificationSound().catch(() => {});
+      }
+      prevExpensesCountRef.current = exps.length;
       setExpenses(exps);
     });
 
     const unsubPayments = subscribeTripPayments(activeTripId, (pays) => {
+      if (!isFirstLoadTripDataRef.current && pays.length > prevPaymentsCountRef.current) {
+        playNotificationSound().catch(() => {});
+      }
+      prevPaymentsCountRef.current = pays.length;
       setPayments(pays);
     });
 
@@ -234,7 +255,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     const unsubJoinRequests = subscribeTripJoinRequests(activeTripId, (reqs) => {
+      if (!isFirstLoadTripDataRef.current && reqs.length > prevJoinRequestsCountRef.current) {
+        playNotificationSound().catch(() => {});
+      }
+      prevJoinRequestsCountRef.current = reqs.length;
       setJoinRequests(reqs);
+      isFirstLoadTripDataRef.current = false;
     });
 
     return () => {
@@ -418,7 +444,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!activeTrip || !user) throw new Error('No active trip or user');
     if (!isTripAdmin) throw new Error('Only a group administrator can edit transactions.');
 
-    return adminEditExpenseInService({
+    const updated = await adminEditExpenseInService({
       expenseId: params.expenseId,
       tripId: activeTrip.id,
       adminUserId: user.id,
@@ -426,6 +452,27 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       reason: params.reason,
       updates: params.updates,
     });
+
+    // Notify other trip members of the transaction update
+    for (const m of activeTrip.members) {
+      const isSelf = m.userId === user.id || m.id === user.id;
+      if (!isSelf) {
+        const targetUserId = m.userId || m.id;
+        if (targetUserId) {
+          createNotificationInFirestore({
+            userId: targetUserId,
+            tripId: activeTrip.id,
+            tripTitle: activeTrip.title,
+            type: 'EXPENSE_EDITED',
+            title: 'Transaction Edited',
+            message: `${user.fullName || 'Admin'} updated "${params.updates.title || 'Expense'}" in ${activeTrip.title}`,
+            data: { expenseId: params.expenseId, tripId: activeTrip.id },
+          }).catch((err) => console.warn('Failed to dispatch edit notification:', err));
+        }
+      }
+    }
+
+    return updated;
   };
 
   // 8. Member Profile Merging
@@ -624,6 +671,25 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currency: expenseData.originalCurrency,
       timestamp: Date.now(),
     });
+
+    // Notify other members of the trip so their devices get instant cross-device notifications and sound alerts
+    for (const m of activeTrip.members) {
+      const isSelf = m.userId === user.id || m.id === user.id || m.id === expenseData.paidByMemberId;
+      if (!isSelf) {
+        const targetUserId = m.userId || m.id;
+        if (targetUserId) {
+          createNotificationInFirestore({
+            userId: targetUserId,
+            tripId: activeTrip.id,
+            tripTitle: activeTrip.title,
+            type: 'EXPENSE_ADDED',
+            title: `New Expense in ${activeTrip.title}`,
+            message: `${payer} added "${expenseData.title}" (${expenseData.originalCurrency} ${expenseData.amount.toFixed(2)})`,
+            data: { expenseId: newExpense.id, tripId: activeTrip.id },
+          }).catch((err) => console.warn('Failed to notify member of expense:', err));
+        }
+      }
+    }
   };
 
   const updateExpense = async (expenseId: string, updates: Partial<Expense>) => {
@@ -694,6 +760,34 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currency: declaration.currency,
       timestamp: Date.now(),
     });
+
+    // Notify receiver
+    const receiverMember = activeTrip.members.find((m) => m.id === declarationData.toMemberId);
+    const receiverUserId = receiverMember?.userId || receiverMember?.id;
+    if (receiverUserId && receiverUserId !== user.id) {
+      createNotificationInFirestore({
+        userId: receiverUserId,
+        tripId: activeTrip.id,
+        tripTitle: activeTrip.title,
+        type: 'PAYMENT_DECLARED',
+        title: 'Payment Declared',
+        message: `${fromName} declared a payment of ${declaration.currency} ${declaration.amount.toFixed(2)} to ${toName}`,
+        data: { paymentId: declaration.id, tripId: activeTrip.id },
+      }).catch((err) => console.warn('Failed to dispatch payment declared notification:', err));
+    }
+
+    // Notify trip creator / admin for approval
+    if (activeTrip.createdBy && activeTrip.createdBy !== user.id && activeTrip.createdBy !== receiverUserId) {
+      createNotificationInFirestore({
+        userId: activeTrip.createdBy,
+        tripId: activeTrip.id,
+        tripTitle: activeTrip.title,
+        type: 'PAYMENT_DECLARED',
+        title: 'Payment Pending Approval',
+        message: `${fromName} declared a payment of ${declaration.currency} ${declaration.amount.toFixed(2)} to ${toName}. Needs approval.`,
+        data: { paymentId: declaration.id, tripId: activeTrip.id },
+      }).catch((err) => console.warn('Failed to dispatch admin payment notification:', err));
+    }
   };
 
   const approvePayment = async (paymentId: string) => {
@@ -721,6 +815,21 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currency: approved.currency,
       timestamp: Date.now(),
     });
+
+    // Notify payer that their payment was approved
+    const payerMember = activeTrip.members.find((m) => m.id === approved.fromMemberId);
+    const payerUserId = approved.payerUid || payerMember?.userId || payerMember?.id;
+    if (payerUserId && payerUserId !== user.id) {
+      createNotificationInFirestore({
+        userId: payerUserId,
+        tripId: activeTrip.id,
+        tripTitle: activeTrip.title,
+        type: 'PAYMENT_APPROVED',
+        title: 'Payment Approved!',
+        message: `Your payment of ${approved.currency} ${approved.amount.toFixed(2)} to ${approved.receiverName || 'Member'} was approved by ${user.fullName || 'Admin'}.`,
+        data: { paymentId: approved.id, tripId: activeTrip.id },
+      }).catch((err) => console.warn('Failed to dispatch approval notification:', err));
+    }
   };
 
   const rejectPayment = async (paymentId: string, reason?: string) => {
@@ -747,6 +856,21 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currency: rejected.currency,
       timestamp: Date.now(),
     });
+
+    // Notify payer that their payment was rejected
+    const payerMember = activeTrip.members.find((m) => m.id === rejected.fromMemberId);
+    const payerUserId = rejected.payerUid || payerMember?.userId || payerMember?.id;
+    if (payerUserId && payerUserId !== user.id) {
+      createNotificationInFirestore({
+        userId: payerUserId,
+        tripId: activeTrip.id,
+        tripTitle: activeTrip.title,
+        type: 'PAYMENT_REJECTED',
+        title: 'Payment Rejected',
+        message: `Your payment of ${rejected.currency} ${rejected.amount.toFixed(2)} was rejected by ${user.fullName || 'Admin'}: ${reason || 'Rejected by Admin'}`,
+        data: { paymentId: rejected.id, tripId: activeTrip.id },
+      }).catch((err) => console.warn('Failed to dispatch rejection notification:', err));
+    }
   };
 
   const cancelPayment = async (paymentId: string) => {
@@ -787,6 +911,21 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currency: paymentData.currency,
       timestamp: Date.now(),
     });
+
+    // Notify payee if they are another member
+    const receiverMember = activeTrip.members.find((m) => m.id === paymentData.toMemberId);
+    const receiverUserId = receiverMember?.userId || receiverMember?.id;
+    if (receiverUserId && receiverUserId !== user.id) {
+      createNotificationInFirestore({
+        userId: receiverUserId,
+        tripId: activeTrip.id,
+        tripTitle: activeTrip.title,
+        type: 'PAYMENT_APPROVED',
+        title: 'Payment Received',
+        message: `${from} recorded payment of ${paymentData.currency} ${paymentData.amount.toFixed(2)} to you in "${activeTrip.title}"`,
+        data: { paymentId: newPayment.id, tripId: activeTrip.id },
+      }).catch((err) => console.warn('Failed to notify payee:', err));
+    }
   };
 
   const updatePaymentStatus = async (

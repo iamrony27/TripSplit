@@ -75,7 +75,7 @@ export function subscribeAllUserActivities(
     return () => {};
   }
 
-  if (!isFirebaseConfigured || userId.startsWith('local_') || userId.startsWith('demo_')) {
+  if (!isFirebaseConfigured) {
     Promise.all(tripIds.map((tId) => getLocalActivities(tId))).then((arrays) => {
       const flat = arrays.flat().sort((a, b) => b.timestamp - a.timestamp);
       callback(flat);

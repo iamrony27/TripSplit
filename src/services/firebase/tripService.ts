@@ -76,30 +76,69 @@ export async function deleteTripInFirestore(tripId: string): Promise<void> {
   }
 }
 
+function matchesPhone(a?: string, b?: string): boolean {
+  if (!a || !b) return false;
+  const da = a.replace(/[^0-9]/g, '');
+  const db = b.replace(/[^0-9]/g, '');
+  if (da.length < 7 || db.length < 7) return false;
+  return da === db || da.endsWith(db) || db.endsWith(da);
+}
+
+export function isUserInTrip(trip: Trip, userId: string): boolean {
+  if (!trip || !userId) return false;
+  if (trip.createdBy === userId || matchesPhone(trip.createdBy, userId)) return true;
+  if (trip.memberIds && trip.memberIds.some((mid) => mid === userId || matchesPhone(mid, userId))) return true;
+
+  if (
+    trip.members?.some(
+      (m) =>
+        m.userId === userId ||
+        m.id === userId ||
+        m.id === `member_${userId}` ||
+        matchesPhone(m.id, userId) ||
+        matchesPhone(m.userId, userId) ||
+        matchesPhone(m.email, userId) ||
+        (m.email && m.email.toLowerCase() === userId.toLowerCase())
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 export function subscribeUserTrips(
   userId: string,
   callback: (trips: Trip[]) => void
 ): Unsubscribe {
-  // If running locally or demo user
-  if (!isFirebaseConfigured || userId.startsWith('local_user_') || userId.startsWith('demo_user_')) {
+  if (!isFirebaseConfigured) {
     return subscribeLocalTrips(userId, callback);
   }
 
   try {
-    const q = query(
-      collection(db, TRIPS_COLLECTION),
-      where('memberIds', 'array-contains', userId)
-    );
+    const q = query(collection(db, TRIPS_COLLECTION));
 
     return onSnapshot(
       q,
-      (snap) => {
-        const list: Trip[] = [];
+      async (snap) => {
+        const firestoreTrips: Trip[] = [];
         snap.forEach((d) => {
-          list.push(d.data() as Trip);
+          const t = d.data() as Trip;
+          if (isUserInTrip(t, userId)) {
+            firestoreTrips.push(t);
+            saveLocalTrip(t).catch(() => {});
+          }
         });
-        list.sort((a, b) => b.updatedAt - a.updatedAt);
-        callback(list);
+
+        // Merge with local trips so offline/local-only records are preserved
+        const localList = await getLocalTrips();
+        const tripMap = new Map<string, Trip>();
+        localList.filter((t) => isUserInTrip(t, userId)).forEach((t) => tripMap.set(t.id, t));
+        firestoreTrips.forEach((t) => tripMap.set(t.id, t));
+
+        const combined = Array.from(tripMap.values());
+        combined.sort((a, b) => b.updatedAt - a.updatedAt);
+        callback(combined);
       },
       (err) => {
         console.warn('Trips Firestore subscription error, using local database:', err);

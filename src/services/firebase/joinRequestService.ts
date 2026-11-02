@@ -396,11 +396,21 @@ export function subscribeTripJoinRequests(
 
     return onSnapshot(
       q,
-      (snap) => {
-        const list: JoinRequest[] = [];
+      async (snap) => {
+        const firestoreList: JoinRequest[] = [];
         snap.forEach((d) => {
-          list.push(d.data() as JoinRequest);
+          const item = d.data() as JoinRequest;
+          firestoreList.push(item);
+          saveLocalJoinRequest(item).catch(() => {});
         });
+
+        // Merge with local requests
+        const localList = await getLocalJoinRequests(tripId);
+        const map = new Map<string, JoinRequest>();
+        localList.forEach((r) => map.set(r.id, r));
+        firestoreList.forEach((r) => map.set(r.id, r));
+
+        const list = Array.from(map.values());
         list.sort((a, b) => b.createdAt - a.createdAt);
         callback(list);
       },

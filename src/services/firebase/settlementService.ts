@@ -300,11 +300,21 @@ export function subscribeTripPayments(
 
     return onSnapshot(
       q,
-      (snap) => {
-        const list: PaymentRecord[] = [];
+      async (snap) => {
+        const firestoreList: PaymentRecord[] = [];
         snap.forEach((d) => {
-          list.push(d.data() as PaymentRecord);
+          const item = d.data() as PaymentRecord;
+          firestoreList.push(item);
+          saveLocalPayment(item).catch(() => {});
         });
+
+        // Merge with local payments
+        const localList = await getLocalPayments(tripId);
+        const map = new Map<string, PaymentRecord>();
+        localList.forEach((p) => map.set(p.id, p));
+        firestoreList.forEach((p) => map.set(p.id, p));
+
+        const list = Array.from(map.values());
         list.sort((a, b) => b.createdAt - a.createdAt);
         callback(list);
       },

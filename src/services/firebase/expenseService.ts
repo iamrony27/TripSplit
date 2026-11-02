@@ -95,11 +95,21 @@ export function subscribeTripExpenses(
 
     return onSnapshot(
       q,
-      (snap) => {
-        const list: Expense[] = [];
+      async (snap) => {
+        const firestoreList: Expense[] = [];
         snap.forEach((d) => {
-          list.push(d.data() as Expense);
+          const item = d.data() as Expense;
+          firestoreList.push(item);
+          saveLocalExpense(item).catch(() => {});
         });
+
+        // Merge with local expenses so offline additions are retained
+        const localList = await getLocalExpenses(tripId);
+        const map = new Map<string, Expense>();
+        localList.forEach((e) => map.set(e.id, e));
+        firestoreList.forEach((e) => map.set(e.id, e));
+
+        const list = Array.from(map.values());
         list.sort((a, b) => {
           if (b.expenseDate !== a.expenseDate) {
             return b.expenseDate.localeCompare(a.expenseDate);

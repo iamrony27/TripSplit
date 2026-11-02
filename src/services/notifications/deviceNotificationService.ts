@@ -98,6 +98,9 @@ export async function sendPhoneNotification(params: {
         data: data || {},
         sound: 'default',
         vibrate: [0, 250, 250, 250],
+        // @ts-ignore
+        channelId: 'default',
+        priority: Notifications.AndroidNotificationPriority.MAX,
       },
       trigger: null, // deliver immediately
     });

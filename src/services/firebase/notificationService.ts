@@ -55,23 +55,44 @@ export function subscribeUserNotifications(
   userId: string,
   callback: (notifications: AppNotification[]) => void
 ): Unsubscribe {
-  if (!isFirebaseConfigured || userId.startsWith('local_user_') || userId.startsWith('demo_user_')) {
+  if (!isFirebaseConfigured) {
     return subscribeLocalNotifications(userId, callback);
   }
 
   try {
+    const cleanDigits = userId.replace(/[^0-9]/g, '');
+    const candidateSet = new Set<string>([userId, 'all']);
+    if (cleanDigits && cleanDigits.length >= 7) {
+      candidateSet.add(cleanDigits);
+      candidateSet.add(`phone_${cleanDigits}`);
+      candidateSet.add(`+91${cleanDigits}`);
+      candidateSet.add(`91${cleanDigits}`);
+      candidateSet.add(`0${cleanDigits}`);
+    }
+    const candidates = Array.from(candidateSet).slice(0, 30);
+
     const q = query(
       collection(db, NOTIFICATIONS_COLLECTION),
-      where('userId', 'in', [userId, 'all'])
+      where('userId', 'in', candidates)
     );
 
     return onSnapshot(
       q,
-      (snap) => {
-        const list: AppNotification[] = [];
+      async (snap) => {
+        const firestoreList: AppNotification[] = [];
         snap.forEach((d) => {
-          list.push(d.data() as AppNotification);
+          const notif = d.data() as AppNotification;
+          firestoreList.push(notif);
+          saveLocalNotification(notif).catch(() => {});
         });
+
+        // Merge with local notifications so offline data is retained
+        const localList = await getLocalNotifications(userId);
+        const map = new Map<string, AppNotification>();
+        localList.forEach((n) => map.set(n.id, n));
+        firestoreList.forEach((n) => map.set(n.id, n));
+
+        const list = Array.from(map.values());
         list.sort((a, b) => b.createdAt - a.createdAt);
         callback(list);
       },
