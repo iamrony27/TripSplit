@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,15 +7,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
-import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
+import { TextInput, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../src/context/AuthContext';
-import { useTrips } from '../../src/context/TripContext';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
@@ -23,84 +20,14 @@ import { M3Shapes } from '../../src/theme/shapes';
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { signIn, signInWithPhone } = useAuth();
-  const { setActiveTripId } = useTrips();
+  const { signIn } = useAuth();
+  const scrollViewRef = useRef<any>(null);
 
-  const [loginMode, setLoginMode] = useState<'phone' | 'email'>('phone');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  // Auto-load remembered phone number from previous join request or session
-  useEffect(() => {
-    const loadSavedPhone = async () => {
-      try {
-        const savedPhone = await AsyncStorage.getItem('@tripsplit_active_phone');
-        if (savedPhone) {
-          setPhoneNumber(savedPhone);
-        }
-      } catch (err) {
-        console.warn('Failed to load saved phone number:', err);
-      }
-    };
-    loadSavedPhone();
-  }, []);
-
-  const handlePhoneLogin = async () => {
-    const cleanDigits = phoneNumber.trim().replace(/[^0-9]/g, '');
-    if (cleanDigits.length < 8) {
-      setErrorMsg('Please enter a valid mobile number (at least 8 digits).');
-      return;
-    }
-    setErrorMsg('');
-    setLoading(true);
-    try {
-      const result = await signInWithPhone(cleanDigits);
-      if (result.success && result.status === 'APPROVED') {
-        if (result.tripId) {
-          setActiveTripId(result.tripId);
-          router.replace(`/trip/${result.tripId}` as any);
-        } else {
-          router.replace('/(tabs)');
-        }
-      } else if (result.status === 'PENDING') {
-        Alert.alert(
-          '⏳ Approval Pending',
-          result.message ||
-            `Your request to join "${result.tripTitle || 'the group'}" is pending administrator approval. Once approved, you can enter immediately using this mobile number.`,
-          [{ text: 'OK' }]
-        );
-      } else if (result.status === 'REJECTED') {
-        Alert.alert(
-          'Join Request Declined',
-          result.message ||
-            `Your request to join "${result.tripTitle || 'the group'}" was declined by the group administrator.`,
-          [{ text: 'OK' }]
-        );
-      } else {
-        Alert.alert(
-          'No Approved Group Found',
-          'No approved group membership or join request was found for this mobile number. Would you like to enter an invitation code or scan a group QR code?',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Join a Group',
-              style: 'default',
-              onPress: () => router.push('/join-group'),
-            },
-          ]
-        );
-      }
-    } catch (err: any) {
-      console.warn('Phone login error:', err);
-      setErrorMsg(err.message || 'Failed to sign in with mobile number.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -111,11 +38,14 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email.trim(), password);
-      // Navigation is automatically handled by AuthContext state change in RootNavigation
     } catch (err: any) {
       console.warn('Login error:', err);
       let msg = 'Failed to sign in. Please verify your credentials.';
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+      if (
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password'
+      ) {
         msg = 'Invalid email or password.';
       } else if (err.code === 'auth/network-request-failed') {
         msg = 'Network error. Please check your internet connection.';
@@ -144,124 +74,40 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
     >
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingTop: Math.max(insets.top, 24), paddingBottom: 60 }]}
+        ref={scrollViewRef}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: Math.max(insets.top, 32),
+            paddingBottom: Math.max(insets.bottom, 40) + 240,
+          },
+        ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets={true}
+        showsVerticalScrollIndicator={false}
       >
         {/* Brand Header */}
         <View style={styles.brandContainer}>
           <View style={styles.iconCircle}>
-            <MaterialCommunityIcons name="wallet-travel" size={40} color={M3Colors.onPrimary} />
+            <MaterialCommunityIcons name="wallet-travel" size={42} color={M3Colors.onPrimary} />
           </View>
           <Text style={styles.appTitle}>TripSplit</Text>
           <Text style={styles.tagline}>
-            Split group expenses & settle instantly with smart UPI
+            Smart group expenses, fair splits & instant UPI settlements with cloud backup
           </Text>
         </View>
-
-        {/* Entry 3-Way Choice Bar */}
-        <View style={styles.entryOptionsRow}>
-          <View style={[styles.entryChoiceBtn, styles.entryChoiceBtnActive]}>
-            <MaterialCommunityIcons name="login" size={16} color={M3Colors.onPrimary} />
-            <Text style={styles.entryChoiceTextActive}>Login</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.entryChoiceBtn}
-            onPress={() => router.push('/(auth)/register')}
-          >
-            <MaterialCommunityIcons name="account-plus" size={16} color={M3Colors.onSurfaceVariant} />
-            <Text style={styles.entryChoiceText}>Create Account</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.entryChoiceBtn, styles.entryChoiceBtnHighlight]}
-            onPress={() => router.push('/join-group')}
-          >
-            <MaterialCommunityIcons name="qrcode-scan" size={16} color={M3Colors.primary} />
-            <Text style={styles.entryChoiceTextHighlight}>Join a Group</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Join a Group Direct Card Banner */}
-        <TouchableOpacity
-          style={styles.joinGroupBanner}
-          onPress={() => router.push('/join-group')}
-          activeOpacity={0.85}
-        >
-          <View style={styles.joinGroupIconBox}>
-            <MaterialCommunityIcons name="qrcode-scan" size={22} color={M3Colors.onPrimary} />
-          </View>
-          <View style={styles.joinGroupTextCol}>
-            <Text style={styles.joinGroupTitle}>Have a Group QR or Invite Code?</Text>
-            <Text style={styles.joinGroupSubtitle}>
-              Join an existing trip without creating an account first
-            </Text>
-          </View>
-          <MaterialCommunityIcons name="chevron-right" size={22} color={M3Colors.primary} />
-        </TouchableOpacity>
 
         {/* Login Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Welcome Back</Text>
           <Text style={styles.cardSubtitle}>
-            {loginMode === 'phone'
-              ? 'Enter with your registered or approved mobile number'
-              : 'Sign in with your email & password'}
+            Sign in to access your trips and cloud backup
           </Text>
-
-          {/* Mode Switcher Tabs */}
-          <View style={styles.modeTabsRow}>
-            <TouchableOpacity
-              style={[styles.modeTabBtn, loginMode === 'phone' && styles.modeTabBtnActive]}
-              onPress={() => {
-                setLoginMode('phone');
-                setErrorMsg('');
-              }}
-              activeOpacity={0.8}
-            >
-              <MaterialCommunityIcons
-                name="cellphone"
-                size={18}
-                color={loginMode === 'phone' ? M3Colors.onPrimary : M3Colors.onSurfaceVariant}
-              />
-              <Text
-                style={[
-                  styles.modeTabText,
-                  loginMode === 'phone' && styles.modeTabTextActive,
-                ]}
-              >
-                Mobile Number
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.modeTabBtn, loginMode === 'email' && styles.modeTabBtnActive]}
-              onPress={() => {
-                setLoginMode('email');
-                setErrorMsg('');
-              }}
-              activeOpacity={0.8}
-            >
-              <MaterialCommunityIcons
-                name="email-outline"
-                size={18}
-                color={loginMode === 'email' ? M3Colors.onPrimary : M3Colors.onSurfaceVariant}
-              />
-              <Text
-                style={[
-                  styles.modeTabText,
-                  loginMode === 'email' && styles.modeTabTextActive,
-                ]}
-              >
-                Email & Password
-              </Text>
-            </TouchableOpacity>
-          </View>
 
           {errorMsg ? (
             <View style={styles.errorBanner}>
@@ -270,111 +116,70 @@ export default function LoginScreen() {
             </View>
           ) : null}
 
-          {loginMode === 'phone' ? (
-            <View style={styles.phoneSection}>
-              <View style={styles.phoneNoticeBox}>
-                <MaterialCommunityIcons name="shield-check" size={20} color={M3Colors.primary} />
-                <Text style={styles.phoneNoticeText}>
-                  Joined a group via invitation code or QR? Once the group admin approves your request, simply enter your mobile number below for instant access.
-                </Text>
-              </View>
+          <TextInput
+            label="Email Address"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (errorMsg) setErrorMsg('');
+            }}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            mode="outlined"
+            style={styles.input}
+            outlineColor={M3Colors.outlineVariant}
+            activeOutlineColor={M3Colors.primary}
+            left={<TextInput.Icon icon="email-outline" />}
+            returnKeyType="next"
+          />
 
-              <TextInput
-                label="Mobile Number"
-                value={phoneNumber}
-                onChangeText={(text) => {
-                  setPhoneNumber(text);
-                  if (errorMsg) setErrorMsg('');
-                }}
-                keyboardType="phone-pad"
-                mode="outlined"
-                placeholder="e.g. 9876543210"
-                style={styles.input}
-                outlineColor={M3Colors.outlineVariant}
-                activeOutlineColor={M3Colors.primary}
-                left={<TextInput.Icon icon="cellphone" />}
-                right={
-                  phoneNumber ? (
-                    <TextInput.Icon
-                      icon="close-circle-outline"
-                      onPress={() => setPhoneNumber('')}
-                    />
-                  ) : undefined
-                }
+          <TextInput
+            label="Password"
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (errorMsg) setErrorMsg('');
+            }}
+            onFocus={() => {
+              setTimeout(() => {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+              }, 150);
+            }}
+            secureTextEntry={!showPassword}
+            mode="outlined"
+            style={styles.input}
+            outlineColor={M3Colors.outlineVariant}
+            activeOutlineColor={M3Colors.primary}
+            left={<TextInput.Icon icon="lock-outline" />}
+            right={
+              <TextInput.Icon
+                icon={showPassword ? 'eye-off' : 'eye'}
+                onPress={() => setShowPassword(!showPassword)}
               />
+            }
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
+          />
 
-              <Button
-                mode="contained"
-                onPress={handlePhoneLogin}
-                loading={loading}
-                disabled={loading}
-                style={styles.loginBtn}
-                contentStyle={styles.loginBtnContent}
-                buttonColor={M3Colors.primary}
-                icon="arrow-right-circle"
-              >
-                Enter with Mobile Number
-              </Button>
-            </View>
-          ) : (
-            <View style={styles.emailSection}>
-              <TextInput
-                label="Email Address"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  if (errorMsg) setErrorMsg('');
-                }}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                mode="outlined"
-                style={styles.input}
-                outlineColor={M3Colors.outlineVariant}
-                activeOutlineColor={M3Colors.primary}
-                left={<TextInput.Icon icon="email-outline" />}
-              />
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/forgot-password')}
+            style={styles.forgotBtn}
+          >
+            <Text style={styles.forgotText}>Forgot password?</Text>
+          </TouchableOpacity>
 
-              <TextInput
-                label="Password"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (errorMsg) setErrorMsg('');
-                }}
-                secureTextEntry={!showPassword}
-                mode="outlined"
-                style={styles.input}
-                outlineColor={M3Colors.outlineVariant}
-                activeOutlineColor={M3Colors.primary}
-                left={<TextInput.Icon icon="lock-outline" />}
-                right={
-                  <TextInput.Icon
-                    icon={showPassword ? 'eye-off' : 'eye'}
-                    onPress={() => setShowPassword(!showPassword)}
-                  />
-                }
-              />
-
-              <TouchableOpacity
-                onPress={() => router.push('/(auth)/forgot-password')}
-                style={styles.forgotBtn}
-              >
-                <Text style={styles.forgotText}>Forgot password?</Text>
-              </TouchableOpacity>
-
-              <Button
-                mode="contained"
-                onPress={handleLogin}
-                loading={loading}
-                disabled={loading}
-                style={styles.loginBtn}
-                contentStyle={styles.loginBtnContent}
-                buttonColor={M3Colors.primary}
-              >
-                Log In
-              </Button>
-            </View>
-          )}
+          <Button
+            mode="contained"
+            onPress={handleLogin}
+            loading={loading}
+            disabled={loading}
+            style={styles.loginBtn}
+            contentStyle={styles.loginBtnContent}
+            buttonColor={M3Colors.primary}
+            icon="login"
+          >
+            Log In
+          </Button>
 
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
@@ -421,9 +226,9 @@ const styles = StyleSheet.create({
     marginBottom: M3Shapes.spacing.xl,
   },
   iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: M3Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -445,7 +250,8 @@ const styles = StyleSheet.create({
     color: M3Colors.onSurfaceVariant,
     textAlign: 'center',
     marginTop: 6,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
+    lineHeight: 20,
   },
   card: {
     backgroundColor: M3Colors.surfaceContainerLowest,
@@ -466,57 +272,7 @@ const styles = StyleSheet.create({
     ...M3Typography.bodyMedium,
     color: M3Colors.onSurfaceVariant,
     marginTop: 2,
-    marginBottom: 16,
-  },
-  modeTabsRow: {
-    flexDirection: 'row',
-    backgroundColor: M3Colors.surfaceContainerHigh,
-    borderRadius: M3Shapes.pill,
-    padding: 3,
-    marginBottom: 16,
-    gap: 4,
-  },
-  modeTabBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: M3Shapes.pill,
-    gap: 6,
-  },
-  modeTabBtnActive: {
-    backgroundColor: M3Colors.primary,
-  },
-  modeTabText: {
-    ...M3Typography.labelMedium,
-    color: M3Colors.onSurfaceVariant,
-    fontWeight: '600',
-  },
-  modeTabTextActive: {
-    color: M3Colors.onPrimary,
-    fontWeight: '700',
-  },
-  phoneSection: {
-    width: '100%',
-  },
-  emailSection: {
-    width: '100%',
-  },
-  phoneNoticeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: M3Colors.primaryContainer,
-    borderRadius: M3Shapes.cardSmall,
-    padding: 10,
-    marginBottom: 14,
-    gap: 10,
-  },
-  phoneNoticeText: {
-    ...M3Typography.bodySm,
-    color: M3Colors.onPrimaryContainer,
-    flex: 1,
-    lineHeight: 18,
+    marginBottom: 18,
   },
   errorBanner: {
     flexDirection: 'row',
@@ -524,7 +280,7 @@ const styles = StyleSheet.create({
     backgroundColor: M3Colors.errorContainer,
     padding: 10,
     borderRadius: M3Shapes.cardSmall,
-    marginBottom: 12,
+    marginBottom: 14,
     gap: 8,
   },
   errorText: {
@@ -533,12 +289,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   input: {
-    marginBottom: 12,
+    marginBottom: 14,
     backgroundColor: M3Colors.surfaceContainerLowest,
   },
   forgotBtn: {
     alignSelf: 'flex-end',
-    marginBottom: 16,
+    marginBottom: 18,
+    paddingVertical: 4,
   },
   forgotText: {
     ...M3Typography.labelMd,
@@ -554,7 +311,7 @@ const styles = StyleSheet.create({
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: 18,
   },
   dividerLine: {
     flex: 1,
@@ -585,81 +342,5 @@ const styles = StyleSheet.create({
     ...M3Typography.bodyMedium,
     color: M3Colors.primary,
     fontWeight: '700',
-  },
-  entryOptionsRow: {
-    flexDirection: 'row',
-    backgroundColor: M3Colors.surfaceContainerHigh,
-    borderRadius: M3Shapes.pill,
-    padding: 4,
-    marginBottom: 14,
-    gap: 4,
-  },
-  entryChoiceBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: M3Shapes.pill,
-    gap: 4,
-  },
-  entryChoiceBtnActive: {
-    backgroundColor: M3Colors.primary,
-  },
-  entryChoiceTextActive: {
-    ...M3Typography.labelSm,
-    color: M3Colors.onPrimary,
-    fontWeight: '700',
-  },
-  entryChoiceText: {
-    ...M3Typography.labelSm,
-    color: M3Colors.onSurfaceVariant,
-    fontWeight: '600',
-  },
-  entryChoiceBtnHighlight: {
-    backgroundColor: M3Colors.primaryContainer,
-  },
-  entryChoiceTextHighlight: {
-    ...M3Typography.labelSm,
-    color: M3Colors.onPrimaryContainer,
-    fontWeight: '800',
-  },
-  joinGroupBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: M3Colors.surfaceContainerLowest,
-    borderRadius: M3Shapes.cardMedium,
-    padding: 12,
-    marginBottom: 16,
-    gap: 12,
-    borderWidth: 1.5,
-    borderColor: M3Colors.primaryFixed,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-  },
-  joinGroupIconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: M3Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  joinGroupTextCol: {
-    flex: 1,
-  },
-  joinGroupTitle: {
-    ...M3Typography.titleSm,
-    color: M3Colors.onSurface,
-    fontWeight: '800',
-  },
-  joinGroupSubtitle: {
-    ...M3Typography.bodySm,
-    color: M3Colors.onSurfaceVariant,
-    fontSize: 11,
-    marginTop: 2,
   },
 });

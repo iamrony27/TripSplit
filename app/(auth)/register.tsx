@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ export default function RegisterScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { signUp } = useAuth();
+  const scrollViewRef = useRef<any>(null);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -69,13 +70,22 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
     >
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingTop: Math.max(insets.top, 24), paddingBottom: 60 }]}
+        ref={scrollViewRef}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: Math.max(insets.top, 24),
+            paddingBottom: Math.max(insets.bottom, 40) + 260,
+          },
+        ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets={true}
+        showsVerticalScrollIndicator={false}
       >
         <TouchableOpacity
           onPress={() => safeGoBack(router, '/(auth)/login')}
@@ -113,6 +123,7 @@ export default function RegisterScreen() {
             outlineColor={M3Colors.outlineVariant}
             activeOutlineColor={M3Colors.primary}
             left={<TextInput.Icon icon="account-outline" />}
+            returnKeyType="next"
           />
 
           <TextInput
@@ -129,6 +140,7 @@ export default function RegisterScreen() {
             outlineColor={M3Colors.outlineVariant}
             activeOutlineColor={M3Colors.primary}
             left={<TextInput.Icon icon="email-outline" />}
+            returnKeyType="next"
           />
 
           <TextInput
@@ -137,6 +149,11 @@ export default function RegisterScreen() {
             onChangeText={(text) => {
               setPassword(text);
               if (errorMsg) setErrorMsg('');
+            }}
+            onFocus={() => {
+              setTimeout(() => {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+              }, 150);
             }}
             secureTextEntry={!showPassword}
             mode="outlined"
@@ -150,6 +167,7 @@ export default function RegisterScreen() {
                 onPress={() => setShowPassword(!showPassword)}
               />
             }
+            returnKeyType="next"
           />
 
           <TextInput
@@ -159,12 +177,19 @@ export default function RegisterScreen() {
               setConfirmPassword(text);
               if (errorMsg) setErrorMsg('');
             }}
+            onFocus={() => {
+              setTimeout(() => {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+              }, 150);
+            }}
             secureTextEntry={!showPassword}
             mode="outlined"
             style={styles.input}
             outlineColor={M3Colors.outlineVariant}
             activeOutlineColor={M3Colors.primary}
             left={<TextInput.Icon icon="lock-check-outline" />}
+            returnKeyType="done"
+            onSubmitEditing={handleRegister}
           />
 
           <Button

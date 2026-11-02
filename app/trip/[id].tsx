@@ -15,7 +15,6 @@ import { useAuth } from '../../src/context/AuthContext';
 import { TopAppBar } from '../../src/components/common/TopAppBar';
 import { StatusBadge } from '../../src/components/common/StatusBadge';
 import { ExpenseTile } from '../../src/components/expense/ExpenseTile';
-import { GroupInviteModal } from '../../src/components/trip/GroupInviteModal';
 import { TripMember } from '../../src/types/trip';
 import { Expense } from '../../src/types/expense';
 import { M3Colors } from '../../src/theme/colors';
@@ -36,7 +35,6 @@ export default function TripDetailsScreen() {
     totalTripSpend,
     payments,
     isTripAdmin,
-    pendingJoinRequestsCount,
     currentMember,
     addMember,
     removeMember,
@@ -46,7 +44,6 @@ export default function TripDetailsScreen() {
   const trip = trips.find((t) => t.id === id);
 
   const [addMemberDialogVisible, setAddMemberDialogVisible] = useState(false);
-  const [inviteModalVisible, setInviteModalVisible] = useState(false);
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberUpi, setNewMemberUpi] = useState('');
   const [addingMember, setAddingMember] = useState(false);
@@ -174,24 +171,13 @@ export default function TripDetailsScreen() {
         fallbackRoute="/(tabs)/trips"
         onBackPress={() => safeGoBack(router, '/(tabs)/trips')}
         rightAction={
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            {isTripAdmin && (
-              <TouchableOpacity
-                onPress={() => setInviteModalVisible(true)}
-                style={styles.settleIconBtn}
-                accessibilityLabel="Group Invite QR"
-              >
-                <MaterialCommunityIcons name="qrcode-scan" size={18} color={M3Colors.primary} />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              onPress={() => router.push('/trip/settle')}
-              style={styles.settleIconBtn}
-              accessibilityLabel="Settle"
-            >
-              <MaterialCommunityIcons name="hand-coin" size={20} color={M3Colors.secondary} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => router.push('/trip/settle')}
+            style={styles.settleIconBtn}
+            accessibilityLabel="Settle"
+          >
+            <MaterialCommunityIcons name="hand-coin" size={20} color={M3Colors.secondary} />
+          </TouchableOpacity>
         }
       />
 
@@ -312,26 +298,12 @@ export default function TripDetailsScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.cardTitle}>Member Balances ({trip.members.length})</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {isTripAdmin && (
-                <TouchableOpacity
-                  onPress={() => setInviteModalVisible(true)}
-                  style={styles.headerActionBtn}
-                >
-                  <MaterialCommunityIcons name="qrcode" size={15} color={M3Colors.primary} />
-                  <Text style={styles.headerActionText}>Invite</Text>
-                </TouchableOpacity>
-              )}
               <TouchableOpacity
                 onPress={() => router.push(`/trip/members?id=${trip.id}` as any)}
                 style={styles.headerActionBtn}
               >
                 <MaterialCommunityIcons name="account-group" size={15} color={M3Colors.primary} />
                 <Text style={styles.headerActionText}>Manage</Text>
-                {pendingJoinRequestsCount > 0 && (
-                  <View style={styles.badgePillMini}>
-                    <Text style={styles.badgePillMiniText}>{pendingJoinRequestsCount}</Text>
-                  </View>
-                )}
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setAddMemberDialogVisible(true)}
@@ -457,13 +429,6 @@ export default function TripDetailsScreen() {
         </Dialog>
       </Portal>
 
-      {/* Group Invite QR Modal */}
-      <GroupInviteModal
-        visible={inviteModalVisible}
-        tripId={trip.id}
-        tripTitle={trip.title}
-        onDismiss={() => setInviteModalVisible(false)}
-      />
     </View>
   );
 }
