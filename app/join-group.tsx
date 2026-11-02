@@ -15,9 +15,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../src/context/AuthContext';
+import { useTrips } from '../src/context/TripContext';
 import { validateInvitationCode } from '../src/services/firebase/invitationService';
-import { submitJoinRequest } from '../src/services/firebase/joinRequestService';
 import { Trip } from '../src/types/trip';
 import { GroupInvitation } from '../src/types/invitation';
 import { M3Colors } from '../src/theme/colors';
@@ -27,13 +28,14 @@ import { M3Shapes } from '../src/theme/shapes';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SCAN_BOX_SIZE = Math.min(SCREEN_WIDTH * 0.72, 260);
 
-type Step = 'INPUT' | 'PREVIEW' | 'SUBMITTED';
+type Step = 'INPUT' | 'PREVIEW';
 
 export default function JoinGroupScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ code?: string }>();
-  const { user, firebaseUser } = useAuth();
+  const { user } = useAuth();
+  const { joinTripWithCode, playNotificationSound } = useTrips();
 
   const [step, setStep] = useState<Step>('INPUT');
   const [activeMode, setActiveMode] = useState<'MANUAL' | 'CAMERA'>('MANUAL');
@@ -57,6 +59,28 @@ export default function JoinGroupScreen() {
   // Camera permissions
   const [permission, requestPermission] = useCameraPermissions();
   const [torch, setTorch] = useState(false);
+
+  // 1. Auto-load saved invitation code & saved phone/name so user never has to re-enter
+  useEffect(() => {
+    const loadSavedCodeAndDetails = async () => {
+      try {
+        if (!params.code) {
+          const savedCode = await AsyncStorage.getItem('@tripsplit_saved_invitation_code');
+          if (savedCode && savedCode.trim()) {
+            setCode(savedCode.trim());
+            handleValidateCode(savedCode.trim());
+          }
+        }
+        const savedPhone = await AsyncStorage.getItem('@tripsplit_active_phone');
+        if (savedPhone) setApplicantPhone(savedPhone);
+        const savedName = await AsyncStorage.getItem('@tripsplit_active_name');
+        if (savedName && !user?.fullName) setApplicantName(savedName);
+      } catch (err) {
+        console.warn('Failed to load saved invite code from storage:', err);
+      }
+    };
+    loadSavedCodeAndDetails();
+  }, []);
 
   // Auto-validate if code passed via params
   useEffect(() => {
@@ -87,6 +111,8 @@ export default function JoinGroupScreen() {
       setValidatedTrip(result.trip);
       setValidatedInvitation(result.invitation);
       setCode(cleanCode);
+      // Save valid code in storage immediately so it persists
+      await AsyncStorage.setItem('@tripsplit_saved_invitation_code', cleanCode);
       setStep('PREVIEW');
     } catch (err: any) {
       setErrorMsg(err.message || 'Invalid invitation code.');
@@ -99,7 +125,6 @@ export default function JoinGroupScreen() {
     if (validating) return;
 
     let extractedCode = data.trim();
-    // Handle URL or deep link scheme: tripsplit://join?code=XYZ or https://tripsplit.app/join/XYZ
     if (extractedCode.includes('code=')) {
       const match = extractedCode.match(/code=([A-Za-z0-9]+)/);
       if (match) extractedCode = match[1];
@@ -119,22 +144,52 @@ export default function JoinGroupScreen() {
       return;
     }
 
+    if (!user && !applicantPhone.trim() && !applicantEmail.trim()) {
+      Alert.alert('Required', 'Please enter your phone number so group members can identify you.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await submitJoinRequest({
+      await joinTripWithCode({
         tripId: validatedTrip.id,
         tripTitle: validatedTrip.title,
         invitationCode: validatedInvitation.code,
         applicantUserId: user?.id,
         applicantName: applicantName.trim(),
-        applicantEmail: applicantEmail.trim() || undefined,
         applicantPhone: applicantPhone.trim() || undefined,
+        applicantEmail: applicantEmail.trim() || undefined,
         applicantUpiId: applicantUpi.trim() || undefined,
       });
 
-      setStep('SUBMITTED');
+      // Save invitation code & phone info in AsyncStorage
+      await AsyncStorage.setItem('@tripsplit_saved_invitation_code', validatedInvitation.code);
+      if (applicantPhone.trim()) {
+        await AsyncStorage.setItem('@tripsplit_active_phone', applicantPhone.trim());
+      }
+      if (applicantName.trim()) {
+        await AsyncStorage.setItem('@tripsplit_active_name', applicantName.trim());
+      }
+
+      // Play chime
+      playNotificationSound().catch(() => {});
+
+      // Navigate straight to the trip view - completely bypassing any approval pending page!
+      Alert.alert(
+        'Welcome!',
+        `You have joined "${validatedTrip.title}".`,
+        [
+          {
+            text: 'Open Trip',
+            onPress: () => {
+              router.replace(`/trip/${validatedTrip.id}` as any);
+            },
+          },
+        ],
+        { cancelable: false }
+      );
     } catch (err: any) {
-      Alert.alert('Join Request Error', err.message || 'Failed to submit request.');
+      Alert.alert('Join Error', err.message || 'Failed to join group.');
     } finally {
       setSubmitting(false);
     }
@@ -402,8 +457,21 @@ export default function JoinGroupScreen() {
             {!user && (
               <>
                 <TextInput
+                  label="Mobile Number *"
+                  placeholder="e.g. 9876543210"
+                  value={applicantPhone}
+                  onChangeText={setApplicantPhone}
+                  keyboardType="phone-pad"
+                  mode="outlined"
+                  outlineColor={M3Colors.outlineVariant}
+                  activeOutlineColor={M3Colors.primary}
+                  style={styles.input}
+                  left={<TextInput.Icon icon="cellphone" />}
+                />
+
+                <TextInput
                   label="Email Address (Optional)"
-                  placeholder="e.g. sarah@example.com"
+                  placeholder="e.g. user@example.com"
                   value={applicantEmail}
                   onChangeText={setApplicantEmail}
                   keyboardType="email-address"
@@ -416,15 +484,15 @@ export default function JoinGroupScreen() {
                 />
 
                 <TextInput
-                  label="Phone or UPI ID (Optional)"
-                  placeholder="e.g. sarah@okaxis"
+                  label="UPI ID for settlements (Optional)"
+                  placeholder="e.g. user@okhdfcbank"
                   value={applicantUpi}
                   onChangeText={setApplicantUpi}
                   mode="outlined"
                   outlineColor={M3Colors.outlineVariant}
                   activeOutlineColor={M3Colors.primary}
                   style={styles.input}
-                  left={<TextInput.Icon icon="cellphone" />}
+                  left={<TextInput.Icon icon="qrcode-scan" />}
                 />
               </>
             )}
@@ -438,9 +506,9 @@ export default function JoinGroupScreen() {
               textColor={M3Colors.onPrimary}
               style={styles.submitJoinBtn}
               contentStyle={styles.btnContent}
-              icon="send"
+              icon="account-plus"
             >
-              Submit Join Request
+              Join Group Now
             </Button>
 
             {!user && (
@@ -453,61 +521,6 @@ export default function JoinGroupScreen() {
             )}
           </View>
         </ScrollView>
-      )}
-
-      {/* ================= STEP 3: SUBMITTED CONFIRMATION ================= */}
-      {step === 'SUBMITTED' && validatedTrip && (
-        <View style={styles.submittedContainer}>
-          <View style={styles.submittedCircle}>
-            <MaterialCommunityIcons name="clock-check-outline" size={64} color="#E65100" />
-          </View>
-
-          <Text style={styles.submittedTitle}>Join Request Submitted!</Text>
-          <Text style={styles.submittedSubtitle}>
-            Your request to join "{validatedTrip.title}" has been forwarded to the group administrator for approval.
-          </Text>
-
-          <View style={styles.statusInfoBox}>
-            <View style={styles.statusInfoRow}>
-              <MaterialCommunityIcons name="shield-alert-outline" size={18} color="#E65100" />
-              <Text style={styles.statusInfoLabel}>Status:</Text>
-              <Text style={styles.statusInfoValue}>Pending Admin Approval</Text>
-            </View>
-            <Text style={styles.statusExpl}>
-              Scanning an invitation code notifies the administrator to grant access. Once approved, all trip expenses and settlement tools will appear on your device.
-            </Text>
-          </View>
-
-          <View style={styles.submittedActions}>
-            <Button
-              mode="contained"
-              onPress={() => {
-                if (user) {
-                  router.replace('/(tabs)');
-                } else {
-                  router.replace('/(auth)/login');
-                }
-              }}
-              buttonColor={M3Colors.primary}
-              textColor={M3Colors.onPrimary}
-              style={styles.homeBtn}
-              contentStyle={styles.btnContent}
-            >
-              {user ? 'Go to Home' : 'Back to Login'}
-            </Button>
-
-            {!user && (
-              <Button
-                mode="outlined"
-                onPress={() => router.push('/(auth)/register')}
-                textColor={M3Colors.primary}
-                style={styles.createAccountBtn}
-              >
-                Create a Free Account
-              </Button>
-            )}
-          </View>
-        </View>
       )}
     </KeyboardAvoidingView>
   );

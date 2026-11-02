@@ -41,6 +41,7 @@ import {
   subscribeTripJoinRequests,
   approveJoinRequest as approveJoinRequestInService,
   rejectJoinRequest as rejectJoinRequestInService,
+  joinTripWithInvitationCode,
 } from '../services/firebase/joinRequestService';
 import {
   adminEditExpense as adminEditExpenseInService,
@@ -54,6 +55,11 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from '../services/firebase/notificationService';
+import {
+  initDeviceNotifications,
+  sendPhoneNotification,
+  requestNotificationPermissions,
+} from '../services/notifications/deviceNotificationService';
 import {
   calculateMemberBalances,
   calculateExpenseShares,
@@ -81,11 +87,21 @@ interface TripContextType {
   currentMemberRole: MemberRole;
   pendingApprovalsCount: number;
 
-  // Join Requests
+  // Join Requests & Direct Join
   joinRequests: JoinRequest[];
   pendingJoinRequestsCount: number;
   approveJoinRequest: (request: JoinRequest, role?: MemberRole) => Promise<void>;
   rejectJoinRequest: (request: JoinRequest, reason?: string) => Promise<void>;
+  joinTripWithCode: (params: {
+    tripId: string;
+    tripTitle: string;
+    invitationCode: string;
+    applicantName: string;
+    applicantPhone?: string;
+    applicantEmail?: string;
+    applicantUpiId?: string;
+    applicantUserId?: string;
+  }) => Promise<{ trip: Trip; member: TripMember }>;
 
   // Invitations
   getTripInvitation: (tripId?: string) => Promise<GroupInvitation>;
@@ -96,6 +112,7 @@ interface TripContextType {
   markNotificationRead: (notificationId: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
   playNotificationSound: () => Promise<void>;
+  requestNotificationPermissions: () => Promise<boolean>;
 
   // Admin Expense Editing & Member Merging
   adminEditExpense: (params: {
@@ -228,6 +245,11 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [activeTripId]);
 
+  // Initialize device push/local notifications on startup
+  useEffect(() => {
+    initDeviceNotifications().catch(() => {});
+  }, []);
+
   const isFirstLoadNotificationsRef = useRef(true);
   const prevUnreadCountRef = useRef(0);
 
@@ -246,6 +268,14 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = subscribeUserNotifications(user.id, (notes) => {
       const unreadCount = notes.filter((n) => !n.isRead).length;
       if (!isFirstLoadNotificationsRef.current && unreadCount > prevUnreadCountRef.current) {
+        const latest = notes.find((n) => !n.isRead);
+        if (latest) {
+          sendPhoneNotification({
+            title: latest.title,
+            body: latest.message,
+            data: latest.data,
+          }).catch(() => {});
+        }
         playNotificationSound().catch(() => {});
       }
       isFirstLoadNotificationsRef.current = false;
@@ -352,6 +382,21 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       adminName: user.fullName || 'Admin',
       reason,
     });
+  };
+
+  const joinTripWithCode = async (params: {
+    tripId: string;
+    tripTitle: string;
+    invitationCode: string;
+    applicantName: string;
+    applicantPhone?: string;
+    applicantEmail?: string;
+    applicantUpiId?: string;
+    applicantUserId?: string;
+  }) => {
+    const result = await joinTripWithInvitationCode(params);
+    setActiveTripId(result.trip.id);
+    return result;
   };
 
   // 7. Admin Expense Editing
@@ -776,6 +821,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         pendingJoinRequestsCount,
         approveJoinRequest,
         rejectJoinRequest,
+        joinTripWithCode,
 
         getTripInvitation,
 
@@ -784,6 +830,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         markNotificationRead,
         markAllNotificationsRead,
         playNotificationSound,
+        requestNotificationPermissions,
 
         adminEditExpense,
         mergeMembers,

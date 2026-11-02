@@ -10,6 +10,7 @@ export interface JoinRequest {
   applicantEmail?: string;
   applicantPhone?: string;
   applicantUpiId?: string;
+  assignedRole?: 'CREATOR' | 'ADMIN' | 'MEMBER' | 'VIEWER';
   status: JoinRequestStatus;
   createdAt: number;
   updatedAt: number;

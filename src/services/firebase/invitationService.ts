@@ -156,6 +156,31 @@ export async function validateInvitationCode(
   if (foundInvitation && !foundTrip) {
     const localTrips = await getLocalTrips();
     foundTrip = localTrips.find((t) => t.id === foundInvitation!.tripId) || null;
+
+    if (!foundTrip) {
+      foundTrip = {
+        id: foundInvitation.tripId,
+        title: foundInvitation.tripTitle,
+        baseCurrency: 'INR',
+        createdBy: foundInvitation.createdBy,
+        members: [
+          {
+            id: foundInvitation.createdBy,
+            userId: foundInvitation.createdBy,
+            name: foundInvitation.createdByName,
+            role: 'CREATOR',
+            totalPaid: 0,
+            totalShare: 0,
+            netBalance: 0,
+            joinedAt: foundInvitation.createdAt,
+          },
+        ],
+        memberIds: [foundInvitation.createdBy],
+        totalSpend: 0,
+        createdAt: foundInvitation.createdAt,
+        updatedAt: foundInvitation.createdAt,
+      };
+    }
   }
 
   if (!foundInvitation || !foundTrip) {

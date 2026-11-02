@@ -328,8 +328,11 @@ export default function TripMembersScreen() {
 
                     <View style={styles.requestInfoCol}>
                       <Text style={styles.requestName}>{req.applicantName}</Text>
+                      {req.applicantPhone ? (
+                        <Text style={styles.requestSub}>📱 {req.applicantPhone}</Text>
+                      ) : null}
                       {req.applicantEmail ? (
-                        <Text style={styles.requestSub}>{req.applicantEmail}</Text>
+                        <Text style={styles.requestSub}>✉️ {req.applicantEmail}</Text>
                       ) : null}
                       {req.applicantUpiId ? (
                         <Text style={styles.requestSub}>UPI: {req.applicantUpiId}</Text>

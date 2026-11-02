@@ -13,6 +13,11 @@ import { useTrips } from '../src/context/TripContext';
 import { TopAppBar } from '../src/components/common/TopAppBar';
 import { AppNotification, NotificationType } from '../src/types/notification';
 import { isSoundEnabled, setSoundEnabled } from '../src/services/audio/soundService';
+import {
+  checkNotificationPermissions,
+  requestNotificationPermissions,
+  sendPhoneNotification,
+} from '../src/services/notifications/deviceNotificationService';
 import { M3Colors } from '../src/theme/colors';
 import { M3Typography } from '../src/theme/typography';
 import { M3Shapes } from '../src/theme/shapes';
@@ -28,9 +33,11 @@ export default function NotificationsScreen() {
   } = useTrips();
 
   const [soundOn, setSoundOn] = useState<boolean>(true);
+  const [deviceNotifGranted, setDeviceNotifGranted] = useState<boolean>(true);
 
   useEffect(() => {
     isSoundEnabled().then((enabled) => setSoundOn(enabled));
+    checkNotificationPermissions().then((granted) => setDeviceNotifGranted(granted));
   }, []);
 
   const handleToggleSound = async () => {
@@ -40,6 +47,26 @@ export default function NotificationsScreen() {
     if (next) {
       playNotificationSound();
     }
+  };
+
+  const handleRequestPhonePermissions = async () => {
+    const granted = await requestNotificationPermissions();
+    setDeviceNotifGranted(granted);
+    if (granted) {
+      await sendPhoneNotification({
+        title: 'TripSplit Alerts Enabled',
+        body: 'You will now receive instant phone notifications with default sound.',
+      });
+      playNotificationSound().catch(() => {});
+    }
+  };
+
+  const handleSendTestPhoneNotification = async () => {
+    await sendPhoneNotification({
+      title: 'TripSplit Settlement Alert',
+      body: 'This is a test notification with phone system sound!',
+    });
+    playNotificationSound().catch(() => {});
   };
 
   const getNotificationIcon = (type: NotificationType) => {
@@ -154,6 +181,57 @@ export default function NotificationsScreen() {
                 {soundOn ? 'ON' : 'OFF'}
               </Text>
             </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Device Phone Notification Card */}
+        <View style={styles.soundCard}>
+          <View style={styles.soundCardLeft}>
+            <View
+              style={[
+                styles.soundCardIconCircle,
+                { backgroundColor: deviceNotifGranted ? '#E8F5E9' : '#FFF3E0' },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={deviceNotifGranted ? 'cellphone-check' : 'phone-alert'}
+                size={22}
+                color={deviceNotifGranted ? '#2E7D32' : '#E65100'}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.soundCardTitle}>Phone System Alerts</Text>
+              <Text style={styles.soundCardSubtitle}>
+                {deviceNotifGranted
+                  ? 'Active: Reaches phone with system sound'
+                  : 'Disabled: Enable access for device push alerts'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.soundCardRight}>
+            {deviceNotifGranted ? (
+              <TouchableOpacity
+                onPress={handleSendTestPhoneNotification}
+                style={styles.testChimeBtn}
+                activeOpacity={0.7}
+                accessibilityLabel="Test phone push notification"
+              >
+                <MaterialCommunityIcons name="send" size={14} color={M3Colors.primary} />
+                <Text style={styles.testChimeText}>Test Alert</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={handleRequestPhonePermissions}
+                style={[styles.toggleBtn, styles.toggleBtnActive]}
+                activeOpacity={0.8}
+                accessibilityLabel="Enable phone system notifications"
+              >
+                <Text style={[styles.toggleBtnText, styles.toggleBtnTextActive]}>
+                  Enable
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 

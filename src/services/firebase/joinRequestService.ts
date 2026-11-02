@@ -20,9 +20,11 @@ import {
   saveLocalTrip,
   getLocalTrips,
 } from '../storage/localDatabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addMemberToTrip, updateTripInFirestore } from './tripService';
 import { logActivityInFirestore } from './activityService';
 import { createNotificationInFirestore } from './notificationService';
+import { sendPhoneNotification } from '../notifications/deviceNotificationService';
 
 const JOIN_REQUESTS_COLLECTION = 'joinRequests';
 const TRIPS_COLLECTION = 'trips';
@@ -140,6 +142,15 @@ export async function submitJoinRequest(params: {
   const trip = localTrips.find((t) => t.id === tripId);
   if (trip) {
     tripCreatorUid = trip.createdBy;
+  } else if (isFirebaseConfigured) {
+    try {
+      const tripSnap = await getDoc(doc(db, TRIPS_COLLECTION, tripId));
+      if (tripSnap.exists()) {
+        tripCreatorUid = tripSnap.data()?.createdBy || '';
+      }
+    } catch (err) {
+      console.warn('Failed to fetch trip creator from Firestore:', err);
+    }
   }
 
   if (tripCreatorUid) {
@@ -150,11 +161,208 @@ export async function submitJoinRequest(params: {
       type: 'JOIN_REQUEST_RECEIVED',
       title: 'New Join Request',
       message: `${applicantName} has requested to join "${tripTitle}". Tap to approve or reject.`,
-      data: { requestId, applicantName, applicantUserId },
+      data: { requestId, applicantName, applicantUserId, applicantPhone },
     });
   }
 
   return newRequest;
+}
+
+/**
+ * Directly joins a trip using a verified invitation code.
+ * Adds the member directly to the trip in Firestore & local DB without an approval blocking page,
+ * saves the invitation code in AsyncStorage, sends device notification with default sound,
+ * and records an approved join entry so the administrator can manage/view them in the group.
+ */
+export async function joinTripWithInvitationCode(params: {
+  tripId: string;
+  tripTitle: string;
+  invitationCode: string;
+  applicantName: string;
+  applicantPhone?: string;
+  applicantEmail?: string;
+  applicantUpiId?: string;
+  applicantUserId?: string;
+}): Promise<{ trip: Trip; member: TripMember }> {
+  const {
+    tripId,
+    tripTitle,
+    invitationCode,
+    applicantName,
+    applicantPhone,
+    applicantEmail,
+    applicantUpiId,
+    applicantUserId,
+  } = params;
+
+  // 1. Fetch current trip
+  let trip: Trip | null = null;
+  if (isFirebaseConfigured) {
+    try {
+      const tripRef = doc(db, TRIPS_COLLECTION, tripId);
+      const snap = await getDoc(tripRef);
+      if (snap.exists()) {
+        trip = snap.data() as Trip;
+      }
+    } catch (err) {
+      console.warn('Firestore trip fetch notice, trying local:', err);
+    }
+  }
+
+  if (!trip) {
+    const localTrips = await getLocalTrips();
+    trip = localTrips.find((t) => t.id === tripId) || null;
+  }
+
+  if (!trip) {
+    // Construct minimal fallback if necessary
+    trip = {
+      id: tripId,
+      title: tripTitle,
+      baseCurrency: 'INR',
+      createdBy: 'admin',
+      members: [],
+      memberIds: [],
+      totalSpend: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+  }
+
+  // 2. Generate clean member identifier
+  const cleanPhone = applicantPhone ? applicantPhone.replace(/[^0-9]/g, '') : '';
+  const memberId =
+    applicantUserId ||
+    (cleanPhone ? `phone_${cleanPhone}` : `member_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`);
+
+  // Check if already a member
+  const existingMember = trip.members.find(
+    (m) =>
+      (m.userId && m.userId === memberId) ||
+      m.id === memberId ||
+      (cleanPhone && m.email === cleanPhone) ||
+      (m.name.toLowerCase() === applicantName.toLowerCase() && (m.upiId === applicantUpiId || m.email === applicantEmail))
+  );
+
+  let updatedMembers = [...trip.members];
+  let updatedMemberIds = [...(trip.memberIds || [])];
+  let memberObj: TripMember;
+
+  if (existingMember) {
+    memberObj = existingMember;
+  } else {
+    memberObj = {
+      id: memberId,
+      userId: applicantUserId,
+      name: applicantName.trim(),
+      role: 'MEMBER',
+      email: applicantEmail?.trim() || (cleanPhone ? applicantPhone : undefined),
+      upiId: applicantUpiId?.trim() || undefined,
+      totalPaid: 0,
+      totalShare: 0,
+      netBalance: 0,
+      joinedAt: Date.now(),
+    };
+    updatedMembers.push(memberObj);
+    if (!updatedMemberIds.includes(memberId)) {
+      updatedMemberIds.push(memberId);
+    }
+  }
+
+  const updatedTrip: Trip = {
+    ...trip,
+    members: updatedMembers,
+    memberIds: updatedMemberIds,
+    updatedAt: Date.now(),
+  };
+
+  // 3. Save trip locally and in Firestore
+  await saveLocalTrip(updatedTrip);
+
+  if (isFirebaseConfigured) {
+    try {
+      const tripRef = doc(db, TRIPS_COLLECTION, tripId);
+      await setDoc(tripRef, sanitizeForFirestore(updatedTrip), { merge: true });
+    } catch (err) {
+      console.warn('Failed to update trip members in Firestore:', err);
+    }
+  }
+
+  // 4. Record approved join request for admin visibility in Members / Join Requests tab
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  const joinRecord: JoinRequest = {
+    id: requestId,
+    tripId,
+    tripTitle,
+    invitationCode,
+    applicantUserId: applicantUserId || memberId,
+    applicantName: applicantName.trim(),
+    applicantEmail: applicantEmail?.trim() || undefined,
+    applicantPhone: applicantPhone?.trim() || undefined,
+    applicantUpiId: applicantUpiId?.trim() || undefined,
+    status: 'APPROVED',
+    assignedRole: 'MEMBER',
+    reviewedBy: trip.createdBy,
+    reviewedByName: 'Invite Code Joined',
+    reviewedAt: Date.now(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+
+  await saveLocalJoinRequest(joinRecord);
+
+  if (isFirebaseConfigured) {
+    try {
+      const reqRef = doc(db, JOIN_REQUESTS_COLLECTION, requestId);
+      await setDoc(reqRef, sanitizeForFirestore(joinRecord));
+    } catch (err) {
+      console.warn('Failed to save join record in Firestore:', err);
+    }
+  }
+
+  // 5. Log activity
+  await logActivityInFirestore({
+    id: `act_${Date.now()}`,
+    tripId,
+    tripTitle,
+    userId: applicantUserId || memberId,
+    userName: applicantName,
+    action: 'MEMBER_ADDED',
+    details: `${applicantName}${cleanPhone ? ` (${cleanPhone})` : ''} joined "${tripTitle}" via code ${invitationCode}`,
+    timestamp: Date.now(),
+  });
+
+  // 6. Notify group creator / admin in Firestore
+  if (trip.createdBy) {
+    await createNotificationInFirestore({
+      userId: trip.createdBy,
+      tripId,
+      tripTitle,
+      type: 'JOIN_REQUEST_APPROVED',
+      title: 'New Member Joined!',
+      message: `${applicantName}${applicantPhone ? ` (${applicantPhone})` : ''} joined "${tripTitle}" using invitation code.`,
+      data: { requestId, applicantName, applicantPhone, applicantUserId: memberId },
+    });
+  }
+
+  // 7. Save invitation code and trip to AsyncStorage so new user is never asked again
+  try {
+    await AsyncStorage.setItem('@tripsplit_saved_invitation_code', invitationCode);
+    await AsyncStorage.setItem('@tripsplit_last_joined_trip_id', tripId);
+    await AsyncStorage.setItem('@tripsplit_active_member_id', memberId);
+    await AsyncStorage.setItem('@tripsplit_active_member_name', applicantName);
+  } catch (err) {
+    console.warn('Failed to save invitation code to AsyncStorage:', err);
+  }
+
+  // 8. Trigger phone notification with default sound
+  await sendPhoneNotification({
+    title: `Joined ${tripTitle}!`,
+    body: `You are now a member of ${tripTitle}. All shared expenses are synced.`,
+    data: { tripId },
+  });
+
+  return { trip: updatedTrip, member: memberObj };
 }
 
 /**
