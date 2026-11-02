@@ -8,16 +8,19 @@ import { M3Shapes } from '../../theme/shapes';
 interface ExtendedFABProps {
   label: string;
   iconName?: any;
+  icon?: any;
   onPress: () => void;
   style?: object;
 }
 
 export const ExtendedFAB: React.FC<ExtendedFABProps> = ({
   label,
-  iconName = 'plus',
+  iconName,
+  icon = 'plus',
   onPress,
   style,
 }) => {
+  const activeIcon = iconName || icon;
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -26,7 +29,7 @@ export const ExtendedFAB: React.FC<ExtendedFABProps> = ({
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <MaterialCommunityIcons name={iconName} size={22} color={M3Colors.onPrimary} />
+      <MaterialCommunityIcons name={activeIcon} size={22} color={M3Colors.onPrimary} />
       <Text style={styles.label}>{label}</Text>
     </TouchableOpacity>
   );

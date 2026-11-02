@@ -40,7 +40,8 @@
         {
           "photosPermission": "Allow TripSplit to access photos for receipts and profile photos."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

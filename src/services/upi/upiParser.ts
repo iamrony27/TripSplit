@@ -83,3 +83,5 @@ export function parseUpiQrCode(qrData: string): ParsedUpiData {
 
   return fallback;
 }
+
+export const parseUpiUri = parseUpiQrCode;

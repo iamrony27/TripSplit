@@ -10,6 +10,8 @@ export const M3Shapes = {
   // Large (Trip cards, Hero modules)
   cardLarge: 24,
   card: 16,
+  cardMedium: 16,
+  cardSmall: 12,
 
   // Medium (Inputs, segments)
   input: 12,
