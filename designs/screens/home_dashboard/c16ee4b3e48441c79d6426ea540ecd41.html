@@ -1,0 +1,294 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><title>TripSplit</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-variant": "#dce5dd", "surface-dim": "#d3dcd5", "surface-container": "#e7f0e9", "error-container": "#ffdad6", "tertiary-fixed-dim": "#85d2e0", "on-primary": "#ffffff", "on-secondary-fixed-variant": "#4f378a", "secondary": "#6750a4", "surface": "#f3fcf4", "inverse-surface": "#2a322d", "primary-container": "#006c4c", "on-tertiary-fixed": "#001f24", "tertiary": "#004e58", "secondary-fixed": "#e9ddff", "on-primary-fixed-variant": "#005138", "surface-container-low": "#edf6ee", "primary-fixed-dim": "#81d7b0", "background": "#f3fcf4", "primary-fixed": "#9df4cb", "surface-container-highest": "#dce5dd", "secondary-container": "#bba2fd", "tertiary-container": "#006874", "inverse-on-surface": "#eaf3ec", "on-tertiary-fixed-variant": "#004f58", "on-secondary-fixed": "#22005d", "on-secondary": "#ffffff", "on-error-container": "#93000a", "error": "#ba1a1a", "on-tertiary-container": "#97e4f2", "on-secondary-container": "#4b3486", "tertiary-fixed": "#a2effd", "inverse-primary": "#81d7b0", "on-primary-fixed": "#002114", "surface-bright": "#f3fcf4", "secondary-fixed-dim": "#cfbcff", "on-background": "#151d19", "on-surface": "#151d19", "on-primary-container": "#93eac2", "outline-variant": "#bec9c1", "on-surface-variant": "#3f4943", "on-error": "#ffffff", "outline": "#6f7a73", "surface-tint": "#006c4c", "primary": "#005138", "surface-container-lowest": "#ffffff", "surface-container-high": "#e1eae3", "on-tertiary": "#ffffff" }, "borderRadius": { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" }, "spacing": { "space-lg": "1.5rem", "space-xl": "2rem", "space-md": "1rem", "margin": "1rem", "gutter": "1rem", "space-xs": "0.25rem", "space-sm": "0.5rem" }, "fontFamily": { "headline-sm": ["Roboto Flex"], "label-md": ["Roboto Flex"], "label-sm": ["Roboto Flex"], "title-sm": ["Roboto Flex"], "title-lg": ["Roboto Flex"], "headline-md": ["Roboto Flex"], "body-sm": ["Roboto Flex"], "body-lg": ["Roboto Flex"], "label-lg": ["Roboto Flex"], "headline-lg": ["Roboto Flex"], "display-md": ["Roboto Flex"], "display-lg-mobile": ["Roboto Flex"], "display-sm": ["Roboto Flex"], "title-md": ["Roboto Flex"], "body-md": ["Roboto Flex"], "display-lg": ["Roboto Flex"] }, "fontSize": { "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}], "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600"}], "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600"}], "title-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600"}], "title-lg": ["22px", {"lineHeight": "28px", "fontWeight": "500"}], "headline-md": ["28px", {"lineHeight": "36px", "fontWeight": "500"}], "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.4px", "fontWeight": "400"}], "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.5px", "fontWeight": "400"}], "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600"}], "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "500"}], "display-md": ["45px", {"lineHeight": "52px", "fontWeight": "400"}], "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.2px", "fontWeight": "500"}], "display-sm": ["36px", {"lineHeight": "44px", "fontWeight": "400"}], "title-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "600"}], "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400"}], "display-lg": ["57px", {"lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "400"}] } } } }</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}.nav-active .indicator{background-color:#9df4cb;color:#002114;width:64px;border-radius:9999px;}.nav-active span:last-child{color:#002114;font-weight:700;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-6 px-margin flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm"><span class="tracking-tight font-medium">9:41</span><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px]">signal_cellular_alt</span><span class="material-symbols-outlined text-[14px]">wifi</span><span class="material-symbols-outlined text-[14px]">battery_full</span></div></div><div class="h-14 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0 flex-1"><img alt="TripSplit App Icon" class="h-8 w-8 rounded-lg object-contain flex-shrink-0 shadow-sm" src="https://lh3.googleusercontent.com/aida/AEtjO1UlZuUIbJAAMU4nnVtg72keNcLuuMh4t0rfJ84x0BX5teZ-8EzidfdaUdU73HJ9je33NwngQhCIkihjYPwRmGmpuPS7MX62tA3RgReu3WV3feYrADGragxPLOH5NlY0EG5oOO2kXxHfnpecZuB98a2ZzZpy3MGfD4KFMWMhbC5hBxxwmfZDh5Gq-B0_6CJIXE-3bhux6jZgUaIE4_J5-3RWx8sPsAo0IqP7hmGU4fy0"><div class="flex flex-col min-w-0"><span class="font-title-sm text-title-sm text-primary tracking-tight leading-none truncate">TripSplit</span><span class="font-title-lg text-title-lg text-on-surface tracking-tight leading-tight truncate">Home</span></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Notifications" class="w-11 h-11 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[24px]">notifications</span></button><div class="w-11 h-11 rounded-full flex items-center justify-center"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary-fixed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfDpzC9JwT02mh-C9mtIfPc0KuecNGG03_QGgh_VESN1acHysIX2wqSXTeYBWmF5XLy3nU_CtCNQVw2K-42H5DcWliVpRYXU10iQG_XBengg7xaNcjHp4bvYuigz3NPxEKR0hGkmqmiNxGg0saoJol8-shFMjtICi0pFg45szz-egqG0iTFJrRIms8tGdxNSISn3bH2MasuMqG4MejLOqVH8_Md13lrJyap5V72vE"></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-20 pb-24 bg-surface"><div class="flex flex-col w-full pb-6 space-y-space-lg">
+<!-- Top Welcome Banner -->
+<section class="px-margin flex flex-col space-y-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<h1 class="font-headline-sm text-headline-sm text-on-surface">Hello, Sarah</h1>
+<span class="text-2xl animate-bounce">👋</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-high px-3 py-1 rounded-full text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="">All Good</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">You are all settled up for 2 trips this month.</p>
+</section>
+<!-- Financial Summary Cards -->
+<section class="w-full">
+<div class="flex items-center justify-between px-margin mb-space-sm">
+<span class="font-title-sm text-title-sm text-on-surface-variant tracking-wide uppercase">Overview</span>
+<span class="font-label-sm text-label-sm text-primary font-semibold">INR (₹)</span>
+</div>
+<div class="flex gap-space-md overflow-x-auto px-margin no-scrollbar snap-x snap-mandatory">
+<!-- Total Spent Card -->
+<div class="flex-shrink-0 w-64 snap-start rounded-lg bg-surface-container p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 w-24 h-24 bg-primary-fixed/20 rounded-full blur-xl pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant">Total Spent</span>
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">₹24,850</div>
+<div class="flex items-center gap-1 mt-1 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px] text-primary">trending_up</span>
+<span class="">Across 4 group trips</span>
+</div>
+</div>
+</div>
+<!-- You Owe Card -->
+<div class="flex-shrink-0 w-64 snap-start rounded-lg bg-error-container p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-error-container">You Owe</span>
+<div class="w-8 h-8 rounded-full bg-error/10 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-[18px]">arrow_outward</span>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="font-headline-md text-headline-md text-on-error-container font-semibold tracking-tight">₹1,420</div>
+<div class="flex items-center gap-1 mt-1 text-on-error-container/80 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="">Pay back to Rohan &amp; Maya</span>
+</div>
+</div>
+</div>
+<!-- You are Owed Card -->
+<div class="flex-shrink-0 w-64 snap-start rounded-lg bg-primary-fixed p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-md text-label-md text-on-primary-fixed">You are Owed</span>
+<span class="bg-primary px-2 py-0.5 rounded-full font-label-sm text-label-sm text-on-primary">2 pending</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">call_received</span>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="font-headline-md text-headline-md text-on-primary-fixed font-semibold tracking-tight">₹3,890</div>
+<div class="flex items-center gap-1 mt-1 text-on-primary-fixed/80 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">volunteer_activism</span>
+<span class="">From Manali road trip</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Quick Actions Row -->
+<section class="px-margin flex flex-col space-y-space-sm">
+<span class="font-title-sm text-title-sm text-on-surface-variant tracking-wide uppercase">Actions</span>
+<div class="grid grid-cols-4 gap-space-sm">
+<button class="flex flex-col items-center gap-space-xs group active:scale-95 transition-transform">
+<div class="w-14 h-14 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center shadow-sm group-hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-[26px]">add_location_alt</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface text-center">New Trip</span>
+</button>
+<button class="flex flex-col items-center gap-space-xs group active:scale-95 transition-transform">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-high text-on-surface flex items-center justify-center shadow-sm group-hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-[26px]">qr_code_scanner</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface text-center">Join Trip</span>
+</button>
+<button class="flex flex-col items-center gap-space-xs group active:scale-95 transition-transform">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-high text-on-surface flex items-center justify-center shadow-sm group-hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-[26px]">receipt_long</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface text-center">Add Bill</span>
+</button>
+<button class="flex flex-col items-center gap-space-xs group active:scale-95 transition-transform">
+<div class="w-14 h-14 rounded-2xl bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shadow-sm group-hover:bg-secondary-fixed-dim transition-colors">
+<span class="material-symbols-outlined text-[26px]">currency_exchange</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface text-center">Settle Up</span>
+</button>
+</div>
+</section>
+<!-- Active Trips Section -->
+<section class="px-margin flex flex-col space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<h2 class="font-title-lg text-title-lg text-on-surface">Active Trips</h2>
+<span class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-2 py-0.5 rounded-full">2</span>
+</div>
+<button class="text-primary font-label-lg text-label-lg flex items-center">
+<span class="">View all</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+<!-- Trip 1: Goa Beach Holiday -->
+<div class="rounded-lg bg-surface-container-low p-space-md flex flex-col space-y-space-md shadow-sm active:bg-surface-container transition-colors">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 rounded-2xl overflow-hidden bg-surface-variant flex-shrink-0 relative">
+<img class="w-full h-full object-cover" data-alt="A sunny tropical beach in Goa with soft pastel turquoise ocean waves gentle golden sand and distant coconut palm trees bathed in serene morning light, minimalist aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgHFhklxNfnfRtJMbeRhfYPg6n-QPh95W1rOjO0Q2vrI8TJhzBAzloMHsF4UOjc3iN6jyk93nHXD1BFYZkt3o5cKQ98E5F26uImSFjYEdhjAx1IMFbhgjyO_rCSckxzTfl1ge35XMnS2NJvmnv-nfkZPLqz5MQyz-F-6l5zHWXhbMD_CCw3x6EHZSShzJFp6oWQLij6VpOQbD8H98ONaqle6bugAN05Fb_VZTPFlQ">
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-title-md text-title-md text-on-surface">Goa Beach Holiday</span>
+<span class="text-base">🌴</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Oct 12 - 16 • 6 travelers</span>
+</div>
+</div>
+<span class="bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm px-2.5 py-1 rounded-full uppercase tracking-wider">Active</span>
+</div>
+<!-- Member Avatar Stack & Total Spent -->
+<div class="flex items-center justify-between pt-space-xs border-0 bg-surface-container/60 rounded-xl p-3">
+<div class="flex items-center">
+<div class="flex -space-x-2 overflow-hidden">
+<img class="inline-block h-7 w-7 rounded-full object-cover" data-alt="Close up profile picture of a young smiling woman in natural light outdoors, modern soft tone portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWRixFl0NuR6v1LL6hG_rpgmsrfTmbxcsGShBcRfKjxwhr0WeO-uJpun0fEeilxYUcO5I86A96hJ6z0ddrfjmMZ0Sorhe7Ha9YYCn5ZI2jmLRrJ4_77eygmUJ7YamGWKymJsgcPTQZrDT5IOgpjvTAoQXOCfO6Mh9cdjMXgUbdLCQ4a7x_nOj9YtTDt-ZUhAuV0kiy2USg58QgSPtUe0KlF9o76uKcvAtAGwpQy-s">
+<img class="inline-block h-7 w-7 rounded-full object-cover" data-alt="Close up portrait photograph of an adventurous young man wearing sunglasses, soft golden hour lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRvF47CqgAQC5rw5vH6CWYNzR3zRm04-5PDp-8hokONiOuzWlMlH27wkqzoIu7CBIIpWo7WU3Sp5hHgBPwsJaWXzK9DZRthFCVU8vY-CwiMau0iTt6RIeLlC29PhB53zKmiJHIWGT416WO1inLQDPZMlZlb7Gax0f3lnYp5FDpxUPzf1Phgu4gMe7At1UgiPqaqdGZGzXJ56kmp-HdONPGRQ_7IGXw0nkpo5XpA04">
+<img class="inline-block h-7 w-7 rounded-full object-cover" data-alt="Candid portrait of a smiling Indian woman wearing a hat outdoors, modern warm pastel style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-E7t0vDTkOz8TcD-q-K2EwuBTmutZgyOnHxeqnBUpJ4eTYsvxjCx8LrZ1dkAoz6VtumEngcy-0GHBoF2ozMkHoIBdyx1eYAG56nX9JmqeteYByLwfSkjpZ7vD63jqZYxwQxKedNRIZBBfRxpmXay05NfU9K538rXMttU1wlK3alHmUosrKkHUwoRLy_WCyYVaCDtEtZ-wvXbah4YRWnC2y_x3aKd7gK7n8lfCIGk">
+<div class="h-7 w-7 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-label-sm text-label-sm font-bold">+3</div>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total Group Spent</span>
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">₹42,100</span>
+</div>
+</div>
+<!-- Split Detail Breakdown -->
+<div class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm px-1">
+<span class="">Your share: <strong class="text-on-surface font-title-sm text-title-sm">₹7,200</strong></span>
+<span class="text-error font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">priority_high</span> You owe ₹1,420
+        </span>
+</div>
+</div>
+<!-- Trip 2: Manali Roadtrip -->
+<div class="rounded-lg bg-surface-container-low p-space-md flex flex-col space-y-space-md shadow-sm active:bg-surface-container transition-colors">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 rounded-2xl overflow-hidden bg-surface-variant flex-shrink-0 relative">
+<img class="w-full h-full object-cover" data-alt="Scenic snowy mountain pass in Manali Himalayas with a winding alpine road surrounded by misty pine trees during a clear crisp morning, muted cool greens and white tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCPkzyr-hr3Dvz7_ubcGRlue9Huy0QHC4K7ZAJhXE8eW6_XoURso6FqSKWhYo47smmepTB3E6A1L5y0h6BNLCIavEQdWbSluOUcp1Cft1mWnzVaZz5w6UR8OVw2IdHRh3_1NkE_wDV-_8Bb3jFG9YAQf_hBzjmyNo1Q0LFhsRmLB6ybOE6pbbfmx2t2KJAQZd8VycQi2Tt_ZygcGnovc0WgNVqwVWrgbPH6Z5W6LQ">
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-title-md text-title-md text-on-surface">Manali Roadtrip</span>
+<span class="text-base">🏔️</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Nov 02 - 06 • 4 travelers</span>
+</div>
+</div>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-2.5 py-1 rounded-full uppercase tracking-wider">Upcoming</span>
+</div>
+<!-- Member Avatar Stack & Total Spent -->
+<div class="flex items-center justify-between pt-space-xs border-0 bg-surface-container/60 rounded-xl p-3">
+<div class="flex items-center">
+<div class="flex -space-x-2 overflow-hidden">
+<img class="inline-block h-7 w-7 rounded-full object-cover" data-alt="Studio avatar photo of a cheerful young man with curly hair and denim jacket, warm natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7xx8FbzBCTG70GgatXCeu5xz8vx2zxni6KF5-PYSrMd8EcwGKqiB4R9NOWl-8jmt_Qe1AK7rGg5ZtYhQ_GuKUt5eCo7IoOL2dy80wbdRCXX2H4_nuB_3QuIadZ88_tJDYG4RgZmfCkIyCqBPFmbI35-yZ956kCv_TFCcQGi1QcUznEWqcxLLsuG8TNImYGezWLz0bHIuQilA5CGP2DPfFrXxsAIVFdg_Fw-F041c">
+<img class="inline-block h-7 w-7 rounded-full object-cover" data-alt="Vibrant portrait headshot of a smiling woman with glasses, light mint green aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6o8dMwlaW2a6OmkUc2I3Kuf4XLe-ZuOD8XgI33spcMCquxwLrvP4l-t59OdIR8ja2vo59UCTphQ9A1nIvfyctp61ASVrNNKCV5b3g3sE427B7f_gTXcAQFUjO0rzVlYp7Mc5oytoxJYzwIyNuYNjO03_Zp3v7fS2Uo875TjPlk8H9vJoTlTeQhopygAINIvtrDEhrh-w4_LxrhoGrXYF8jNDMaL7UVTuOK4xI0kc">
+<div class="h-7 w-7 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-label-sm text-label-sm font-bold">+2</div>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total Group Spent</span>
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">₹18,400</span>
+</div>
+</div>
+<!-- Split Detail Breakdown -->
+<div class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm px-1">
+<span class="">Advance bookings done</span>
+<span class="text-primary font-medium flex items-center gap-1 bg-primary-fixed/40 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span> +₹1,850 you get back
+        </span>
+</div>
+</div>
+</section>
+<!-- Recent Activities List -->
+<section class="px-margin flex flex-col space-y-space-sm pb-10">
+<div class="flex items-center justify-between">
+<h2 class="font-title-lg text-title-lg text-on-surface">Recent Activity</h2>
+<button class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors">Clear filter</button>
+</div>
+<div class="flex flex-col space-y-2">
+<!-- Activity 1: Food -->
+<div class="flex items-center justify-between p-space-md rounded-2xl bg-surface-container-low shadow-sm">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-11 h-11 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]">restaurant</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface truncate">Seafood Dinner at Curlies</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Goa Beach Holiday • Paid by Aryan</span>
+</div>
+</div>
+<div class="flex flex-col items-end flex-shrink-0 ml-2">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">₹3,450</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">2h ago</span>
+</div>
+</div>
+<!-- Activity 2: Fuel -->
+<div class="flex items-center justify-between p-space-md rounded-2xl bg-surface-container-low shadow-sm">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-11 h-11 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]">local_gas_station</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface truncate">Highway Petrol Pump</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Manali Roadtrip • Paid by You</span>
+</div>
+</div>
+<div class="flex flex-col items-end flex-shrink-0 ml-2">
+<span class="font-title-sm text-title-sm text-primary font-semibold">+₹1,850</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Yesterday</span>
+</div>
+</div>
+<!-- Activity 3: Hotel -->
+<div class="flex items-center justify-between p-space-md rounded-2xl bg-surface-container-low shadow-sm">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-11 h-11 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]">hotel</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface truncate">Boutique Villa Stay</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Goa Beach Holiday • Split 6 ways</span>
+</div>
+</div>
+<div class="flex flex-col items-end flex-shrink-0 ml-2">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">₹18,000</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">2 days ago</span>
+</div>
+</div>
+<!-- Activity 4: Payment Received -->
+<div class="flex items-center justify-between p-space-md rounded-2xl bg-surface-container-low shadow-sm">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-11 h-11 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface truncate">Payment from Kabir</span>
+<span class="font-body-sm text-body-sm text-primary truncate">UPI Settlement received</span>
+</div>
+</div>
+<div class="flex flex-col items-end flex-shrink-0 ml-2">
+<span class="font-title-sm text-title-sm text-primary font-semibold">₹1,200</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Oct 14</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Extended Floating Action Button (anchored bottom right) -->
+<div class="fixed bottom-24 right-4 z-40">
+<button class="h-14 px-5 rounded-full bg-primary text-on-primary shadow-xl flex items-center gap-2 active:scale-95 transition-all duration-200" id="addExpenseBtn">
+<span class="material-symbols-outlined text-[24px]">add</span>
+<span class="font-label-lg text-label-lg tracking-wide">Add Expense</span>
+</button>
+</div>
+</div>
+<script>
+  // Simple micro-interaction for button click
+  const fabBtn = document.getElementById('addExpenseBtn');
+  if (fabBtn) {
+    fabBtn.addEventListener('click', () => {
+      fabBtn.classList.add('scale-90');
+      setTimeout(() => {
+        fabBtn.classList.remove('scale-90');
+      }, 150);
+    });
+  }
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface-container-low/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.05)]" data-active-classes="nav-active"><div class="flex items-center justify-around h-20 px-space-xs"><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] h-14 group transition-all text-on-surface-variant nav-active" data-path="home" href="#"><div class="indicator flex items-center justify-center h-8 w-12 transition-all"><span class="material-symbols-outlined text-[24px]">home</span></div><span class="font-label-md text-label-md mt-0.5">Home</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-14 group transition-all text-on-surface-variant" data-path="trips" href="#"><div class="indicator flex items-center justify-center h-8 w-12 transition-all"><span class="material-symbols-outlined text-[24px]">travel_explore</span></div><span class="font-label-md text-label-md mt-0.5">My Trips</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-14 group transition-all text-on-surface-variant" data-path="analytics" href="#"><div class="indicator flex items-center justify-center h-8 w-12 transition-all"><span class="material-symbols-outlined text-[24px]">insights</span></div><span class="font-label-md text-label-md mt-0.5">Analytics</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-14 group transition-all text-on-surface-variant" data-path="activity" href="#"><div class="indicator flex items-center justify-center h-8 w-12 transition-all"><span class="material-symbols-outlined text-[24px]">history</span></div><span class="font-label-md text-label-md mt-0.5">Activity</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-14 group transition-all text-on-surface-variant" data-path="profile" href="#"><div class="indicator flex items-center justify-center h-8 w-12 transition-all"><span class="material-symbols-outlined text-[24px]">account_circle</span></div><span class="font-label-md text-label-md mt-0.5">Profile</span></a></div></nav>
+
+</body></html>

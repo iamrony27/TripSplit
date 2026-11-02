@@ -1,0 +1,395 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_stack" name="shell-type"><title>TripSplit</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-variant": "#dce5dd", "surface-dim": "#d3dcd5", "surface-container": "#e7f0e9", "error-container": "#ffdad6", "tertiary-fixed-dim": "#85d2e0", "on-primary": "#ffffff", "on-secondary-fixed-variant": "#4f378a", "secondary": "#6750a4", "surface": "#f3fcf4", "inverse-surface": "#2a322d", "primary-container": "#006c4c", "on-tertiary-fixed": "#001f24", "tertiary": "#004e58", "secondary-fixed": "#e9ddff", "on-primary-fixed-variant": "#005138", "surface-container-low": "#edf6ee", "primary-fixed-dim": "#81d7b0", "background": "#f3fcf4", "primary-fixed": "#9df4cb", "surface-container-highest": "#dce5dd", "secondary-container": "#bba2fd", "tertiary-container": "#006874", "inverse-on-surface": "#eaf3ec", "on-tertiary-fixed-variant": "#004f58", "on-secondary-fixed": "#22005d", "on-secondary": "#ffffff", "on-error-container": "#93000a", "error": "#ba1a1a", "on-tertiary-container": "#97e4f2", "on-secondary-container": "#4b3486", "tertiary-fixed": "#a2effd", "inverse-primary": "#81d7b0", "on-primary-fixed": "#002114", "surface-bright": "#f3fcf4", "secondary-fixed-dim": "#cfbcff", "on-background": "#151d19", "on-surface": "#151d19", "on-primary-container": "#93eac2", "outline-variant": "#bec9c1", "on-surface-variant": "#3f4943", "on-error": "#ffffff", "outline": "#6f7a73", "surface-tint": "#006c4c", "primary": "#005138", "surface-container-lowest": "#ffffff", "surface-container-high": "#e1eae3", "on-tertiary": "#ffffff" }, "borderRadius": { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" }, "spacing": { "space-lg": "1.5rem", "space-xl": "2rem", "space-md": "1rem", "margin": "1rem", "gutter": "1rem", "space-xs": "0.25rem", "space-sm": "0.5rem" }, "fontFamily": { "headline-sm": ["Roboto Flex"], "label-md": ["Roboto Flex"], "label-sm": ["Roboto Flex"], "title-sm": ["Roboto Flex"], "title-lg": ["Roboto Flex"], "headline-md": ["Roboto Flex"], "body-sm": ["Roboto Flex"], "body-lg": ["Roboto Flex"], "label-lg": ["Roboto Flex"], "headline-lg": ["Roboto Flex"], "display-md": ["Roboto Flex"], "display-lg-mobile": ["Roboto Flex"], "display-sm": ["Roboto Flex"], "title-md": ["Roboto Flex"], "body-md": ["Roboto Flex"], "display-lg": ["Roboto Flex"] }, "fontSize": { "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}], "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600"}], "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600"}], "title-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600"}], "title-lg": ["22px", {"lineHeight": "28px", "fontWeight": "500"}], "headline-md": ["28px", {"lineHeight": "36px", "fontWeight": "500"}], "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.4px", "fontWeight": "400"}], "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.5px", "fontWeight": "400"}], "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600"}], "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "500"}], "display-md": ["45px", {"lineHeight": "52px", "fontWeight": "400"}], "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.2px", "fontWeight": "500"}], "display-sm": ["36px", {"lineHeight": "44px", "fontWeight": "400"}], "title-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "600"}], "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400"}], "display-lg": ["57px", {"lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "400"}] } } } }</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-6 px-margin flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm"><span class="tracking-tight font-medium">9:41</span><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px]">signal_cellular_alt</span><span class="material-symbols-outlined text-[14px]">wifi</span><span class="material-symbols-outlined text-[14px]">battery_full</span></div></div><div class="h-14 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-1.5 min-w-0 flex-1"><button aria-label="Go back" class="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors flex-shrink-0" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><div class="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0 shadow-sm"><img alt="TripSplit Logo" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UlZuUIbJAAMU4nnVtg72keNcLuuMh4t0rfJ84x0BX5teZ-8EzidfdaUdU73HJ9je33NwngQhCIkihjYPwRmGmpuPS7MX62tA3RgReu3WV3feYrADGragxPLOH5NlY0EG5oOO2kXxHfnpecZuB98a2ZzZpy3MGfD4KFMWMhbC5hBxxwmfZDh5Gq-B0_6CJIXE-3bhux6jZgUaIE4_J5-3RWx8sPsAo0IqP7hmGU4fy0"></div><div class="min-w-0 flex-1 pl-1"><h1 class="font-title-lg text-title-lg text-on-surface tracking-tight whitespace-nowrap">Add Expense</h1></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Notifications" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-10 h-10 rounded-full flex items-center justify-center"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary-fixed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfDpzC9JwT02mh-C9mtIfPc0KuecNGG03_QGgh_VESN1acHysIX2wqSXTeYBWmF5XLy3nU_CtCNQVw2K-42H5DcWliVpRYXU10iQG_XBengg7xaNcjHp4bvYuigz3NPxEKR0hGkmqmiNxGg0saoJol8-shFMjtICi0pFg45szz-egqG0iTFJrRIms8tGdxNSISn3bH2MasuMqG4MejLOqVH8_Md13lrJyap5V72vE"></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-20 pb-safe bg-surface"><div class="flex flex-col w-full pb-32">
+<!-- Trip Context & Currency Row -->
+<div class="px-margin pt-space-sm pb-space-xs flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs bg-surface-container-high px-space-md py-space-xs rounded-full min-w-0">
+<span class="material-symbols-outlined text-primary text-[18px] flex-shrink-0" style="font-variation-settings: 'FILL' 1;">luggage</span>
+<span class="font-title-sm text-title-sm text-on-surface truncate">Goa Beach Holiday 🌴</span>
+</div>
+<!-- Currency Segmented Selector -->
+<div class="flex items-center bg-surface-container p-1 rounded-full shadow-sm flex-shrink-0" id="currency-group">
+<button class="curr-btn px-space-sm py-0.5 rounded-full font-label-md text-label-md bg-primary text-on-primary shadow-sm transition-all" onclick="selectCurrency('₹', this)" type="button">₹ INR</button>
+<button class="curr-btn px-space-sm py-0.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all" onclick="selectCurrency('$', this)" type="button">$ USD</button>
+<button class="curr-btn px-space-sm py-0.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all" onclick="selectCurrency('€', this)" type="button">€ EUR</button>
+</div>
+</div>
+<!-- Primary Expense Hero: Dynamic Display Amount -->
+<div class="px-margin pt-space-md pb-space-sm flex flex-col items-center justify-center">
+<div class="flex items-center justify-center gap-1 text-on-surface-variant font-label-md text-label-md tracking-wider uppercase mb-1">
+<span class="material-symbols-outlined text-[14px]">payments</span>
+      Total Expense
+    </div>
+<div class="relative flex items-baseline justify-center w-full">
+<span class="font-headline-md text-headline-md text-primary mr-1 select-none" id="currency-symbol">₹</span>
+<input aria-label="Expense amount" class="w-auto max-w-[280px] bg-transparent text-center font-display-md text-display-md text-on-surface font-medium focus:outline-none p-0 tracking-tight caret-primary selection:bg-primary-fixed" id="amount-input" inputmode="decimal" oninput="updateSplitCalc(this.value)" type="text" value="3,450.00">
+</div>
+<div class="mt-1 flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low px-space-sm py-0.5 rounded-full">
+<span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span>
+<span id="split-helper-text" class="">Equally split among 5 friends</span>
+</div>
+</div>
+<!-- Expense Title & Receipt Section -->
+<div class="px-margin mt-space-sm">
+<div class="bg-surface-container-low p-space-md rounded-2xl flex flex-col gap-space-sm shadow-sm">
+<div class="flex items-start gap-space-sm">
+<div class="flex-1">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Description / Merchant</label>
+<input class="w-full bg-surface-container font-title-md text-title-md text-on-surface rounded-xl px-space-md py-space-sm focus:outline-none focus:bg-surface-container-highest transition-colors" placeholder="What's this for?" type="text" value="Seafood Dinner at Fisherman's Wharf">
+</div>
+</div>
+<!-- Attached Receipt Pill & Thumbnail Preview -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 rounded-xl overflow-hidden bg-surface-container-highest shadow-sm flex-shrink-0 group">
+<img class="w-full h-full object-cover" data-alt="Close up photograph of a printed seafood restaurant paper receipt with warm ambient candle light reflecting off tabletop wood in Goa India." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCerFTZHYMTVIScpmuoMsA7d2SQZQtgE_TxmCSjHB766K6_qYxbTYxHmp_DtghVzFeabS9zj9G1pQlQK6N-YDOExIp5rdnDv2ppuDgG-MOo5kNFgp-7TDhevTUBgojDy4Viir4LotTjotdnNVCt9sEKzscckmaTocyZcTkLVrXEuNfWemw5ARwHQe9evX_hMVLt1KDXupEXHzmABy-ficOFRGK7n_RvXSgoSqiEpPE">
+<div class="absolute inset-0 bg-inverse-surface/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[16px] text-white">zoom_in</span>
+</div>
+</div>
+<div class="min-w-0">
+<p class="font-title-sm text-title-sm text-on-surface truncate">Wharf_Dinner_Bill.jpg</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">OCR itemized • 1.2 MB</p>
+</div>
+</div>
+<button class="flex items-center gap-1 bg-surface-container hover:bg-surface-container-high px-space-sm py-space-xs rounded-full font-label-md text-label-md text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+<span class="">Replace</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Category Selector Carousel -->
+<div class="mt-space-lg flex flex-col">
+<div class="px-margin flex items-center justify-between mb-space-xs">
+<span class="font-title-sm text-title-sm text-on-surface">Category</span>
+<span class="font-label-md text-label-md text-primary font-medium cursor-pointer">All Categories</span>
+</div>
+<div class="flex gap-space-sm overflow-x-auto px-margin py-space-xs no-scrollbar">
+<!-- Active: Restaurant / Food -->
+<button class="category-chip flex-shrink-0 flex items-center gap-space-xs pl-space-xs pr-space-md py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-lg text-label-lg shadow-sm transition-all" type="button">
+<span class="w-7 h-7 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+</span>
+<span class="">Food &amp; Dining</span>
+</button>
+<!-- Travel -->
+<button class="category-chip flex-shrink-0 flex items-center gap-space-xs pl-space-xs pr-space-md py-1 rounded-full bg-surface-container text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high transition-all" type="button">
+<span class="w-7 h-7 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
+<span class="material-symbols-outlined text-[18px]">flight</span>
+</span>
+<span class="">Travel</span>
+</button>
+<!-- Hotel -->
+<button class="category-chip flex-shrink-0 flex items-center gap-space-xs pl-space-xs pr-space-md py-1 rounded-full bg-surface-container text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high transition-all" type="button">
+<span class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed">
+<span class="material-symbols-outlined text-[18px]">hotel</span>
+</span>
+<span class="">Hotel</span>
+</button>
+<!-- Fuel -->
+<button class="category-chip flex-shrink-0 flex items-center gap-space-xs pl-space-xs pr-space-md py-1 rounded-full bg-surface-container text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high transition-all" type="button">
+<span class="w-7 h-7 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">local_gas_station</span>
+</span>
+<span class="">Fuel</span>
+</button>
+<!-- Drinks -->
+<button class="category-chip flex-shrink-0 flex items-center gap-space-xs pl-space-xs pr-space-md py-1 rounded-full bg-surface-container text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high transition-all" type="button">
+<span class="w-7 h-7 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined text-[18px]">local_bar</span>
+</span>
+<span class="">Drinks</span>
+</button>
+<!-- Snacks -->
+<button class="category-chip flex-shrink-0 flex items-center gap-space-xs pl-space-xs pr-space-md py-1 rounded-full bg-surface-container text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high transition-all" type="button">
+<span class="w-7 h-7 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed-variant">
+<span class="material-symbols-outlined text-[18px]">icecream</span>
+</span>
+<span class="">Snacks</span>
+</button>
+<!-- Groceries -->
+<button class="category-chip flex-shrink-0 flex items-center gap-space-xs pl-space-xs pr-space-md py-1 rounded-full bg-surface-container text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high transition-all" type="button">
+<span class="w-7 h-7 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">shopping_basket</span>
+</span>
+<span class="">Groceries</span>
+</button>
+</div>
+</div>
+<!-- Paid By & Date Row -->
+<div class="px-margin mt-space-lg flex flex-col gap-space-md">
+<div class="bg-surface-container-low p-space-md rounded-2xl shadow-sm">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-title-sm text-title-sm text-on-surface">Paid By</span>
+<div class="flex items-center gap-1 text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+<span class="">Single Payer</span>
+</div>
+</div>
+<!-- Quick Selector Avatars / Pills -->
+<div class="flex gap-space-xs overflow-x-auto pb-1 no-scrollbar">
+<!-- Sarah (You) Selected -->
+<button class="payer-btn flex items-center gap-space-xs pl-1 pr-space-md py-1 rounded-full bg-primary text-on-primary shadow-sm flex-shrink-0 transition-transform active:scale-95" type="button">
+<img class="w-7 h-7 rounded-full object-cover" data-alt="Portrait of a young friendly woman with sunglasses on her head smiling against a sunny coastal background, realistic travel photo." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwYhncPRXzmSIcxX5pgdMRYMvAUzryZuCDTPp5ucbcScwVN-g9Kn_pyHhVEWpxaQqQKdgg5as2jfNJu9PFbX9fo6SThPS87krsk4HSP5iPqmbNv_wmVkR-pPiG_WtV2UnzCPq5BMNW_5ERMkpXxnATIQdzztqiGGrRC-HD15Np3mx6tH3WJyWWFXp00cSF2STVaMi-_JVZQgocnXn6qWqIIahJXRerGTGfz46enTA">
+<span class="font-label-md text-label-md">Sarah (You)</span>
+</button>
+<!-- Rohan -->
+<button class="payer-btn flex items-center gap-space-xs pl-1 pr-space-md py-1 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high flex-shrink-0 transition-transform active:scale-95" type="button">
+<img class="w-7 h-7 rounded-full object-cover" data-alt="Portrait of a young Indian man wearing a casual linen shirt smiling under palm trees, realistic candid travel portrait." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCikDfwNnUJ0fWEr1J2NbMDiFHwjZHjcX1I7_6ygUdi8ZBNZxA8L8ovheb_fN8ViZlCxX7n3SAoo5HDcFMBqTV8T3PDHfZJbcOHEbQs5kt-MSCU8jmlNmScw-CLVy7exFw82tIeOU7of9JBleNCMRo3Ak3hLjHLHKpPODkXnI6RSdK1mRiuwLzfjpfKfoSYiYDh655x5Ext54hBqrlhcEcYAN7MpG11sZJUHeGmX1A">
+<span class="font-label-md text-label-md">Rohan</span>
+</button>
+<!-- Ananya -->
+<button class="payer-btn flex items-center gap-space-xs pl-1 pr-space-md py-1 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high flex-shrink-0 transition-transform active:scale-95" type="button">
+<img class="w-7 h-7 rounded-full object-cover" data-alt="Young Indian woman with curly hair laughing cheerfully on a beach boardwalk, natural daylight candid portrait." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHl5YPeRuRax898sDf2IfCPsOHAIZw2ffNwkRb36xC7hloKhD-d_xe5JSMJE1ASj2wRIiBX31mGKrrVR4IP4diTVqCjh8QhODbP3LCZSBRLiVws6PAFzeD2hFIEcjVjGGtHgeGQ4LWjSbYYN5CASa8UmtDsZ1aVTJ76peqgd1TF586mDdXAmVPQr6VK0ELD-sEbUHZmD6184OWR0xTvRuwJ74UMM_MjfNZS-kMXw4">
+<span class="font-label-md text-label-md">Ananya</span>
+</button>
+<!-- Vikram -->
+<button class="payer-btn flex items-center gap-space-xs pl-1 pr-space-md py-1 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high flex-shrink-0 transition-transform active:scale-95" type="button">
+<img class="w-7 h-7 rounded-full object-cover" data-alt="Portrait of a stylish young man wearing a tropical summer shirt smiling warmly, high quality photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAShJwo6sKqSWypmkgt1gncawGN9YgYjKnnk5I93NzYudL4MTWaWf981z5EdIP1ZDiAhPk0mWggnyqYZ_Mns2n3cvBkAwTCw1O67gIjn9wrrz_QwAVtqt2ciKHemSWeJ4-Eshmj4wWdRICjbPLCRbFQzAWrPyOj_kDRglnuQpX0RxlhwSFrP_1gTdmU4iyNS6u5af52VHZM5hgQPQFobirGCovejLf4XGvPWWHqNLE">
+<span class="font-label-md text-label-md">Vikram</span>
+</button>
+</div>
+<!-- Date selector row -->
+<div class="mt-space-md pt-space-sm flex items-center justify-between bg-surface-container rounded-xl px-space-md py-space-sm">
+<div class="flex items-center gap-space-xs text-on-surface">
+<span class="material-symbols-outlined text-[20px] text-primary" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="font-title-sm text-title-sm">Expense Date</span>
+</div>
+<button class="flex items-center gap-1 bg-surface-container-high hover:bg-surface-container-highest px-space-sm py-1 rounded-full font-label-md text-label-md text-on-surface transition-colors" type="button">
+<span class="">Today, Oct 14</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">arrow_drop_down</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Split Mode Segmented Control -->
+<div class="px-margin mt-space-lg">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="font-title-sm text-title-sm text-on-surface">Split Mode</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">4 calculation models</span>
+</div>
+<div class="bg-surface-container p-1 rounded-full flex items-center gap-1 overflow-x-auto no-scrollbar shadow-inner">
+<button class="flex-1 min-w-[100px] py-1.5 px-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md text-center shadow-sm transition-all whitespace-nowrap" type="button">
+        Equally
+      </button>
+<button class="flex-1 min-w-[90px] py-1.5 px-space-sm rounded-full text-on-surface-variant font-label-md text-label-md text-center hover:text-on-surface transition-all whitespace-nowrap" type="button">
+        Unequally
+      </button>
+<button class="flex-1 min-w-[100px] py-1.5 px-space-sm rounded-full text-on-surface-variant font-label-md text-label-md text-center hover:text-on-surface transition-all whitespace-nowrap" type="button">
+        Percentage
+      </button>
+<button class="flex-1 min-w-[80px] py-1.5 px-space-sm rounded-full text-on-surface-variant font-label-md text-label-md text-center hover:text-on-surface transition-all whitespace-nowrap" type="button">
+        By Shares
+      </button>
+</div>
+</div>
+<!-- Participants Split Breakdown -->
+<div class="px-margin mt-space-md">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="font-title-sm text-title-sm text-on-surface">Split With</span>
+<span class="font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed px-2 py-0.5 rounded-full font-bold">5 selected</span>
+</div>
+<button class="font-label-md text-label-md text-primary font-medium" id="select-all-btn" onclick="toggleSelectAll()" type="button">Select None</button>
+</div>
+<!-- Participant Multi-Selection Cards -->
+<div class="flex flex-col gap-space-xs" id="participant-list">
+<!-- 1. Sarah (You) -->
+<label class="participant-row flex items-center justify-between p-space-sm rounded-2xl bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer select-none">
+<div class="flex items-center gap-space-sm min-w-0">
+<input checked="" class="split-checkbox w-5 h-5 accent-primary rounded cursor-pointer" onchange="recalcParticipants()" type="checkbox">
+<div class="relative">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Close up face profile of Sarah with sunglasses resting on hair smiling warmly, vibrant light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeA6wYmH1ERN8hdoauwL42gltPr9tEwVRdMXUHsVDdLj_SPFQ2ZWlmn3n4XR1keFY3nwsDwX0q7gPx5YH123cy2f_NBaM4QhFuDLEgI-EhquK6rIDD2TCSOJvBV5-QJDvIdmlCRO0lWiHxkV-vD_41V-8Yq5KmFVjyD6ldcZP3IP4tGpm9bLg180hVSp7uz-e_OkjFamD0DuTVetMdCklAlw4vWgokUigaSBpcpBA">
+<span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-primary rounded-full flex items-center justify-center text-white text-[9px] font-bold">★</span>
+</div>
+<div class="min-w-0">
+<p class="font-title-sm text-title-sm text-on-surface truncate">Sarah <span class="text-on-surface-variant font-normal">(You)</span></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Payer</p>
+</div>
+</div>
+<div class="text-right flex-shrink-0">
+<span class="participant-share font-title-sm text-title-sm text-primary">₹690.00</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">1 share (20%)</p>
+</div>
+</label>
+<!-- 2. Rohan Verma -->
+<label class="participant-row flex items-center justify-between p-space-sm rounded-2xl bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer select-none">
+<div class="flex items-center gap-space-sm min-w-0">
+<input checked="" class="split-checkbox w-5 h-5 accent-primary rounded cursor-pointer" onchange="recalcParticipants()" type="checkbox">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Portrait of Rohan, a stylish Indian traveler smiling in natural daylight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOBcseUvCrUJ3rGWc6NbITAdQUGi5qxJSqEeCDuMSYOXG-u7mHkvGSGCffb5rvVnQAzVFiKT_0_qVf9S1dhGjeTZLCVZnarNR8mqpOUFuWCCYRWyDhuw02hp94nTNYx2j-DLdbV5fwyPrmM4roweBTWy_uD7O6uvcnQh3F383y8oGjI7wxKpx8RHry5M1_64l0Fzn0LKRGiTLdWzbb6f43Rzwzl-xfPp8Rhax0vVw">
+<div class="min-w-0">
+<p class="font-title-sm text-title-sm text-on-surface truncate">Rohan Verma</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Trip Member</p>
+</div>
+</div>
+<div class="text-right flex-shrink-0">
+<span class="participant-share font-title-sm text-title-sm text-on-surface">₹690.00</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">1 share (20%)</p>
+</div>
+</label>
+<!-- 3. Ananya Sharma -->
+<label class="participant-row flex items-center justify-between p-space-sm rounded-2xl bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer select-none">
+<div class="flex items-center gap-space-sm min-w-0">
+<input checked="" class="split-checkbox w-5 h-5 accent-primary rounded cursor-pointer" onchange="recalcParticipants()" type="checkbox">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Smiling portrait of Ananya with curly hair wearing travel sunglasses outdoors." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBy9YdzoDbUuGrxn8SUwgNhVLWNQmXDci_qD1aSvZM5CYw8z3F8tHy3qxz-_unoItCWnVzHFogjegN4X52wctzeQGjK2be55j4k1CxP7po4N8gLGyy_iwfNRv2fxQ2jcNQ0gP3l6xbTFyFcx_ArfR0bg_XYvzJhRxKHKK8YcmZ0gcBKUme_KvQpAYj7z9tqEU3uKi8W6w-j6mXqBZ08nrKHZ3k-BrE9XygFu_3tn-s">
+<div class="min-w-0">
+<p class="font-title-sm text-title-sm text-on-surface truncate">Ananya Sharma</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Trip Member</p>
+</div>
+</div>
+<div class="text-right flex-shrink-0">
+<span class="participant-share font-title-sm text-title-sm text-on-surface">₹690.00</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">1 share (20%)</p>
+</div>
+</label>
+<!-- 4. Vikram Rao -->
+<label class="participant-row flex items-center justify-between p-space-sm rounded-2xl bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer select-none">
+<div class="flex items-center gap-space-sm min-w-0">
+<input checked="" class="split-checkbox w-5 h-5 accent-primary rounded cursor-pointer" onchange="recalcParticipants()" type="checkbox">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Close-up portrait of Vikram Rao wearing a summer linen outfit in Goa." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPz9U7tnR9A92-R9K9O-thULeKhSoMroeSOBj5xAuKjKXhHxiLMRzb-8dSO-vOjbmoU4geXeWEIHqpA4xSrpItYsXaT2JHK6uh-_fKtmFBitSsAhfEJ8B5_ZW89QkHnPy3RxZn-U5mhqxm4X4zNIv-yVBkYurPfjSYSUtGRF-94JEAVrgxD2gFEXy5CCJbq4SNj_Uxade0UeFJAEjPp2leAVWIuEK7NsxdBtlIX5M">
+<div class="min-w-0">
+<p class="font-title-sm text-title-sm text-on-surface truncate">Vikram Rao</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Trip Member</p>
+</div>
+</div>
+<div class="text-right flex-shrink-0">
+<span class="participant-share font-title-sm text-title-sm text-on-surface">₹690.00</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">1 share (20%)</p>
+</div>
+</label>
+<!-- 5. Priya Patel -->
+<label class="participant-row flex items-center justify-between p-space-sm rounded-2xl bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer select-none">
+<div class="flex items-center gap-space-sm min-w-0">
+<input checked="" class="split-checkbox w-5 h-5 accent-primary rounded cursor-pointer" onchange="recalcParticipants()" type="checkbox">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Portrait of Priya Patel smiling outdoors by palm trees with natural golden hour lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuATBXEaEaL5sj86c7GMwlDpUtQ0ELK18rx1xa0V2w3fq5Wnv3z1OdpqcPq42UivPMqfDokB2XL7RgwhCe-lTRXDeoZhVR34MtQD1f1UAY_6BNBwc30tX7wZwmXWrPiw676UjNITCVhprU2RCP95ll72Ho6uSEG21R72kQqZI_JJbQQ-X6tBPCiRc6_-CagfsxDnE8r7rIYArGk4xyjRiG3IagtW0t99Cxd6WpQARlc">
+<div class="min-w-0">
+<p class="font-title-sm text-title-sm text-on-surface truncate">Priya Patel</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Trip Member</p>
+</div>
+</div>
+<div class="text-right flex-shrink-0">
+<span class="participant-share font-title-sm text-title-sm text-on-surface">₹690.00</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">1 share (20%)</p>
+</div>
+</label>
+</div>
+</div>
+<!-- Extra Details Accordion Preview -->
+<div class="px-margin mt-space-md">
+<button class="w-full flex items-center justify-between p-space-md rounded-2xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant transition-colors" type="button">
+<div class="flex items-center gap-space-xs font-label-lg text-label-lg">
+<span class="material-symbols-outlined text-[20px]">notes</span>
+<span class="">Add Notes, Tax, or Tip Breakdown</span>
+</div>
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+<!-- Bottom Floating CTA Container -->
+<div class="fixed bottom-0 inset-x-0 bg-surface/90 backdrop-blur-xl p-margin pb-safe shadow-[0_-4px_16px_rgba(0,0,0,0.06)] z-40">
+<div class="max-w-md mx-auto flex flex-col gap-1.5">
+<div class="flex items-center justify-between px-space-xs text-on-surface-variant font-label-sm text-label-sm">
+<span id="preview-breakdown-text" class="">You get back ₹2,760.00 from 4 members</span>
+<span class="flex items-center gap-1 text-primary font-medium">
+<span class="material-symbols-outlined text-[14px]">bolt</span> Instant sync
+        </span>
+</div>
+<button class="w-full h-14 rounded-full bg-primary text-on-primary flex items-center justify-center gap-space-sm font-label-lg text-label-lg shadow-lg active:scale-[0.98] transition-transform" id="save-expense-btn" onclick="triggerSaveAnimation()" type="button">
+<span class="material-symbols-outlined text-[22px]">check_circle</span>
+<span id="cta-label-text" class="">Save Expense (₹3,450.00)</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  let currentSymbol = '₹';
+
+  function selectCurrency(symbol, buttonEl) {
+    currentSymbol = symbol;
+    document.querySelectorAll('.curr-btn').forEach(btn => {
+      btn.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+      btn.classList.add('text-on-surface-variant');
+    });
+    buttonEl.classList.remove('text-on-surface-variant');
+    buttonEl.classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+    
+    document.getElementById('currency-symbol').innerText = symbol;
+    updateSplitCalc(document.getElementById('amount-input').value);
+  }
+
+  function getNumericAmount(val) {
+    const clean = ('' + val).replace(/[^0-9.]/g, '');
+    const num = parseFloat(clean);
+    return isNaN(num) ? 0 : num;
+  }
+
+  function updateSplitCalc(rawVal) {
+    const total = getNumericAmount(rawVal);
+    const checkboxes = document.querySelectorAll('.split-checkbox');
+    const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+    
+    const perPerson = checkedCount > 0 ? (total / checkedCount) : 0;
+    const formattedPerPerson = perPerson.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formattedTotal = total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    document.querySelectorAll('.participant-row').forEach(row => {
+      const cb = row.querySelector('.split-checkbox');
+      const shareEl = row.querySelector('.participant-share');
+      if (cb && cb.checked) {
+        shareEl.innerText = `${currentSymbol}${formattedPerPerson}`;
+        shareEl.classList.remove('opacity-40');
+      } else {
+        shareEl.innerText = `${currentSymbol}0.00`;
+        shareEl.classList.add('opacity-40');
+      }
+    });
+
+    const isSarahChecked = checkboxes[0]?.checked;
+    const othersCount = checkedCount - (isSarahChecked ? 1 : 0);
+    const getBack = othersCount * perPerson;
+    const formattedGetBack = getBack.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const previewBreakdown = document.getElementById('preview-breakdown-text');
+    if (previewBreakdown) {
+      if (othersCount > 0) {
+        previewBreakdown.innerText = `You get back ${currentSymbol}${formattedGetBack} from ${othersCount} member${othersCount > 1 ? 's' : ''}`;
+      } else {
+        previewBreakdown.innerText = `Full expense absorbed by payer`;
+      }
+    }
+
+    const helperText = document.getElementById('split-helper-text');
+    if (helperText) {
+      helperText.innerText = `Equally split among ${checkedCount} friends`;
+    }
+
+    const ctaLabel = document.getElementById('cta-label-text');
+    if (ctaLabel) {
+      ctaLabel.innerText = `Save Expense (${currentSymbol}${formattedTotal})`;
+    }
+  }
+
+  function recalcParticipants() {
+    updateSplitCalc(document.getElementById('amount-input').value);
+  }
+
+  let allSelected = true;
+  function toggleSelectAll() {
+    const checkboxes = document.querySelectorAll('.split-checkbox');
+    const btn = document.getElementById('select-all-btn');
+    allSelected = !allSelected;
+    checkboxes.forEach(cb => cb.checked = allSelected);
+    btn.innerText = allSelected ? 'Select None' : 'Select All';
+    recalcParticipants();
+  }
+
+  function triggerSaveAnimation() {
+    const btn = document.getElementById('save-expense-btn');
+    btn.innerHTML = `<span class="material-symbols-outlined text-[24px] animate-spin">progress_activity</span><span>Saving to Goa Trip...</span>`;
+    setTimeout(() => {
+      btn.innerHTML = `<span class="material-symbols-outlined text-[24px]">task_alt</span><span>Saved Successfully!</span>`;
+      btn.classList.add('bg-primary-container', 'text-on-primary-container');
+    }, 900);
+  }
+</script></main>
+
+</body></html>

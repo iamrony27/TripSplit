@@ -1,0 +1,337 @@
+<!DOCTYPE html><html class="light" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><title>TripSplit</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-variant": "#dce5dd", "surface-dim": "#d3dcd5", "surface-container": "#e7f0e9", "error-container": "#ffdad6", "tertiary-fixed-dim": "#85d2e0", "on-primary": "#ffffff", "on-secondary-fixed-variant": "#4f378a", "secondary": "#6750a4", "surface": "#f3fcf4", "inverse-surface": "#2a322d", "primary-container": "#006c4c", "on-tertiary-fixed": "#001f24", "tertiary": "#004e58", "secondary-fixed": "#e9ddff", "on-primary-fixed-variant": "#005138", "surface-container-low": "#edf6ee", "primary-fixed-dim": "#81d7b0", "background": "#f3fcf4", "primary-fixed": "#9df4cb", "surface-container-highest": "#dce5dd", "secondary-container": "#bba2fd", "tertiary-container": "#006874", "inverse-on-surface": "#eaf3ec", "on-tertiary-fixed-variant": "#004f58", "on-secondary-fixed": "#22005d", "on-secondary": "#ffffff", "on-error-container": "#93000a", "error": "#ba1a1a", "on-tertiary-container": "#97e4f2", "on-secondary-container": "#4b3486", "tertiary-fixed": "#a2effd", "inverse-primary": "#81d7b0", "on-primary-fixed": "#002114", "surface-bright": "#f3fcf4", "secondary-fixed-dim": "#cfbcff", "on-background": "#151d19", "on-surface": "#151d19", "on-primary-container": "#93eac2", "outline-variant": "#bec9c1", "on-surface-variant": "#3f4943", "on-error": "#ffffff", "outline": "#6f7a73", "surface-tint": "#006c4c", "primary": "#005138", "surface-container-lowest": "#ffffff", "surface-container-high": "#e1eae3", "on-tertiary": "#ffffff" }, "borderRadius": { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" }, "spacing": { "space-lg": "1.5rem", "space-xl": "2rem", "space-md": "1rem", "margin": "1rem", "gutter": "1rem", "space-xs": "0.25rem", "space-sm": "0.5rem" }, "fontFamily": { "headline-sm": ["Roboto Flex"], "label-md": ["Roboto Flex"], "label-sm": ["Roboto Flex"], "title-sm": ["Roboto Flex"], "title-lg": ["Roboto Flex"], "headline-md": ["Roboto Flex"], "body-sm": ["Roboto Flex"], "body-lg": ["Roboto Flex"], "label-lg": ["Roboto Flex"], "headline-lg": ["Roboto Flex"], "display-md": ["Roboto Flex"], "display-lg-mobile": ["Roboto Flex"], "display-sm": ["Roboto Flex"], "title-md": ["Roboto Flex"], "body-md": ["Roboto Flex"], "display-lg": ["Roboto Flex"] }, "fontSize": { "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}], "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600"}], "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600"}], "title-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600"}], "title-lg": ["22px", {"lineHeight": "28px", "fontWeight": "500"}], "headline-md": ["28px", {"lineHeight": "36px", "fontWeight": "500"}], "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.4px", "fontWeight": "400"}], "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.5px", "fontWeight": "400"}], "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600"}], "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "500"}], "display-md": ["45px", {"lineHeight": "52px", "fontWeight": "400"}], "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.2px", "fontWeight": "500"}], "display-sm": ["36px", {"lineHeight": "44px", "fontWeight": "400"}], "title-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "600"}], "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400"}], "display-lg": ["57px", {"lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "400"}] } } } }</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}.nav-active .indicator{background-color:#9df4cb;color:#002114;width:64px;border-radius:9999px;}.nav-active span:last-child{color:#002114;font-weight:700;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-6 px-margin flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm"><span class="tracking-tight font-medium">9:41</span><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px]">signal_cellular_alt</span><span class="material-symbols-outlined text-[14px]">wifi</span><span class="material-symbols-outlined text-[14px]">battery_full</span></div></div><div class="h-14 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-3 min-w-0 flex-1"><img alt="TripSplit App Icon" class="w-9 h-9 rounded-DEFAULT object-contain flex-shrink-0 shadow-sm" src="https://lh3.googleusercontent.com/aida/AEtjO1UlZuUIbJAAMU4nnVtg72keNcLuuMh4t0rfJ84x0BX5teZ-8EzidfdaUdU73HJ9je33NwngQhCIkihjYPwRmGmpuPS7MX62tA3RgReu3WV3feYrADGragxPLOH5NlY0EG5oOO2kXxHfnpecZuB98a2ZzZpy3MGfD4KFMWMhbC5hBxxwmfZDh5Gq-B0_6CJIXE-3bhux6jZgUaIE4_J5-3RWx8sPsAo0IqP7hmGU4fy0"><div class="flex flex-col min-w-0"><span class="font-label-sm text-label-sm text-primary tracking-wider uppercase font-semibold leading-none">TripSplit</span><h1 class="font-title-lg text-title-lg text-on-surface tracking-tight leading-tight mt-0.5">Profile</h1></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Notifications" class="w-11 h-11 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[24px]">notifications</span></button><div class="w-11 h-11 rounded-full flex items-center justify-center"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary-fixed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfDpzC9JwT02mh-C9mtIfPc0KuecNGG03_QGgh_VESN1acHysIX2wqSXTeYBWmF5XLy3nU_CtCNQVw2K-42H5DcWliVpRYXU10iQG_XBengg7xaNcjHp4bvYuigz3NPxEKR0hGkmqmiNxGg0saoJol8-shFMjtICi0pFg45szz-egqG0iTFJrRIms8tGdxNSISn3bH2MasuMqG4MejLOqVH8_Md13lrJyap5V72vE"></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-20 pb-24 bg-surface"><div class="flex flex-col w-full px-margin pb-10 space-y-space-md">
+<!-- Profile Header Card (Level 2 Elevation) -->
+<section class="bg-surface-container-low rounded-lg p-space-md shadow-sm relative overflow-hidden">
+<div class="absolute -right-10 -top-10 w-36 h-36 bg-primary-fixed/20 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center gap-space-md relative z-10">
+<div class="relative">
+<img alt="Sarah Jenkins Avatar" class="w-20 h-20 rounded-full object-cover shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfDpzC9JwT02mh-C9mtIfPc0KuecNGG03_QGgh_VESN1acHysIX2wqSXTeYBWmF5XLy3nU_CtCNQVw2K-42H5DcWliVpRYXU10iQG_XBengg7xaNcjHp4bvYuigz3NPxEKR0hGkmqmiNxGg0saoJol8-shFMjtICi0pFg45szz-egqG0iTFJrRIms8tGdxNSISn3bH2MasuMqG4MejLOqVH8_Md13lrJyap5V72vE">
+<button aria-label="Change Profile Picture" class="absolute bottom-0 right-0 w-7 h-7 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-1.5">
+<h2 class="font-title-lg text-title-lg text-on-surface truncate">Sarah Jenkins</h2>
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">sarah.j@example.com</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate mt-0.5">+91 98765 43210</p>
+</div>
+</div>
+<!-- Overall Stats Pills -->
+<div class="flex flex-wrap gap-2 mt-space-md pt-space-sm">
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">backpack</span>
+<span class="font-label-md text-label-md">8 Trips</span>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+<span class="font-label-md text-label-md">Settled ₹1,24,000</span>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-fixed text-on-primary-fixed">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<span class="font-label-md text-label-md">100% Reliability</span>
+</div>
+</div>
+</section>
+<!-- Balance Summary Widget -->
+<section class="grid grid-cols-2 gap-3">
+<div class="bg-surface-container-low rounded-DEFAULT p-3.5 flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">You Owe</span>
+<div class="w-6 h-6 rounded-full bg-error-container text-on-error-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</div>
+</div>
+<div class="mt-2">
+<span class="font-headline-sm text-headline-sm text-error">₹1,420</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">across 2 friends</p>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-DEFAULT p-3.5 flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Owed to you</span>
+<div class="w-6 h-6 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">call_received</span>
+</div>
+</div>
+<div class="mt-2">
+<span class="font-headline-sm text-headline-sm text-primary">₹3,890</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">across 4 friends</p>
+</div>
+</div>
+</section>
+<!-- UPI & Payment Settings Section (Highlighted M3 Card) -->
+<section class="bg-surface-container rounded-lg p-space-md shadow-sm relative overflow-hidden">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">qr_code_2</span>
+</div>
+<h3 class="font-title-md text-title-md text-on-surface">UPI &amp; Settlement</h3>
+</div>
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed">Instant Payout</span>
+</div>
+<!-- Saved Primary UPI ID Banner -->
+<div class="bg-surface-container-lowest rounded-DEFAULT p-3 flex items-center justify-between shadow-sm my-space-sm">
+<div class="flex flex-col min-w-0 pr-2">
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Primary UPI VPA</span>
+<span class="bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">verified</span> Verified
+          </span>
+</div>
+<span class="font-title-sm text-title-sm text-on-surface truncate font-semibold">sarah.jenkins@okaxis</span>
+</div>
+<button aria-label="Copy UPI ID" class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-variant active:scale-95 transition-all" id="copy-vpa-btn" onclick="copyVpa()">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+<!-- Interactive Framed Dynamic QR Card -->
+<div class="bg-surface-container-lowest rounded-lg p-space-md my-space-sm flex flex-col items-center text-center shadow-sm">
+<div class="p-3 bg-surface-container-low rounded-lg shadow-inner flex flex-col items-center">
+<!-- SVG Vector QR Code Graphic with Brand Center -->
+<svg class="w-44 h-44" fill="none" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#FBFDF9" height="160" rx="16" width="160"></rect>
+<!-- Position Markers Top-Left -->
+<rect fill="#005138" height="36" rx="6" width="36" x="16" y="16"></rect>
+<rect fill="#FBFDF9" height="24" rx="3" width="24" x="22" y="22"></rect>
+<rect fill="#005138" height="12" rx="2" width="12" x="28" y="28"></rect>
+<!-- Position Markers Top-Right -->
+<rect fill="#005138" height="36" rx="6" width="36" x="108" y="16"></rect>
+<rect fill="#FBFDF9" height="24" rx="3" width="24" x="114" y="22"></rect>
+<rect fill="#005138" height="12" rx="2" width="12" x="120" y="28"></rect>
+<!-- Position Markers Bottom-Left -->
+<rect fill="#005138" height="36" rx="6" width="36" x="16" y="108"></rect>
+<rect fill="#FBFDF9" height="24" rx="3" width="24" x="22" y="114"></rect>
+<rect fill="#005138" height="12" rx="2" width="12" x="28" y="120"></rect>
+<!-- Matrix Patterns -->
+<rect fill="#005138" height="8" rx="2" width="8" x="60" y="18"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="76" y="18"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="92" y="26"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="68" y="34"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="84" y="42"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="18" y="60"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="34" y="68"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="26" y="84"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="60" y="60"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="92" y="60"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="108" y="68"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="124" y="60"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="140" y="76"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="68" y="92"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="84" y="84"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="60" y="108"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="76" y="116"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="92" y="108"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="108" y="92"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="132" y="108"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="116" y="124"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="100" y="136"></rect>
+<rect fill="#005138" height="8" rx="2" width="8" x="132" y="136"></rect>
+<!-- TripSplit Logo Core -->
+<circle cx="80" cy="80" fill="#FBFDF9" r="16"></circle>
+<circle cx="80" cy="80" fill="#9df4cb" r="12"></circle>
+<path d="M76 80L84 80M80 76L80 84" stroke="#002114" stroke-linecap="round" stroke-width="2.5"></path>
+</svg>
+</div>
+<div class="mt-3 flex flex-col items-center">
+<span class="font-title-sm text-title-sm text-on-surface">Scan to pay Sarah via UPI</span>
+<div class="flex items-center gap-2 mt-1.5 text-on-surface-variant font-label-sm text-label-sm">
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-medium">GPay</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-medium">PhonePe</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-medium">Paytm</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-medium">BHIM</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-2.5 mt-space-sm">
+<button class="w-full h-11 px-space-md rounded-full bg-primary text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-2 active:scale-98 shadow-sm transition-all" onclick="triggerScanner()">
+<span class="material-symbols-outlined text-[20px]">photo_camera</span>
+        Scan QR Code (Camera / Screenshot)
+      </button>
+<button class="w-full h-11 px-space-md rounded-full bg-primary-fixed text-on-primary-fixed font-label-lg text-label-lg flex items-center justify-center gap-2 active:scale-98 transition-all" onclick="toggleUpiModal()">
+<span class="material-symbols-outlined text-[20px]">edit_note</span>
+        Add / Edit UPI ID Manually
+      </button>
+</div>
+<!-- Inline Simulated Scanner Toast / Modal -->
+<div class="hidden mt-3 p-3 bg-secondary-fixed text-on-secondary-fixed rounded-DEFAULT flex items-center justify-between" id="scanner-modal">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[20px] animate-pulse">document_scanner</span>
+<span class="font-body-sm text-body-sm truncate">Scanning active for GPay / PhonePe QR...</span>
+</div>
+<button class="font-label-sm text-label-sm font-semibold underline px-2 py-1" onclick="triggerScanner()">Close</button>
+</div>
+</section>
+<!-- Preferences & App Settings List -->
+<section class="bg-surface-container-low rounded-lg p-space-md shadow-sm space-y-3">
+<h3 class="font-title-md text-title-md text-on-surface">Preferences &amp; App Settings</h3>
+<!-- Base Currency Item -->
+<div class="flex items-center justify-between p-3 rounded-DEFAULT bg-surface-container-lowest">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">currency_rupee</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface">Base Currency</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">INR (₹) - Indian Rupee</span>
+</div>
+</div>
+<button aria-label="Change base currency" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+<!-- Multi-currency conversion rate -->
+<div class="flex items-center justify-between p-3 rounded-DEFAULT bg-surface-container-lowest">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-secondary flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">sync_alt</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface">Auto Rate Conversion</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Enabled (Live ECB rates)</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-semibold">Active</span>
+</div>
+<!-- Language -->
+<div class="flex items-center justify-between p-3 rounded-DEFAULT bg-surface-container-lowest">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-tertiary flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">translate</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface">Language</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">English (US)</span>
+</div>
+</div>
+<button aria-label="Change language" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+<!-- Cloud Sync -->
+<div class="flex items-center justify-between p-3 rounded-DEFAULT bg-surface-container-lowest">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">cloud_done</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface">Cloud Sync</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Synced with Firebase (Just now)</span>
+</div>
+</div>
+<button aria-label="Force Sync" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+</button>
+</div>
+<!-- Security -->
+<div class="flex items-center justify-between p-3 rounded-DEFAULT bg-surface-container-lowest">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">fingerprint</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface">Security</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Biometric App Lock enabled</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary text-[20px]">toggle_on</span>
+</div>
+</section>
+<!-- Danger Zone & Account Management -->
+<section class="bg-surface-container-low rounded-lg p-space-md shadow-sm space-y-2.5">
+<h3 class="font-title-md text-title-md text-on-surface mb-1">Data &amp; Account</h3>
+<button class="w-full flex items-center justify-between p-3 rounded-DEFAULT bg-surface-container-lowest active:scale-98 transition-all">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">download</span>
+</div>
+<div class="flex flex-col text-left min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface">Export Trip Data</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Download summaries as CSV / PDF</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">file_open</span>
+</button>
+<button class="w-full flex items-center justify-between p-3 rounded-DEFAULT bg-error-container active:scale-98 transition-all">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-full bg-on-error/30 flex items-center justify-center text-on-error-container flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+</div>
+<div class="flex flex-col text-left min-w-0">
+<span class="font-title-sm text-title-sm text-on-error-container font-semibold">Log out</span>
+<span class="font-body-sm text-body-sm text-on-error-container/80 truncate">Securely sign out of TripSplit</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-error-container text-[20px]">chevron_right</span>
+</button>
+</section>
+<!-- Manual UPI Edit Bottom Modal / Popover (State managed via vanilla JS) -->
+<div class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end justify-center p-0" id="manual-upi-sheet">
+<div class="w-full bg-surface-container-high rounded-t-xl p-space-lg shadow-xl space-y-space-md animate-slide-up">
+<div class="w-12 h-1 bg-outline-variant/60 rounded-full mx-auto mb-2"></div>
+<div class="flex items-center justify-between">
+<h4 class="font-title-lg text-title-lg text-on-surface">Edit Primary UPI ID</h4>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant" onclick="toggleUpiModal()">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Friends can settle payments instantly to this Virtual Payment Address (VPA).
+      </p>
+<div class="flex flex-col space-y-1.5">
+<label class="font-label-md text-label-md text-on-surface-variant" for="upi-input">UPI ID / VPA</label>
+<div class="bg-surface-container-lowest rounded-DEFAULT px-3.5 py-2.5 flex items-center shadow-inner">
+<input class="bg-transparent w-full text-on-surface font-title-sm text-title-sm focus:outline-none" id="upi-input" placeholder="e.g. username@upi" type="text" value="sarah.jenkins@okaxis">
+<span class="material-symbols-outlined text-primary text-[20px]">alternate_email</span>
+</div>
+</div>
+<div class="flex gap-2 pt-2">
+<button class="flex-1 h-11 rounded-full bg-surface-container text-on-surface font-label-lg text-label-lg" onclick="toggleUpiModal()">
+          Cancel
+        </button>
+<button class="flex-1 h-11 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-sm" onclick="saveUpiId()">
+          Save &amp; Verify
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  function toggleUpiModal() {
+    const modal = document.getElementById('manual-upi-sheet');
+    if (modal) {
+      modal.classList.toggle('hidden');
+    }
+  }
+
+  function saveUpiId() {
+    const input = document.getElementById('upi-input');
+    if (input && input.value.trim() !== '') {
+      toggleUpiModal();
+    }
+  }
+
+  function triggerScanner() {
+    const banner = document.getElementById('scanner-modal');
+    if (banner) {
+      banner.classList.toggle('hidden');
+    }
+  }
+
+  function copyVpa() {
+    const copyBtn = document.getElementById('copy-vpa-btn');
+    if (copyBtn) {
+      const origContent = copyBtn.innerHTML;
+      copyBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-primary">check</span>';
+      setTimeout(() => {
+        copyBtn.innerHTML = origContent;
+      }, 1500);
+    }
+  }
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface-container-low/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.05)]" data-active-classes="nav-active"><div class="flex items-center justify-around h-20 px-space-xs"><a class="flex flex-col items-center justify-center min-w-[56px] h-14 group transition-all text-on-surface-variant" data-path="home" href="#"><div class="indicator flex items-center justify-center h-8 w-12 transition-all"><span class="material-symbols-outlined text-[24px]">home</span></div><span class="font-label-md text-label-md mt-0.5">Home</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-14 group transition-all text-on-surface-variant" data-path="trips" href="#"><div class="indicator flex items-center justify-center h-8 w-12 transition-all"><span class="material-symbols-outlined text-[24px]">travel_explore</span></div><span class="font-label-md text-label-md mt-0.5">My Trips</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-14 group transition-all text-on-surface-variant" data-path="analytics" href="#"><div class="indicator flex items-center justify-center h-8 w-12 transition-all"><span class="material-symbols-outlined text-[24px]">insights</span></div><span class="font-label-md text-label-md mt-0.5">Analytics</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-14 group transition-all text-on-surface-variant" data-path="activity" href="#"><div class="indicator flex items-center justify-center h-8 w-12 transition-all"><span class="material-symbols-outlined text-[24px]">history</span></div><span class="font-label-md text-label-md mt-0.5">Activity</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] h-14 group transition-all text-on-surface-variant nav-active" data-path="profile" href="#"><div class="indicator flex items-center justify-center h-8 w-12 transition-all"><span class="material-symbols-outlined text-[24px]">account_circle</span></div><span class="font-label-md text-label-md mt-0.5">Profile</span></a></div></nav>
+
+</body></html>

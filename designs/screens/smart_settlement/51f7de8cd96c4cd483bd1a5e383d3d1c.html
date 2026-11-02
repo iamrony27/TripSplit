@@ -1,0 +1,293 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_stack" name="shell-type"><title>TripSplit</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-variant": "#dce5dd", "surface-dim": "#d3dcd5", "surface-container": "#e7f0e9", "error-container": "#ffdad6", "tertiary-fixed-dim": "#85d2e0", "on-primary": "#ffffff", "on-secondary-fixed-variant": "#4f378a", "secondary": "#6750a4", "surface": "#f3fcf4", "inverse-surface": "#2a322d", "primary-container": "#006c4c", "on-tertiary-fixed": "#001f24", "tertiary": "#004e58", "secondary-fixed": "#e9ddff", "on-primary-fixed-variant": "#005138", "surface-container-low": "#edf6ee", "primary-fixed-dim": "#81d7b0", "background": "#f3fcf4", "primary-fixed": "#9df4cb", "surface-container-highest": "#dce5dd", "secondary-container": "#bba2fd", "tertiary-container": "#006874", "inverse-on-surface": "#eaf3ec", "on-tertiary-fixed-variant": "#004f58", "on-secondary-fixed": "#22005d", "on-secondary": "#ffffff", "on-error-container": "#93000a", "error": "#ba1a1a", "on-tertiary-container": "#97e4f2", "on-secondary-container": "#4b3486", "tertiary-fixed": "#a2effd", "inverse-primary": "#81d7b0", "on-primary-fixed": "#002114", "surface-bright": "#f3fcf4", "secondary-fixed-dim": "#cfbcff", "on-background": "#151d19", "on-surface": "#151d19", "on-primary-container": "#93eac2", "outline-variant": "#bec9c1", "on-surface-variant": "#3f4943", "on-error": "#ffffff", "outline": "#6f7a73", "surface-tint": "#006c4c", "primary": "#005138", "surface-container-lowest": "#ffffff", "surface-container-high": "#e1eae3", "on-tertiary": "#ffffff" }, "borderRadius": { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" }, "spacing": { "space-lg": "1.5rem", "space-xl": "2rem", "space-md": "1rem", "margin": "1rem", "gutter": "1rem", "space-xs": "0.25rem", "space-sm": "0.5rem" }, "fontFamily": { "headline-sm": ["Roboto Flex"], "label-md": ["Roboto Flex"], "label-sm": ["Roboto Flex"], "title-sm": ["Roboto Flex"], "title-lg": ["Roboto Flex"], "headline-md": ["Roboto Flex"], "body-sm": ["Roboto Flex"], "body-lg": ["Roboto Flex"], "label-lg": ["Roboto Flex"], "headline-lg": ["Roboto Flex"], "display-md": ["Roboto Flex"], "display-lg-mobile": ["Roboto Flex"], "display-sm": ["Roboto Flex"], "title-md": ["Roboto Flex"], "body-md": ["Roboto Flex"], "display-lg": ["Roboto Flex"] }, "fontSize": { "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "500"}], "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600"}], "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600"}], "title-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600"}], "title-lg": ["22px", {"lineHeight": "28px", "fontWeight": "500"}], "headline-md": ["28px", {"lineHeight": "36px", "fontWeight": "500"}], "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.4px", "fontWeight": "400"}], "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.5px", "fontWeight": "400"}], "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600"}], "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "500"}], "display-md": ["45px", {"lineHeight": "52px", "fontWeight": "400"}], "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.2px", "fontWeight": "500"}], "display-sm": ["36px", {"lineHeight": "44px", "fontWeight": "400"}], "title-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0.15px", "fontWeight": "600"}], "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.25px", "fontWeight": "400"}], "display-lg": ["57px", {"lineHeight": "64px", "letterSpacing": "-0.25px", "fontWeight": "400"}] } } } }</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-6 px-margin flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm"><span class="tracking-tight font-medium">9:41</span><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[14px]">signal_cellular_alt</span><span class="material-symbols-outlined text-[14px]">wifi</span><span class="material-symbols-outlined text-[14px]">battery_full</span></div></div><div class="h-14 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0 flex-1"><button aria-label="Go back" class="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors flex-shrink-0" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><div class="w-9 h-9 rounded-DEFAULT overflow-hidden flex-shrink-0 shadow-xs"><img alt="TripSplit App Icon" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UlZuUIbJAAMU4nnVtg72keNcLuuMh4t0rfJ84x0BX5teZ-8EzidfdaUdU73HJ9je33NwngQhCIkihjYPwRmGmpuPS7MX62tA3RgReu3WV3feYrADGragxPLOH5NlY0EG5oOO2kXxHfnpecZuB98a2ZzZpy3MGfD4KFMWMhbC5hBxxwmfZDh5Gq-B0_6CJIXE-3bhux6jZgUaIE4_J5-3RWx8sPsAo0IqP7hmGU4fy0"></div><div class="min-w-0 flex flex-col justify-center"><span class="font-label-sm text-label-sm text-primary uppercase tracking-wider font-semibold leading-none">TripSplit</span><h1 class="font-title-lg text-title-lg text-on-surface font-semibold tracking-tight leading-tight whitespace-nowrap">Smart Settlement</h1></div></div><div class="flex items-center gap-1 flex-shrink-0"><button aria-label="Notifications" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary-fixed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfDpzC9JwT02mh-C9mtIfPc0KuecNGG03_QGgh_VESN1acHysIX2wqSXTeYBWmF5XLy3nU_CtCNQVw2K-42H5DcWliVpRYXU10iQG_XBengg7xaNcjHp4bvYuigz3NPxEKR0hGkmqmiNxGg0saoJol8-shFMjtICi0pFg45szz-egqG0iTFJrRIms8tGdxNSISn3bH2MasuMqG4MejLOqVH8_Md13lrJyap5V72vE"></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-20 pb-safe bg-surface"><div class="flex flex-col w-full pb-32">
+<!-- Settlement Summary Header -->
+<section class="px-margin pt-space-sm pb-space-md">
+<div class="flex items-center gap-space-xs text-primary mb-1">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span class="font-label-md text-label-md uppercase tracking-wider font-semibold">Smart Settlement</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Goa Beach Holiday</h2>
+<div class="flex items-center gap-space-xs mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary-fixed text-on-primary-fixed">
+<span class="material-symbols-outlined text-[13px]">bolt</span>
+</span>
+<span class="">Reduced 11 transactions to 3 transfers</span>
+</div>
+</section>
+<!-- Algorithm Callout Banner -->
+<section class="px-margin mb-space-md">
+<div class="bg-surface-container rounded-lg p-space-md shadow-sm relative overflow-hidden">
+<div class="absolute -right-6 -bottom-6 w-24 h-24 bg-primary-fixed-dim/20 rounded-full blur-xl pointer-events-none"></div>
+<div class="flex items-start gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold">Optimized Debt Graph</h3>
+<span class="bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded-full">73% Faster</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-relaxed">
+            Instead of everyone paying each other multiple times, TripSplit ran graph simplification to minimize transfers down to just 3 direct UPI payments.
+          </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Settlements Section Header -->
+<div class="px-margin flex items-center justify-between mb-space-sm">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Payment Transfers</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">1 of 3 resolved</span>
+</div>
+<div class="px-margin flex flex-col gap-space-md">
+<!-- Card 1: Active Payment (You Owe) -->
+<div class="bg-surface-container-low rounded-lg p-space-md shadow-sm relative overflow-hidden transition-all duration-300" id="card-rohan">
+<!-- Status & Category tag -->
+<div class="flex items-center justify-between pb-space-sm">
+<span class="inline-flex items-center gap-1 font-label-md text-label-md px-2.5 py-1 rounded-full bg-error-container text-on-error-container">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-pulse"></span>
+          You Owe Money
+        </span>
+<span class="font-label-sm text-label-sm text-outline flex items-center gap-1" id="badge-rohan-status">
+<span class="material-symbols-outlined text-[15px]">schedule</span> Pending Payment
+        </span>
+</div>
+<!-- Recipient Profile & Amount -->
+<div class="flex items-start justify-between gap-space-sm mt-1">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="relative flex-shrink-0">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="Warm natural portrait of Rohan, an Indian man in his late 20s with a cheerful smile wearing a casual linen beach shirt, sunlit outdoor coastal aesthetic, soft focus background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlJ3QYYB2XRRBc95MTqQT_GJJubW7pudgGInX_URDXdmizqHCe8hxDNA-qNoSJ16PcLnVJmoUyU3SG4uniwDIzClWp9oCRoQZZ4ki8YVof5v571KK5cEjNrs3fZ2_6UgdCtlxiBc_bAPnTiSLXy0UqQ24FUrCj42aMSy92wI83L6XOgqa_ziEYirGZRsvZCpMINdABc85paGkgfMKjvFEin8ubVnTYHJS9Un9KAGE">
+<span class="absolute -bottom-1 -right-1 bg-surface-container-lowest text-primary rounded-full p-0.5 flex items-center justify-center shadow-xs">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</span>
+</div>
+<div class="min-w-0">
+<h4 class="font-title-md text-title-md text-on-surface font-semibold truncate">Rohan Verma</h4>
+<div class="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm mt-0.5">
+<span class="truncate">rohan.verma@okhdfcbank</span>
+<button aria-label="Copy UPI ID" class="p-1 rounded-full hover:bg-surface-variant text-primary" onclick="navigator.clipboard.writeText('rohan.verma@okhdfcbank')">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<div class="text-right flex-shrink-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block">Amount</span>
+<span class="font-headline-sm text-headline-sm text-error font-bold tracking-tight">₹1,420</span>
+</div>
+</div>
+<!-- Interactive QR Code Visual Drawer -->
+<div class="mt-space-md bg-surface-container-lowest rounded-DEFAULT p-space-md flex flex-col items-center justify-center text-center shadow-xs">
+<div class="relative p-2 rounded-DEFAULT bg-surface flex items-center justify-center shadow-sm">
+<!-- Dynamic SVG QR Matrix -->
+<svg class="w-32 h-32 text-on-surface" fill="currentColor" viewBox="0 0 120 120">
+<!-- Corners -->
+<rect fill="none" height="30" rx="4" stroke="currentColor" stroke-width="4" width="30" x="10" y="10"></rect>
+<rect fill="currentColor" height="14" rx="2" width="14" x="18" y="18"></rect>
+<rect fill="none" height="30" rx="4" stroke="currentColor" stroke-width="4" width="30" x="80" y="10"></rect>
+<rect fill="currentColor" height="14" rx="2" width="14" x="88" y="18"></rect>
+<rect fill="none" height="30" rx="4" stroke="currentColor" stroke-width="4" width="30" x="10" y="80"></rect>
+<rect fill="currentColor" height="14" rx="2" width="14" x="18" y="88"></rect>
+<!-- Data dots -->
+<circle cx="50" cy="20" r="3"></circle>
+<circle cx="65" cy="20" r="3"></circle>
+<circle cx="50" cy="35" r="3"></circle>
+<circle cx="65" cy="35" r="3"></circle>
+<circle cx="35" cy="50" r="3"></circle>
+<circle cx="50" cy="50" r="4"></circle>
+<circle cx="65" cy="50" r="3"></circle>
+<circle cx="85" cy="50" r="3"></circle>
+<circle cx="100" cy="50" r="3"></circle>
+<circle cx="20" cy="65" r="3"></circle>
+<circle cx="35" cy="65" r="3"></circle>
+<circle cx="55" cy="65" r="3"></circle>
+<circle cx="75" cy="65" r="3"></circle>
+<circle cx="95" cy="65" r="3"></circle>
+<circle cx="50" cy="80" r="3"></circle>
+<circle cx="65" cy="80" r="3"></circle>
+<circle cx="80" cy="80" r="3"></circle>
+<circle cx="95" cy="80" r="3"></circle>
+<circle cx="50" cy="95" r="3"></circle>
+<circle cx="70" cy="95" r="3"></circle>
+<circle cx="85" cy="95" r="3"></circle>
+<circle cx="105" cy="95" r="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="w-8 h-8 rounded-full bg-surface-container-lowest shadow-md flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+</span>
+</div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-primary">qr_code_scanner</span>
+          Scan using any UPI app (GPay, PhonePe, Paytm)
+        </p>
+</div>
+<!-- Quick UPI Payment Launchers -->
+<div class="grid grid-cols-2 gap-space-sm mt-space-md">
+<!-- GPay Button -->
+<a class="h-11 px-3 rounded-full bg-surface-container-high hover:bg-surface-variant flex items-center justify-center gap-2 text-on-surface font-title-sm text-title-sm transition-all shadow-xs active:scale-95" href="upi://pay?pa=rohan.verma@okhdfcbank&amp;pn=Rohan%20Verma&amp;am=1420&amp;cu=INR&amp;tn=Goa%20Trip%20Settlement">
+<svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+<path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z" fill="#4285F4"></path>
+<path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.14C3.25 21.31 7.31 24 12 24z" fill="#34A853"></path>
+<path d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.59H1.26C.46 8.18 0 9.99 0 12s.46 3.82 1.26 5.41l4.02-3.14z" fill="#FBBC05"></path>
+<path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.69 1.26 6.59l4.02 3.14c.95-2.83 3.6-4.98 6.72-4.98z" fill="#EA4335"></path>
+</svg>
+<span class="truncate">Google Pay</span>
+</a>
+<!-- PhonePe Button -->
+<a class="h-11 px-3 rounded-full bg-secondary-fixed hover:bg-secondary-fixed-dim flex items-center justify-center gap-2 text-on-secondary-fixed font-title-sm text-title-sm transition-all shadow-xs active:scale-95" href="upi://pay?pa=rohan.verma@okhdfcbank&amp;pn=Rohan%20Verma&amp;am=1420&amp;cu=INR&amp;tn=Goa%20Trip%20Settlement">
+<span class="w-4 h-4 rounded-full bg-secondary flex items-center justify-center text-on-secondary text-[10px] font-bold">पे</span>
+<span class="truncate">PhonePe</span>
+</a>
+</div>
+<!-- Share UPI Link and Direct Actions -->
+<div class="flex items-center gap-space-sm mt-space-sm">
+<button class="flex-1 h-10 px-3 rounded-full bg-surface-container hover:bg-surface-variant flex items-center justify-center gap-1.5 text-on-surface-variant font-label-md text-label-md transition-colors" onclick="navigator.share ? navigator.share({title: 'TripSplit Payment', text: 'UPI transfer for Goa Beach Holiday: ₹1,420 to rohan.verma@okhdfcbank'}) : alert('Link copied to clipboard')">
+<span class="material-symbols-outlined text-[16px]">share</span>
+<span class="">Share UPI Link</span>
+</button>
+</div>
+<!-- Manual Verification Action -->
+<div class="mt-space-md pt-space-sm border-t-0 bg-surface-container/60 rounded-DEFAULT p-3 flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<input class="w-5 h-5 rounded-full text-primary focus:ring-0 cursor-pointer accent-primary" id="markPaidCheck" onchange="togglePaidState(this.checked)" type="checkbox">
+<label class="font-body-sm text-body-sm text-on-surface cursor-pointer select-none" for="markPaidCheck">
+            I have completed this transfer
+          </label>
+</div>
+<button class="h-9 px-3.5 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-xs hover:bg-primary-container transition-all flex items-center gap-1" id="markPaidBtn" onclick="confirmPayment()">
+<span class="material-symbols-outlined text-[16px]">check</span>
+<span class="">Mark Paid</span>
+</button>
+</div>
+<!-- Disclaimer notice -->
+<p class="font-label-sm text-label-sm text-outline mt-2 text-center">
+        Opening a UPI app does not automatically confirm transfer. Tap "Mark Paid" after sending.
+      </p>
+</div>
+<!-- Card 2: You Receive (Ananya Sharma) -->
+<div class="bg-surface-container-low rounded-lg p-space-md shadow-sm">
+<div class="flex items-center justify-between pb-space-sm">
+<span class="inline-flex items-center gap-1 font-label-md text-label-md px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed">
+<span class="material-symbols-outlined text-[14px]">call_received</span>
+          You Receive Money
+        </span>
+<span class="font-label-sm text-label-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">send</span> Reminder Sent
+        </span>
+</div>
+<div class="flex items-start justify-between gap-space-sm mt-1">
+<div class="flex items-center gap-space-sm min-w-0">
+<img class="w-12 h-12 rounded-full object-cover flex-shrink-0" data-alt="Portrait of Ananya, a joyful young woman wearing round sunglasses on her head with beach waves hair and a bright yellow top, warm coastal background, modern clean style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVy8Ul6k1MGz1j9h1llWFY0p_HxBaM78thlTkAziGLcTjGs5Wp1nTpi3H9H29KfUlVXjYb2KkRfLuPPN46Xgh0pQHwthS50lLeBl0cYGfGRI-ustVgIohUbLcIP5ggCFBPZ1NfdXPEvl0AjKa-4KRw6logzTSx33oFSgUhQ7OaSM7iu0dRf9YDk9SxJxjf-oZlcd52Tu96Af08QCIMKllxM7SzzRXmv5-MDxkQItw">
+<div class="min-w-0">
+<h4 class="font-title-md text-title-md text-on-surface font-semibold truncate">Ananya Sharma</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Owes you for Resort &amp; Meals</p>
+</div>
+</div>
+<div class="text-right flex-shrink-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block">To Receive</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold tracking-tight">₹2,470</span>
+</div>
+</div>
+<!-- Reminder Trigger -->
+<div class="mt-space-md pt-space-xs flex items-center justify-between gap-space-sm">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Last pinged 2h ago</span>
+<a class="h-10 px-4 rounded-full bg-primary-container text-on-primary font-label-md text-label-md flex items-center gap-2 hover:opacity-90 transition-opacity" href="https://wa.me/?text=Hey%20Ananya!%20Could%20you%20please%20settle%20your%20TripSplit%20share%20of%20%E2%82%B92,470%20for%20our%20Goa%20Trip?%20Thanks!" target="_blank">
+<span class="material-symbols-outlined text-[16px]">chat</span>
+<span class="">WhatsApp Reminder</span>
+</a>
+</div>
+</div>
+<!-- Card 3: Settled / Paid Peer Transaction -->
+<div class="bg-surface-container-low/70 rounded-lg p-space-md shadow-xs opacity-90">
+<div class="flex items-center justify-between pb-space-sm">
+<span class="inline-flex items-center gap-1 font-label-md text-label-md px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">group</span>
+          Group Transfer
+        </span>
+<span class="font-label-sm text-label-sm text-primary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span> Settled
+        </span>
+</div>
+<div class="flex items-center justify-between mt-1">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="flex -space-x-3 overflow-hidden flex-shrink-0">
+<img class="inline-block h-10 w-10 rounded-full object-cover" data-alt="Portrait of Vikram, smiling young man in a green shirt with palm tree reflections, candid style, high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkeV_xEqQeoAjpqriTaDfkYBAz_4i1NQXDke5jpO7WjXN4P4mu4g46pgvRacwyL3gutFPL0Ei18mbt6Cz94rO0H5ZcKEpnzivl80FSxL5mOUO0lh7nTlE6W34Xnp0d4jH8etychRG8Xg3Ws8mxN5EFI0U-izMWewGuoQO-feWKeVmNj5r0-7nq1C8S8mpcYB9Yp_WodjpjTcCwlU9rFdiTrjG5CWo1iyqt4ZN9p_8">
+<img class="inline-block h-10 w-10 rounded-full object-cover" data-alt="Portrait of Priya, cheerful woman in summer sunglasses laughing during a road trip, warm sun flare, vibrant styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIqdQsZi6w6rSEirFmmVNvQQHp0ODbvFVMBEVACBZ71HTHFZZFDgSXbE_5o7PgPNMql7RXdwcrsp_ApE438UzIMNAyus0q3U2jFm5VaEyI0pDKxRelAdYyfcJMZrvs0YhqfkND6MYGqkHBlwgbT-kdSOh7B8jR8fx4bV65UN-8_uiEz7sD-Kl2NXeLM4_NrUAx-3RLBaqSZTp5YUPFjS0oqiXzw0PJVGbTW0lBI-0">
+</div>
+<div class="min-w-0">
+<div class="font-title-sm text-title-sm text-on-surface font-semibold truncate">Vikram Rao → Priya Patel</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Paid via PhonePe • Yesterday, 4:15 PM</p>
+</div>
+</div>
+<div class="text-right flex-shrink-0">
+<span class="font-title-md text-title-md text-on-surface-variant line-through font-semibold">₹1,850</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Micro-insight pill -->
+<div class="px-margin mt-space-md">
+<div class="bg-tertiary-container/15 text-tertiary rounded-lg p-space-sm flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-tertiary flex-shrink-0">shield_lock</span>
+<span class="font-body-sm text-body-sm leading-tight">Protected by UPI 256-bit encryption. Settlements are reconciled directly to your bank account.</span>
+</div>
+</div>
+<!-- Persistent Floating Bottom Net Balance Banner -->
+<div class="fixed bottom-0 inset-x-0 z-40 px-margin pb-6 pt-3 bg-surface/90 backdrop-blur-xl shadow-lg border-t-0">
+<div class="max-w-md mx-auto bg-surface-container-highest rounded-lg p-3.5 shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed">
+<span class="material-symbols-outlined text-[22px]">account_balance</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block">Your Net Position</span>
+<span class="font-title-md text-title-md text-primary font-bold tracking-tight">+₹1,050 to receive</span>
+</div>
+</div>
+<button class="h-9 px-4 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-xs hover:bg-primary-container transition-all flex items-center gap-1 flex-shrink-0" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span class="">Overview</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  function togglePaidState(isChecked) {
+    const btn = document.getElementById('markPaidBtn');
+    if (isChecked) {
+      btn.classList.add('bg-primary-container', 'scale-105');
+    } else {
+      btn.classList.remove('bg-primary-container', 'scale-105');
+    }
+  }
+
+  function confirmPayment() {
+    const card = document.getElementById('card-rohan');
+    const badge = document.getElementById('badge-rohan-status');
+    const checkbox = document.getElementById('markPaidCheck');
+    
+    checkbox.checked = true;
+    badge.innerHTML = '<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: \'FILL\' 1;">check_circle</span> <span class="text-primary font-semibold">Marked as Settled</span>';
+    
+    // Provide delightful feedback
+    card.classList.add('bg-surface-container');
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-inverse-surface text-inverse-on-surface px-4 py-2 rounded-full font-label-md text-label-md shadow-lg flex items-center gap-2 transition-all duration-300 transform scale-100';
+    toast.innerHTML = '<span class="material-symbols-outlined text-[18px] text-primary-fixed">check_circle</span> Transfer recorded for Rohan Verma';
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
+</script></main>
+
+</body></html>
