@@ -15,7 +15,7 @@ export const unstable_settings = {
 };
 
 function RootNavigation() {
-  const { firebaseUser, loading, needsSetup } = useAuth();
+  const { firebaseUser, user, loading, needsSetup } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -24,20 +24,21 @@ function RootNavigation() {
 
     const inAuthGroup = segments[0] === '(auth)';
     const isPublicRoute = segments[0] === 'join-group' || segments[0] === 'scan-qr';
+    const isAuthenticated = !!firebaseUser || !!user;
 
-    if (!firebaseUser && !inAuthGroup && !isPublicRoute) {
+    if (!isAuthenticated && !inAuthGroup && !isPublicRoute) {
       // Redirect to login if unauthenticated
       router.replace('/(auth)/login');
-    } else if (firebaseUser && inAuthGroup) {
+    } else if (isAuthenticated && inAuthGroup) {
       if (needsSetup) {
         router.replace('/setup-wizard');
       } else {
         router.replace('/(tabs)');
       }
-    } else if (firebaseUser && needsSetup && segments[0] !== 'setup-wizard') {
+    } else if (isAuthenticated && needsSetup && segments[0] !== 'setup-wizard') {
       router.replace('/setup-wizard');
     }
-  }, [firebaseUser, loading, needsSetup, segments]);
+  }, [firebaseUser, user, loading, needsSetup, segments]);
 
   if (loading) {
     return (

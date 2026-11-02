@@ -9,6 +9,8 @@ import {
   saveSetupWizardData,
   updateUserUpiId,
   subscribeAuthState,
+  loginWithPhoneNumber,
+  PhoneLoginResult,
 } from '../services/firebase/authService';
 import { updateMemberUpiInTrips } from '../services/firebase/tripService';
 import { UserProfile, SetupWizardData } from '../types/user';
@@ -19,6 +21,7 @@ interface AuthContextType {
   loading: boolean;
   needsSetup: boolean;
   signIn: (email: string, pass: string) => Promise<void>;
+  signInWithPhone: (phoneNumber: string) => Promise<PhoneLoginResult>;
   signUp: (email: string, pass: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -94,6 +97,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const handleSignInWithPhone = async (phoneNumber: string): Promise<PhoneLoginResult> => {
+    setLoading(true);
+    try {
+      const result = await loginWithPhoneNumber(phoneNumber);
+      if (result.success && result.profile) {
+        setUser(result.profile);
+      }
+      return result;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSignOut = async () => {
     setLoading(true);
     try {
@@ -132,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         needsSetup,
         signIn: handleSignIn,
+        signInWithPhone: handleSignInWithPhone,
         signUp: handleSignUp,
         signOut: handleSignOut,
         resetPassword: handleResetPassword,

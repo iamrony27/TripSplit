@@ -7,9 +7,21 @@ import {
   User,
   updateProfile,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, db, isFirebaseConfigured } from './config';
 import { UserProfile, SetupWizardData } from '../../types/user';
+import { Trip, TripMember } from '../../types/trip';
+import { JoinRequest } from '../../types/joinRequest';
 import { sanitizeForFirestore } from '../../utils/sanitizeFirestore';
 import {
   getLocalCurrentUser,
@@ -18,7 +30,18 @@ import {
   saveLocalUserProfile,
   subscribeLocalAuth,
   seedDemoDataIfEmpty,
+  getLocalTrips,
+  saveLocalTrip,
 } from '../storage/localDatabase';
+
+export interface PhoneLoginResult {
+  success: boolean;
+  status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'NOT_FOUND';
+  profile?: UserProfile;
+  tripId?: string;
+  tripTitle?: string;
+  message?: string;
+}
 
 const USERS_COLLECTION = 'users';
 
@@ -308,5 +331,193 @@ export function subscribeAuthState(callback: (user: User | null) => void) {
     isUnsubscribed = true;
     localUnsub();
     if (firebaseUnsubscribe) firebaseUnsubscribe();
+  };
+}
+
+export function matchPhoneNumbers(phoneA?: string, phoneB?: string): boolean {
+  if (!phoneA || !phoneB) return false;
+  const digitsA = phoneA.replace(/[^0-9]/g, '');
+  const digitsB = phoneB.replace(/[^0-9]/g, '');
+  if (digitsA.length < 7 || digitsB.length < 7) return false;
+  if (digitsA === digitsB) return true;
+  return digitsA.endsWith(digitsB) || digitsB.endsWith(digitsA);
+}
+
+/**
+ * Logs in or grants app access using ONLY mobile phone number.
+ * Looks up approved group memberships or approved join requests across Firestore & local database.
+ */
+export async function loginWithPhoneNumber(phoneNumber: string): Promise<PhoneLoginResult> {
+  const cleanDigits = phoneNumber.trim().replace(/[^0-9]/g, '');
+  if (cleanDigits.length < 8) {
+    throw new Error('Please enter a valid mobile number (at least 8 digits).');
+  }
+
+  let foundRequest: JoinRequest | null = null;
+  let matchingTrip: Trip | null = null;
+  let matchingMember: TripMember | null = null;
+
+  // 1. Search joinRequests in Firestore
+  if (isFirebaseConfigured) {
+    try {
+      const candidates = [cleanDigits, `+91${cleanDigits}`, `91${cleanDigits}`, `0${cleanDigits}`];
+      const q = query(
+        collection(db, 'joinRequests'),
+        where('applicantPhone', 'in', candidates)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const list = snap.docs.map((d) => d.data() as JoinRequest);
+        list.sort((a, b) => b.createdAt - a.createdAt);
+        foundRequest = list[0];
+      }
+    } catch (err) {
+      console.warn('Firestore phone lookup in joinRequests:', err);
+    }
+  }
+
+  // 2. Search joinRequests in local storage
+  if (!foundRequest) {
+    try {
+      const allLocalRequests = await AsyncStorage.getItem('@tripsplit_local_join_requests');
+      if (allLocalRequests) {
+        const list: JoinRequest[] = JSON.parse(allLocalRequests);
+        foundRequest =
+          list.find((r) => matchPhoneNumbers(r.applicantPhone, cleanDigits)) || null;
+      }
+    } catch (err) {
+      console.warn('Local join request phone lookup error:', err);
+    }
+  }
+
+  // 3. Search in local trips
+  const localTrips = await getLocalTrips();
+  for (const t of localTrips) {
+    const m = t.members.find(
+      (mem) =>
+        matchPhoneNumbers(mem.email, cleanDigits) ||
+        matchPhoneNumbers(mem.id, cleanDigits)
+    );
+    if (m) {
+      matchingTrip = t;
+      matchingMember = m;
+      break;
+    }
+  }
+
+  // 4. Search in Firestore trips if not found locally
+  if (!matchingMember && isFirebaseConfigured) {
+    try {
+      const qTrips = query(collection(db, 'trips'));
+      const snap = await getDocs(qTrips);
+      for (const docSnap of snap.docs) {
+        const t = docSnap.data() as Trip;
+        const m = t.members?.find(
+          (mem) =>
+            matchPhoneNumbers(mem.email, cleanDigits) ||
+            matchPhoneNumbers(mem.id, cleanDigits)
+        );
+        if (m) {
+          matchingTrip = t;
+          matchingMember = m;
+          await saveLocalTrip(t);
+          break;
+        }
+      }
+    } catch (err) {
+      console.warn('Firestore trips phone lookup notice:', err);
+    }
+  }
+
+  // 5. Evaluate findings
+  // Case A: Member is actively in a group (already approved!)
+  if (matchingMember && matchingTrip) {
+    const userId = matchingMember.userId || matchingMember.id || `phone_${cleanDigits}`;
+    const profile: UserProfile = {
+      id: userId,
+      email: `${cleanDigits}@phone.tripsplit.app`,
+      fullName: matchingMember.name || 'Member',
+      country: 'India',
+      defaultCurrency: matchingTrip.baseCurrency || 'INR',
+      preferredLanguage: 'English',
+      upiId: matchingMember.upiId,
+      isProfileComplete: true,
+      createdAt: matchingMember.joinedAt || Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    await saveLocalUserProfile(profile);
+    const mockUser = createMockFirebaseUser(profile.id, profile.email, profile.fullName);
+    await setLocalCurrentUser(mockUser);
+    await AsyncStorage.setItem('@tripsplit_active_phone', cleanDigits);
+    await AsyncStorage.setItem('@tripsplit_last_joined_trip_id', matchingTrip.id);
+
+    return {
+      success: true,
+      status: 'APPROVED',
+      profile,
+      tripId: matchingTrip.id,
+      tripTitle: matchingTrip.title,
+      message: `Welcome back, ${matchingMember.name}! You are in "${matchingTrip.title}".`,
+    };
+  }
+
+  // Case B: JoinRequest was found
+  if (foundRequest) {
+    if (foundRequest.status === 'APPROVED') {
+      const userId = foundRequest.applicantUserId || `phone_${cleanDigits}`;
+      const profile: UserProfile = {
+        id: userId,
+        email: `${cleanDigits}@phone.tripsplit.app`,
+        fullName: foundRequest.applicantName || 'Member',
+        country: 'India',
+        defaultCurrency: 'INR',
+        preferredLanguage: 'English',
+        upiId: foundRequest.applicantUpiId,
+        isProfileComplete: true,
+        createdAt: foundRequest.createdAt,
+        updatedAt: Date.now(),
+      };
+
+      await saveLocalUserProfile(profile);
+      const mockUser = createMockFirebaseUser(profile.id, profile.email, profile.fullName);
+      await setLocalCurrentUser(mockUser);
+      await AsyncStorage.setItem('@tripsplit_active_phone', cleanDigits);
+      if (foundRequest.tripId) {
+        await AsyncStorage.setItem('@tripsplit_last_joined_trip_id', foundRequest.tripId);
+      }
+
+      return {
+        success: true,
+        status: 'APPROVED',
+        profile,
+        tripId: foundRequest.tripId,
+        tripTitle: foundRequest.tripTitle,
+        message: `Your request was approved! Welcome to "${foundRequest.tripTitle}".`,
+      };
+    } else if (foundRequest.status === 'PENDING') {
+      return {
+        success: false,
+        status: 'PENDING',
+        tripId: foundRequest.tripId,
+        tripTitle: foundRequest.tripTitle,
+        message: `Your request to join "${foundRequest.tripTitle}" is currently pending administrator approval. Once approved, you can enter immediately using this mobile number.`,
+      };
+    } else if (foundRequest.status === 'REJECTED') {
+      return {
+        success: false,
+        status: 'REJECTED',
+        tripId: foundRequest.tripId,
+        tripTitle: foundRequest.tripTitle,
+        message: `Your request to join "${foundRequest.tripTitle}" was declined by the administrator.${foundRequest.rejectionReason ? ` Reason: ${foundRequest.rejectionReason}` : ''}`,
+      };
+    }
+  }
+
+  // Case C: No request or group found for this phone number
+  return {
+    success: false,
+    status: 'NOT_FOUND',
+    message: 'No approved group found for this mobile number. Please ask the group admin for an invitation code or QR to join a group.',
   };
 }

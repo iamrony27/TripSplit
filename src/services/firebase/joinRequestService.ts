@@ -114,6 +114,18 @@ export async function submitJoinRequest(params: {
   // Save locally
   await saveLocalJoinRequest(newRequest);
 
+  // Persist applicant phone & name to AsyncStorage for instant mobile login upon admin approval
+  if (applicantPhone) {
+    const cleanPhone = applicantPhone.replace(/[^0-9]/g, '');
+    await AsyncStorage.setItem('@tripsplit_active_phone', cleanPhone);
+  }
+  if (applicantName) {
+    await AsyncStorage.setItem('@tripsplit_active_name', applicantName.trim());
+  }
+  if (invitationCode) {
+    await AsyncStorage.setItem('@tripsplit_saved_invitation_code', invitationCode.trim());
+  }
+
   // Save to Firestore
   if (isFirebaseConfigured) {
     try {
@@ -466,13 +478,14 @@ export async function approveJoinRequest(params: {
 
   // 3. Add member to trip if not already present
   if (!alreadyMember) {
-    const newMemberId = request.applicantUserId || `member_${Date.now()}`;
+    const cleanPhone = request.applicantPhone ? request.applicantPhone.replace(/[^0-9]/g, '') : '';
+    const newMemberId = request.applicantUserId || (cleanPhone ? `phone_${cleanPhone}` : `member_${Date.now()}`);
     const newMember: TripMember = {
       id: newMemberId,
       userId: request.applicantUserId,
       name: request.applicantName,
       role,
-      email: request.applicantEmail,
+      email: request.applicantEmail || (cleanPhone ? request.applicantPhone : undefined),
       upiId: request.applicantUpiId,
       totalPaid: 0,
       totalShare: 0,
