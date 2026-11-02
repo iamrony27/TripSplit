@@ -87,7 +87,7 @@ export default function ScanQrScreen() {
         await updateUpi(extractedUpiId);
         Alert.alert(
           'UPI ID Linked',
-          `Successfully saved ${extractedUpiId}${payeeName ? ` (${payeeName})` : ''} to your profile.`,
+          `Successfully saved your personal UPI ID: ${extractedUpiId}${payeeName ? ` (${payeeName})` : ''}`,
           [{ text: 'OK', onPress: () => router.back() }]
         );
       } else {
@@ -132,7 +132,9 @@ export default function ScanQrScreen() {
           <MaterialCommunityIcons name="close" size={24} color="#FFFFFF" />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Scan UPI QR</Text>
+        <Text style={styles.headerTitle}>
+          {returnTarget === 'profile' ? 'Link Your UPI ID' : 'Scan UPI QR'}
+        </Text>
 
         <TouchableOpacity onPress={() => setTorch(!torch)} style={styles.iconCircle}>
           <MaterialCommunityIcons
@@ -153,7 +155,9 @@ export default function ScanQrScreen() {
           <View style={[styles.corner, styles.bottomRight]} />
         </View>
         <Text style={styles.scanInstruction}>
-          Point camera at a Google Pay, PhonePe, Paytm or BHIM payment QR code
+          {returnTarget === 'profile'
+            ? 'Point camera at your personal Google Pay, PhonePe, or Paytm QR code to link your UPI ID'
+            : 'Point camera at a Google Pay, PhonePe, Paytm or BHIM payment QR code'}
         </Text>
       </View>
 

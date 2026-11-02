@@ -143,31 +143,23 @@ export default function ProfileScreen() {
                   color={M3Colors.onSurface}
                   backgroundColor="#FFFFFF"
                 />
-                <Text style={styles.qrHint}>Scan to pay with any UPI app</Text>
+                <Text style={styles.qrHint}>Your Receiving QR Code</Text>
+                <Text style={styles.qrSubHint}>Other trip members can scan this with Google Pay or PhonePe to pay you</Text>
               </View>
 
               <View style={styles.upiActionsRow}>
                 <Button
-                  mode="outlined"
+                  mode="contained"
                   onPress={() => {
                     setNewUpiId(user.upiId || '');
                     setUpiDialogVisible(true);
                   }}
                   icon="pencil"
-                  textColor={M3Colors.primary}
+                  buttonColor={M3Colors.primary}
+                  textColor={M3Colors.onPrimary}
                   style={styles.upiActionBtn}
                 >
                   Edit UPI ID
-                </Button>
-
-                <Button
-                  mode="contained"
-                  onPress={() => router.push({ pathname: '/scan-qr', params: { returnTarget: 'profile' } })}
-                  icon="qrcode-scan"
-                  buttonColor={M3Colors.primary}
-                  style={styles.upiActionBtn}
-                >
-                  Scan QR
                 </Button>
               </View>
             </View>
@@ -181,21 +173,16 @@ export default function ProfileScreen() {
               <View style={styles.upiActionsRow}>
                 <Button
                   mode="contained"
-                  onPress={() => setUpiDialogVisible(true)}
+                  onPress={() => {
+                    setNewUpiId('');
+                    setUpiDialogVisible(true);
+                  }}
                   icon="plus"
                   buttonColor={M3Colors.primary}
+                  textColor={M3Colors.onPrimary}
                   style={styles.upiActionBtn}
                 >
-                  Enter UPI ID
-                </Button>
-                <Button
-                  mode="outlined"
-                  onPress={() => router.push({ pathname: '/scan-qr', params: { returnTarget: 'profile' } })}
-                  icon="qrcode-scan"
-                  textColor={M3Colors.primary}
-                  style={styles.upiActionBtn}
-                >
-                  Scan QR
+                  Add / Link UPI ID
                 </Button>
               </View>
             </View>
@@ -247,8 +234,10 @@ export default function ProfileScreen() {
           onDismiss={() => setUpiDialogVisible(false)}
           style={styles.dialog}
         >
-          <Dialog.Title style={styles.dialogTitle}>Update UPI ID</Dialog.Title>
-          <Dialog.Content>
+          <Dialog.Title style={styles.dialogTitle}>
+            {user?.upiId ? 'Update UPI ID' : 'Link UPI ID'}
+          </Dialog.Title>
+          <Dialog.Content style={styles.dialogContent}>
             {upiError ? (
               <Text style={styles.dialogError}>{upiError}</Text>
             ) : null}
@@ -263,7 +252,36 @@ export default function ProfileScreen() {
               mode="outlined"
               outlineColor={M3Colors.outlineVariant}
               activeOutlineColor={M3Colors.primary}
+              left={<TextInput.Icon icon="bank-outline" />}
             />
+
+            {/* OR Divider */}
+            <View style={styles.dialogDividerRow}>
+              <View style={styles.dialogDividerLine} />
+              <Text style={styles.dialogDividerText}>OR AUTO-FILL VIA QR</Text>
+              <View style={styles.dialogDividerLine} />
+            </View>
+
+            {/* Scan Your Own UPI QR Code Option */}
+            <TouchableOpacity
+              style={styles.dialogScanCard}
+              onPress={() => {
+                setUpiDialogVisible(false);
+                router.push({ pathname: '/scan-qr', params: { returnTarget: 'profile' } });
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.dialogScanIcon}>
+                <MaterialCommunityIcons name="qrcode-scan" size={22} color={M3Colors.primary} />
+              </View>
+              <View style={styles.dialogScanTextWrap}>
+                <Text style={styles.dialogScanTitle}>Scan Your UPI QR Code</Text>
+                <Text style={styles.dialogScanSubtitle}>
+                  Scan the QR code from your personal Google Pay, PhonePe, or Paytm app to automatically detect and set your UPI ID.
+                </Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={M3Colors.onSurfaceVariant} />
+            </TouchableOpacity>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setUpiDialogVisible(false)} textColor={M3Colors.onSurfaceVariant}>
@@ -273,7 +291,9 @@ export default function ProfileScreen() {
               onPress={handleSaveUpi}
               loading={savingUpi}
               disabled={savingUpi}
-              textColor={M3Colors.primary}
+              mode="contained"
+              buttonColor={M3Colors.primary}
+              textColor={M3Colors.onPrimary}
             >
               Save
             </Button>
@@ -418,9 +438,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   qrHint: {
+    ...M3Typography.labelLarge,
+    color: M3Colors.onSurface,
+    fontWeight: '700',
+    marginTop: 8,
+  },
+  qrSubHint: {
     ...M3Typography.labelSm,
     color: M3Colors.onSurfaceVariant,
-    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 8,
+    marginTop: 2,
+    fontSize: 11,
   },
   upiActionsRow: {
     flexDirection: 'row',
@@ -532,5 +561,59 @@ const styles = StyleSheet.create({
     ...M3Typography.bodySm,
     color: M3Colors.error,
     marginBottom: 8,
+  },
+  dialogContent: {
+    gap: 12,
+  },
+  dialogDividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginVertical: 4,
+  },
+  dialogDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: M3Colors.outlineVariant,
+  },
+  dialogDividerText: {
+    ...M3Typography.labelSm,
+    color: M3Colors.onSurfaceVariant,
+    fontWeight: '700',
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  dialogScanCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: M3Colors.surfaceContainerHigh,
+    borderRadius: M3Shapes.cardMedium,
+    padding: 12,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: M3Colors.primaryContainer,
+  },
+  dialogScanIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: M3Colors.primaryContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dialogScanTextWrap: {
+    flex: 1,
+  },
+  dialogScanTitle: {
+    ...M3Typography.labelLarge,
+    color: M3Colors.onSurface,
+    fontWeight: '700',
+  },
+  dialogScanSubtitle: {
+    ...M3Typography.bodySm,
+    color: M3Colors.onSurfaceVariant,
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 2,
   },
 });
