@@ -43,7 +43,7 @@ const TABS: TabConfig[] = [
   { name: 'profile', title: 'Profile', icon: 'account-outline', activeIcon: 'account' },
 ];
 
-const SCOOP_WIDTH = 72;
+const SCOOP_WIDTH = 75;
 const SCOOP_HEIGHT = 28;
 const CIRCLE_SIZE = 44;
 
@@ -134,15 +134,15 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
             ]}
             pointerEvents="none"
           >
-            {/* Smooth Scoop Cutout SVG - strictly inside the bar at top: 0, zero outside overflow */}
-            <Svg width={SCOOP_WIDTH} height={SCOOP_HEIGHT} viewBox="0 0 72 28">
+            {/* Pure Mathematical Concentric Circular Scoop SVG (Exact 7px halo gap everywhere) */}
+            <Svg width={SCOOP_WIDTH} height={SCOOP_HEIGHT} viewBox="0 0 75 28">
               <Path
-                d="M 0 0 C 8 0, 12 2, 16 8 C 22 19, 28 28, 36 28 C 44 28, 50 19, 56 8 C 60 2, 64 0, 72 0 Z"
+                d="M 0 0 A 10 10 0 0 1 9.5 6.9 A 29 29 0 0 0 64.7 6.9 A 10 10 0 0 1 74.2 0 Z"
                 fill={M3Colors.surface}
               />
             </Svg>
 
-            {/* Elevated Vibrant Emerald Circular Badge with comfortable gap all around */}
+            {/* Elevated Vibrant Emerald Circular Badge with equal 7px distance on all sides */}
             <Animated.View
               style={[
                 styles.activeCircleBadge,
@@ -242,8 +242,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A', // Jet Black / Dark Slate
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
     elevation: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
@@ -252,7 +250,7 @@ const styles = StyleSheet.create({
   },
   slidingScoopWrapper: {
     position: 'absolute',
-    top: 0, // Sits strictly inside the bar top line, no box above the bar
+    top: -1, // Sits seamlessly over the bar top edge, eliminating any seam line
     left: 0,
     width: SCOOP_WIDTH,
     height: SCOOP_HEIGHT,
@@ -261,8 +259,8 @@ const styles = StyleSheet.create({
   },
   activeCircleBadge: {
     position: 'absolute',
-    top: -22, // Elevated above the bar, leaving a clean 8px gap above scoop bottom
-    left: (SCOOP_WIDTH - CIRCLE_SIZE) / 2, // 14px comfortable gap on each side
+    top: -24, // Sits with an exact 7px equal concentric halo gap all the way around
+    left: (SCOOP_WIDTH - CIRCLE_SIZE) / 2, // Centered perfectly within the 75px concentric scoop
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
@@ -289,15 +287,15 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   centerPlusCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#1E293B',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#334155',
-    top: -14, // Raised above the bar
+    top: -16, // Raised 16px above the bar top
     elevation: 8,
     shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
