@@ -8,7 +8,6 @@ import {
   Platform,
   TouchableOpacity,
   Image,
-  ImageBackground,
 } from 'react-native';
 import { TextInput, Button, HelperText } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -240,14 +239,9 @@ export default function LoginScreen() {
   const isLogin = authMode === 'login';
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/auth_bg_subtle.png')}
-      resizeMode="cover"
-      style={styles.bgImage}
-    >
-      <View style={styles.bgOverlay} />
+    <View style={styles.container}>
       <KeyboardAvoidingView
-        style={styles.container}
+        style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
@@ -261,13 +255,11 @@ export default function LoginScreen() {
         >
           {/* Brand Header */}
           <View style={styles.brandContainer}>
-            <View style={styles.logoWrapper}>
-              <Image
-                source={require('../../assets/images/app_logo_modern.png')}
-                style={styles.logoImage}
-                resizeMode="cover"
-              />
-            </View>
+            <Image
+              source={require('../../assets/images/app_logo_modern.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
             <Text style={styles.appTitle}>TripSplit</Text>
             <Text style={styles.tagline}>
               {isLogin
@@ -488,21 +480,16 @@ export default function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bgImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  bgOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(255, 255, 255, 0.72)',
-  },
   container: {
+    flex: 1,
+    backgroundColor: M3Colors.surface,
+  },
+  keyboardView: {
     flex: 1,
   },
   scrollContent: {
@@ -513,23 +500,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  logoWrapper: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    overflow: 'hidden',
-    marginBottom: 8,
-    elevation: 4,
-    shadowColor: M3Colors.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
   logoImage: {
-    width: '100%',
-    height: '100%',
+    width: 104,
+    height: 104,
+    marginBottom: 8,
   },
   appTitle: {
     ...M3Typography.displaySm,
