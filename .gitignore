@@ -10,8 +10,15 @@ web-build/
 *.jks
 *.keystore
 *.apk
-/android
 /ios
+# Android build artifacts
+**/.gradle/
+**/build/
+**/.cxx/
+**/local.properties
+**/*.iml
+*.jsbundle
+android/gradle/gradle-daemon-jvm.properties
 google-services.json
 GoogleService-Info.plist
 firebase-debug.log*
