@@ -6,12 +6,14 @@ import {
   Animated,
   Platform,
   Vibration,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Defs, Mask, Rect, G, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
-import { M3Colors } from '../../theme/colors';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export interface BottomTabBarProps {
   state: {
@@ -55,7 +57,8 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
 }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [barWidth, setBarWidth] = useState(0);
+  const initialWidth = Dimensions.get('window').width - 32;
+  const [barWidth, setBarWidth] = useState(initialWidth > 0 ? initialWidth : 360);
 
   // Determine current active route name
   const currentRoute = state.routes[state.index];
@@ -110,13 +113,13 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
         damping: 20,
         stiffness: 180,
         mass: 0.8,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
         friction: 5,
         tension: 130,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
     ]).start();
   }, [activeSlot, tabWidth, barWidth, translateXAnim, scaleAnim]);
@@ -126,7 +129,7 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
   return (
     <View style={[styles.outerWrapper, { bottom: bottomInset }]} pointerEvents="box-none">
       <View
-        style={styles.barContainer}
+        style={[styles.barContainer, { width: barWidth > 0 ? barWidth : '100%' }]}
         onLayout={(e) => {
           const w = e.nativeEvent.layout.width;
           if (w > 0 && Math.abs(w - barWidth) > 1) {
@@ -134,26 +137,59 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
           }
         }}
       >
-        {/* Sliding Scoop & Floating Circle Layer (Smooth spring sliding across tabs) */}
+        {/* Background Dark Slate Capsule with True Transparent Cutout via SVG Mask */}
+        {barWidth > 0 && (
+          <Svg
+            width={barWidth}
+            height={60}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          >
+            <Defs>
+              <Mask id="capsuleBarMask">
+                {/* White capsule keeps the dark bar visible */}
+                <Rect
+                  x="0"
+                  y="0"
+                  width={barWidth}
+                  height="60"
+                  rx="30"
+                  ry="30"
+                  fill="#FFFFFF"
+                />
+                {/* Black scoop cutout cuts a 100% transparent gap through the bar */}
+                <AnimatedPath
+                  x={translateXAnim as any}
+                  d="M 0 0 A 6 6 0 0 1 5.82 4.55 A 27 27 0 0 0 58.21 4.55 A 6 6 0 0 1 64.03 0 Z"
+                  fill="#000000"
+                />
+              </Mask>
+            </Defs>
+
+            <Rect
+              x="0"
+              y="0"
+              width={barWidth}
+              height="60"
+              rx="30"
+              ry="30"
+              fill="#0F172A"
+              mask="url(#capsuleBarMask)"
+            />
+          </Svg>
+        )}
+
+        {/* Sliding Elevated Floating Circle Badge */}
         {tabWidth > 0 && (
           <Animated.View
             style={[
-              styles.slidingScoopWrapper,
+              styles.floatingBadgeWrapper,
               {
                 transform: [{ translateX: translateXAnim }],
               },
             ]}
             pointerEvents="none"
           >
-            {/* Pure Mathematical Concentric Circular Scoop SVG (Exact 6px halo gap everywhere) */}
-            <Svg width={SCOOP_WIDTH} height={SCOOP_HEIGHT} viewBox="0 0 64 26">
-              <Path
-                d="M 0 0 A 6 6 0 0 1 5.82 4.55 A 27 27 0 0 0 58.21 4.55 A 6 6 0 0 1 64.03 0 Z"
-                fill={M3Colors.surface}
-              />
-            </Svg>
-
-            {/* Elevated Vibrant Emerald Circular Badge */}
             <Animated.View
               style={[
                 styles.activeCircleBadge,
@@ -247,10 +283,8 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   barContainer: {
-    width: '100%',
     height: 60,
     borderRadius: 30, // Smooth capsule pill (not squarish!)
-    backgroundColor: '#0F172A', // Jet Black / Dark Slate
     flexDirection: 'row',
     alignItems: 'center',
     elevation: 12,
@@ -259,9 +293,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 14,
   },
-  slidingScoopWrapper: {
+  floatingBadgeWrapper: {
     position: 'absolute',
-    top: -1, // Sits seamlessly over the bar top edge, eliminating any seam line
+    top: 0,
     left: 0,
     width: SCOOP_WIDTH,
     height: SCOOP_HEIGHT,
