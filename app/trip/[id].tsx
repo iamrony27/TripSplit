@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -39,9 +39,17 @@ export default function TripDetailsScreen() {
     addMember,
     removeMember,
     deleteExpense,
+    activeTripId,
+    setActiveTripId,
   } = useTrips();
 
   const trip = trips.find((t) => t.id === id);
+
+  useEffect(() => {
+    if (id && activeTripId !== id) {
+      setActiveTripId(id);
+    }
+  }, [id, activeTripId, setActiveTripId]);
 
   const [addMemberDialogVisible, setAddMemberDialogVisible] = useState(false);
   const [newMemberName, setNewMemberName] = useState('');

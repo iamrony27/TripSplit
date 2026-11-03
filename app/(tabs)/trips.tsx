@@ -22,7 +22,7 @@ import { formatCurrency } from '../../src/services/currency/exchangeRateService'
 export default function TripsScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { trips, activeTripId, setActiveTripId, deleteTrip } = useTrips();
+  const { trips, activeTripId, setActiveTripId, deleteTrip, totalTripSpend } = useTrips();
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -125,7 +125,12 @@ export default function TripsScreen() {
                   <View>
                     <Text style={styles.spendLabel}>TOTAL SPEND</Text>
                     <Text style={styles.spendAmount}>
-                      {formatCurrency(trip.totalSpend || 0, trip.baseCurrency || 'INR')}
+                      {formatCurrency(
+                        isActive && totalTripSpend !== undefined
+                          ? totalTripSpend
+                          : (trip.totalSpend || 0),
+                        trip.baseCurrency || 'INR'
+                      )}
                     </Text>
                   </View>
 

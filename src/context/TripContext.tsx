@@ -285,6 +285,22 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return expenses.reduce((acc, curr) => acc + (curr.convertedAmount || curr.amount), 0);
   }, [expenses]);
 
+  // Keep trip.totalSpend synchronized across trips list and Firestore
+  useEffect(() => {
+    if (activeTripId && totalTripSpend !== undefined) {
+      setTrips((prev) =>
+        prev.map((t) =>
+          t.id === activeTripId && Math.abs((t.totalSpend || 0) - totalTripSpend) > 0.01
+            ? { ...t, totalSpend: totalTripSpend }
+            : t
+        )
+      );
+      if (activeTrip && Math.abs((activeTrip.totalSpend || 0) - totalTripSpend) > 0.01) {
+        updateTripInFirestore(activeTripId, { totalSpend: totalTripSpend }).catch(() => {});
+      }
+    }
+  }, [activeTripId, totalTripSpend, activeTrip]);
+
   const currentMember = useMemo(() => {
     if (!activeTrip || !user) return null;
     return (

@@ -74,10 +74,44 @@ export async function saveLocalUserProfile(profile: UserProfile): Promise<void> 
 export async function getLocalTrips(userId?: string): Promise<Trip[]> {
   const json = await AsyncStorage.getItem(STORAGE_KEYS.TRIPS);
   const list: Trip[] = json ? JSON.parse(json) : [];
+
+  // Cross-reference with all saved expenses to ensure totalSpend is always accurately computed
+  const expJson = await AsyncStorage.getItem(STORAGE_KEYS.EXPENSES);
+  const allExpenses: Expense[] = expJson ? JSON.parse(expJson) : [];
+
+  const enrichedList = list.map((trip) => {
+    const tripExps = allExpenses.filter((e) => e.tripId === trip.id);
+    if (tripExps.length > 0) {
+      const sum = tripExps.reduce((acc, e) => acc + (e.convertedAmount || e.amount || 0), 0);
+      return { ...trip, totalSpend: Math.round(sum * 100) / 100 };
+    }
+    return trip;
+  });
+
   if (userId) {
-    return list.filter((t) => t.memberIds.includes(userId));
+    return enrichedList.filter((t) => t.memberIds.includes(userId));
   }
-  return list;
+  return enrichedList;
+}
+
+export async function syncTripTotalSpend(tripId: string): Promise<number> {
+  const expJson = await AsyncStorage.getItem(STORAGE_KEYS.EXPENSES);
+  const allExpenses: Expense[] = expJson ? JSON.parse(expJson) : [];
+  const tripExps = allExpenses.filter((e) => e.tripId === tripId);
+  const sum = Math.round(tripExps.reduce((acc, e) => acc + (e.convertedAmount || e.amount || 0), 0) * 100) / 100;
+
+  const tripsJson = await AsyncStorage.getItem(STORAGE_KEYS.TRIPS);
+  if (tripsJson) {
+    const list: Trip[] = JSON.parse(tripsJson);
+    const idx = list.findIndex((t) => t.id === tripId);
+    if (idx >= 0 && list[idx].totalSpend !== sum) {
+      list[idx].totalSpend = sum;
+      list[idx].updatedAt = Date.now();
+      await AsyncStorage.setItem(STORAGE_KEYS.TRIPS, JSON.stringify(list));
+      notifyTripListeners();
+    }
+  }
+  return sum;
 }
 
 export async function saveLocalTrip(trip: Trip): Promise<void> {
@@ -140,6 +174,7 @@ export async function saveLocalExpense(expense: Expense): Promise<void> {
   }
   await AsyncStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(all));
   notifyExpenseListeners(expense.tripId);
+  await syncTripTotalSpend(expense.tripId);
 }
 
 export async function deleteLocalExpense(expenseId: string, tripId: string): Promise<void> {
@@ -148,6 +183,7 @@ export async function deleteLocalExpense(expenseId: string, tripId: string): Pro
   all = all.filter((e) => e.id !== expenseId);
   await AsyncStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(all));
   notifyExpenseListeners(tripId);
+  await syncTripTotalSpend(tripId);
 }
 
 export function subscribeLocalExpenses(

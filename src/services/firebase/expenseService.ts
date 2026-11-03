@@ -17,18 +17,22 @@ import {
   deleteLocalExpense,
   subscribeLocalExpenses,
   getLocalExpenses,
+  syncTripTotalSpend,
 } from '../storage/localDatabase';
+import { updateTripInFirestore } from './tripService';
 
 const EXPENSES_COLLECTION = 'expenses';
 
 export async function createExpenseInFirestore(expense: Expense): Promise<void> {
   // Always save locally first
   await saveLocalExpense(expense);
+  const newTotal = await syncTripTotalSpend(expense.tripId);
 
   if (isFirebaseConfigured) {
     try {
       const ref = doc(db, EXPENSES_COLLECTION, expense.id);
       await setDoc(ref, sanitizeForFirestore(expense));
+      await updateTripInFirestore(expense.tripId, { totalSpend: newTotal });
     } catch (err) {
       console.warn('Firestore createExpense failed, stored in local cache:', err);
     }
@@ -44,6 +48,10 @@ export async function updateExpenseInFirestore(
     const existing = list.find((e) => e.id === expenseId);
     if (existing) {
       await saveLocalExpense({ ...existing, ...updates, updatedAt: Date.now() });
+    }
+    const newTotal = await syncTripTotalSpend(updates.tripId);
+    if (isFirebaseConfigured) {
+      updateTripInFirestore(updates.tripId, { totalSpend: newTotal }).catch(() => {});
     }
   }
 
@@ -65,14 +73,19 @@ export async function updateExpenseInFirestore(
 }
 
 export async function deleteExpenseInFirestore(expenseId: string, tripId?: string): Promise<void> {
+  let newTotal = 0;
   if (tripId) {
     await deleteLocalExpense(expenseId, tripId);
+    newTotal = await syncTripTotalSpend(tripId);
   }
 
   if (isFirebaseConfigured) {
     try {
       const ref = doc(db, EXPENSES_COLLECTION, expenseId);
       await deleteDoc(ref);
+      if (tripId) {
+        await updateTripInFirestore(tripId, { totalSpend: newTotal });
+      }
     } catch (err) {
       console.warn('Firestore deleteExpense failed, removed locally:', err);
     }
