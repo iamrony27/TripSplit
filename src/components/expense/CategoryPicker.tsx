@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { DEFAULT_CATEGORIES } from '../../constants/categories';
 import { M3Colors } from '../../theme/colors';
 import { M3Typography } from '../../theme/typography';
 import { M3Shapes } from '../../theme/shapes';
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 interface CategoryPickerProps {
   selectedCategoryId: string;

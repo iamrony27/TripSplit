@@ -186,7 +186,7 @@ export default function NotificationsScreen() {
           </View>
         </View>
 
-        {/* Device Phone Notification Card */}
+        {/* Device Haptic & Tactile Feedback Card */}
         <View style={styles.soundCard}>
           <View style={styles.soundCardLeft}>
             <View
@@ -196,44 +196,31 @@ export default function NotificationsScreen() {
               ]}
             >
               <MaterialCommunityIcons
-                name={deviceNotifGranted ? 'cellphone-check' : 'phone-alert'}
+                name={deviceNotifGranted ? 'vibrate' : 'vibrate-off'}
                 size={22}
                 color={deviceNotifGranted ? '#2E7D32' : '#E65100'}
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.soundCardTitle}>Phone System Alerts</Text>
+              <Text style={styles.soundCardTitle}>Haptic & Tactile Feedback</Text>
               <Text style={styles.soundCardSubtitle}>
                 {deviceNotifGranted
-                  ? 'Active: Reaches phone with system sound'
-                  : 'Disabled: Enable access for device push alerts'}
+                  ? 'Active: Provides subtle tactile feedback on actions'
+                  : 'Disabled: Enable access for device vibration alerts'}
               </Text>
             </View>
           </View>
 
           <View style={styles.soundCardRight}>
-            {deviceNotifGranted ? (
-              <TouchableOpacity
-                onPress={handleSendTestPhoneNotification}
-                style={styles.testChimeBtn}
-                activeOpacity={0.7}
-                accessibilityLabel="Test phone push notification"
-              >
-                <MaterialCommunityIcons name="send" size={14} color={M3Colors.primary} />
-                <Text style={styles.testChimeText}>Test Alert</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={handleRequestPhonePermissions}
-                style={[styles.toggleBtn, styles.toggleBtnActive]}
-                activeOpacity={0.8}
-                accessibilityLabel="Enable phone system notifications"
-              >
-                <Text style={[styles.toggleBtnText, styles.toggleBtnTextActive]}>
-                  Enable
-                </Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              onPress={handleSendTestPhoneNotification}
+              style={styles.testChimeBtn}
+              activeOpacity={0.7}
+              accessibilityLabel="Test tactile feedback"
+            >
+              <MaterialCommunityIcons name="vibrate" size={14} color={M3Colors.primary} />
+              <Text style={styles.testChimeText}>Test</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
