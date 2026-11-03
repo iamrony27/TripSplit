@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -15,6 +16,7 @@ import { TopAppBar } from '../../src/components/common/TopAppBar';
 import { StatusBadge } from '../../src/components/common/StatusBadge';
 import { AvatarStack } from '../../src/components/common/AvatarStack';
 import { ExpenseTile } from '../../src/components/expense/ExpenseTile';
+import { Expense } from '../../src/types/expense';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
@@ -32,6 +34,8 @@ export default function HomeScreen() {
     settlementSuggestions,
     payments,
     loading,
+    deleteExpense,
+    isTripAdmin,
   } = useTrips();
 
   const [refreshing, setRefreshing] = React.useState(false);
@@ -73,6 +77,73 @@ export default function HomeScreen() {
   ).length;
 
   const baseCurrency = activeTrip?.baseCurrency || user?.defaultCurrency || 'INR';
+
+  const handleDeleteExpense = (expenseId: string, title: string) => {
+    Alert.alert(
+      'Delete Expense',
+      `Are you sure you want to delete "${title}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteExpense(expenseId);
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Failed to delete expense.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleExpensePress = (exp: Expense) => {
+    if (!activeTrip) return;
+    const isPayer = exp.paidByMemberId === currentMember?.id || (user?.id && exp.paidByMemberId === user.id);
+    const canEdit = isTripAdmin;
+    const canDelete = isTripAdmin || isPayer;
+
+    if (canEdit) {
+      Alert.alert(
+        exp.title,
+        `Amount: ${formatCurrency(exp.amount, exp.originalCurrency)}${exp.isEdited ? '\nStatus: Edited with audit log' : ''}\nChoose an action:`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Edit Transaction',
+            onPress: () =>
+              router.push(`/trip/edit-expense?expenseId=${exp.id}&tripId=${activeTrip.id}` as any),
+          },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => handleDeleteExpense(exp.id, exp.title),
+          },
+        ]
+      );
+    } else if (canDelete) {
+      Alert.alert(
+        exp.title,
+        `Amount: ${formatCurrency(exp.amount, exp.originalCurrency)}\nPaid by: ${activeTrip.members.find((m) => m.id === exp.paidByMemberId)?.name || 'Member'}\nChoose an action:`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => handleDeleteExpense(exp.id, exp.title),
+          },
+        ]
+      );
+    } else {
+      Alert.alert(
+        exp.title,
+        `Amount: ${formatCurrency(exp.amount, exp.originalCurrency)}\nPaid by: ${activeTrip.members.find((m) => m.id === exp.paidByMemberId)?.name || 'Member'}\n${exp.description || ''}`,
+        [{ text: 'Close' }]
+      );
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -312,7 +383,7 @@ export default function HomeScreen() {
                     expense={item}
                     currentUserId={currentMember?.id}
                     payerName={payer}
-                    onPress={() => router.push('/trip/add-expense')}
+                    onPress={() => handleExpensePress(item)}
                   />
                 );
               })
