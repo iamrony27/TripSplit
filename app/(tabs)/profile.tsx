@@ -22,7 +22,7 @@ import { M3Shapes } from '../../src/theme/shapes';
 import { isValidUpiId } from '../../src/services/upi/upiParser';
 import { generateUpiPaymentUri, launchUpiPayment } from '../../src/services/upi/upiLauncher';
 
-const DEVELOPER_UPI = 'rony@okhdfcbank';
+const DEVELOPER_UPI = '7074018142@ptsbi';
 
 export default function ProfileScreen() {
   const router = useRouter();

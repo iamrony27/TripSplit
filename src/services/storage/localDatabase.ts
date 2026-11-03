@@ -252,7 +252,7 @@ function notifyActivityListeners(tripId: string) {
 export async function seedDemoDataIfEmpty(
   userId: string,
   userName: string,
-  userUpiId: string = 'rony@okhdfcbank'
+  userUpiId: string = '7074018142@ptsbi'
 ): Promise<Trip> {
   const existing = await getLocalTrips(userId);
   if (existing.length > 0) {
