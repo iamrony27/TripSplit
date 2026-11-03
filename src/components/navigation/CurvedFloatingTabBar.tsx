@@ -43,9 +43,9 @@ const TABS: TabConfig[] = [
   { name: 'profile', title: 'Profile', icon: 'account-outline', activeIcon: 'account' },
 ];
 
-const SCOOP_WIDTH = 84;
-const SCOOP_HEIGHT = 40;
-const CIRCLE_SIZE = 46;
+const SCOOP_WIDTH = 72;
+const SCOOP_HEIGHT = 28;
+const CIRCLE_SIZE = 44;
 
 export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
   state,
@@ -63,7 +63,6 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
   // Identify active slot index among the 5 tabs
   const activeSlot = useMemo(() => {
     const idx = TABS.findIndex((t) => t.name === currentRouteName);
-    // If not found or if on special action tab 'add', fallback to 0 or preserve
     if (idx === -1 || idx === 2) return 0;
     return idx;
   }, [currentRouteName]);
@@ -72,7 +71,8 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
 
   // Tab width based on measured bar width
   const tabWidth = barWidth > 0 ? barWidth / 5 : 0;
-  const targetX = tabWidth > 0 ? tabWidth * (activeSlot + 0.5) - SCOOP_WIDTH / 2 : 0;
+  const rawX = tabWidth > 0 ? tabWidth * (activeSlot + 0.5) - SCOOP_WIDTH / 2 : 0;
+  const targetX = barWidth > 0 ? Math.max(0, Math.min(barWidth - SCOOP_WIDTH, rawX)) : 0;
 
   // Animation values
   const translateXAnim = useRef(new Animated.Value(targetX)).current;
@@ -82,7 +82,8 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
   useEffect(() => {
     if (tabWidth <= 0) return;
 
-    const toValue = tabWidth * (activeSlot + 0.5) - SCOOP_WIDTH / 2;
+    const raw = tabWidth * (activeSlot + 0.5) - SCOOP_WIDTH / 2;
+    const toValue = Math.max(0, Math.min(barWidth - SCOOP_WIDTH, raw));
 
     if (!hasInitialized.current) {
       translateXAnim.setValue(toValue);
@@ -107,7 +108,7 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
-  }, [activeSlot, tabWidth, translateXAnim, scaleAnim]);
+  }, [activeSlot, tabWidth, barWidth, translateXAnim, scaleAnim]);
 
   const bottomInset = Math.max(insets.bottom, Platform.OS === 'android' ? 16 : 10);
 
@@ -133,15 +134,15 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
             ]}
             pointerEvents="none"
           >
-            {/* Smooth Scoop Cutout SVG */}
-            <Svg width={SCOOP_WIDTH} height={SCOOP_HEIGHT} viewBox="0 0 84 40">
+            {/* Smooth Scoop Cutout SVG - strictly inside the bar at top: 0, zero outside overflow */}
+            <Svg width={SCOOP_WIDTH} height={SCOOP_HEIGHT} viewBox="0 0 72 28">
               <Path
-                d="M 0 0 L 84 0 L 84 14 C 74 14, 68 16, 64 21 C 57 29, 51 40, 42 40 C 33 40, 27 29, 20 21 C 16 16, 10 14, 0 14 Z"
+                d="M 0 0 C 8 0, 12 2, 16 8 C 22 19, 28 28, 36 28 C 44 28, 50 19, 56 8 C 60 2, 64 0, 72 0 Z"
                 fill={M3Colors.surface}
               />
             </Svg>
 
-            {/* Elevated Vibrant Emerald Circular Badge */}
+            {/* Elevated Vibrant Emerald Circular Badge with comfortable gap all around */}
             <Animated.View
               style={[
                 styles.activeCircleBadge,
@@ -165,11 +166,11 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
             const isTabActive = idx === activeSlot;
 
             if (tab.isSpecial) {
-              // Center '+' Add Transaction Button
+              // Center '+' Add Transaction Button (Raised above bar)
               return (
                 <TouchableOpacity
                   key={tab.name}
-                  activeOpacity={0.75}
+                  activeOpacity={0.8}
                   onPress={() => {
                     Vibration.vibrate(35);
                     router.push('/trip/add-expense');
@@ -179,7 +180,7 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
                   accessibilityRole="button"
                 >
                   <View style={styles.centerPlusCircle}>
-                    <MaterialCommunityIcons name="plus" size={24} color="#10B981" />
+                    <MaterialCommunityIcons name="plus" size={26} color="#10B981" />
                   </View>
                 </TouchableOpacity>
               );
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
   },
   slidingScoopWrapper: {
     position: 'absolute',
-    top: -14,
+    top: 0, // Sits strictly inside the bar top line, no box above the bar
     left: 0,
     width: SCOOP_WIDTH,
     height: SCOOP_HEIGHT,
@@ -260,8 +261,8 @@ const styles = StyleSheet.create({
   },
   activeCircleBadge: {
     position: 'absolute',
-    top: -6,
-    left: (SCOOP_WIDTH - CIRCLE_SIZE) / 2,
+    top: -22, // Elevated above the bar, leaving a clean 8px gap above scoop bottom
+    left: (SCOOP_WIDTH - CIRCLE_SIZE) / 2, // 14px comfortable gap on each side
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
@@ -288,18 +289,19 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   centerPlusCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: '#1E293B',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: '#334155',
-    elevation: 4,
+    top: -14, // Raised above the bar
+    elevation: 8,
     shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
   },
 });
