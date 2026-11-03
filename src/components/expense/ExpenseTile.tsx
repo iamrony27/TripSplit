@@ -42,7 +42,7 @@ export const ExpenseTile: React.FC<ExpenseTileProps> = ({
           <MaterialCommunityIcons
             name={category.icon as any}
             size={22}
-            color={M3Colors.onSurface}
+            color="#FFFFFF"
           />
         </View>
 
