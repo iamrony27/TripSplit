@@ -86,7 +86,7 @@
 
 > *"Hi! I'm Rony, an independent developer pouring hundreds of late nights and endless passion into building TripSplit completely free, without intrusive ads or paywalls. Every update, algorithm, and feature is hand-crafted to make travel with your friends and loved ones simple and joyful. If TripSplit has helped you split expenses and keep friendships stress-free, a small coffee or tip goes a very long way in keeping this project alive and growing. Your warmth and support mean everything to me! ❤️"*
 
-- **Developer UPI ID:** `rony@okhdfcbank`
+- **Developer UPI ID:** `7074018142@ptsbi`
 - **Supported Apps:** Google Pay, PhonePe, Paytm, BHIM
 
 ---
