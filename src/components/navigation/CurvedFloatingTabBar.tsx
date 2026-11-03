@@ -6,12 +6,12 @@ import {
   Animated,
   Platform,
   Vibration,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
-import { M3Colors } from '../../theme/colors';
 
 export interface BottomTabBarProps {
   state: {
@@ -43,9 +43,60 @@ const TABS: TabConfig[] = [
   { name: 'profile', title: 'Profile', icon: 'account-outline', activeIcon: 'account' },
 ];
 
-const SCOOP_WIDTH = 75;
-const SCOOP_HEIGHT = 28;
-const CIRCLE_SIZE = 44;
+const BAR_HEIGHT = 60;
+const BAR_RADIUS = 20;
+const PAD_X = 28;
+const CIRCLE_SIZE = 42;
+
+/**
+ * Mathematically exact SVG path for the dark capsule bar with a 100% transparent cutout scoop.
+ * Slope-continuous C1 arcs ensure seamless zero-seam tangent transitions.
+ */
+const getCutoutBarPath = (
+  width: number,
+  height: number,
+  radius: number,
+  cx: number
+): string => {
+  if (width <= 0 || cx <= 0) return '';
+
+  const circleCy = -2;
+  const scoopR = 27; // 21px circle radius + 6px concentric gap
+  const earR = 8;
+  const d = scoopR + earR; // 35
+  const deltaY = earR - circleCy; // 10
+  const deltaX = Math.sqrt(d * d - deltaY * deltaY); // ~33.541
+
+  const leftContactX = (cx - (scoopR * deltaX) / d).toFixed(2);
+  const leftContactY = (circleCy + (scoopR * deltaY) / d).toFixed(2);
+  const rightContactX = (cx + (scoopR * deltaX) / d).toFixed(2);
+  const rightContactY = leftContactY;
+
+  const leftStart = (cx - deltaX).toFixed(2);
+  const rightEnd = (cx + deltaX).toFixed(2);
+
+  const x1 = radius;
+  const x2 = width - radius;
+  const y1 = radius;
+  const y2 = height - radius;
+
+  return [
+    `M ${x1} 0`,
+    `L ${leftStart} 0`,
+    `A ${earR} ${earR} 0 0 1 ${leftContactX} ${leftContactY}`,
+    `A ${scoopR} ${scoopR} 0 0 0 ${rightContactX} ${rightContactY}`,
+    `A ${earR} ${earR} 0 0 1 ${rightEnd} 0`,
+    `L ${x2} 0`,
+    `A ${radius} ${radius} 0 0 1 ${width} ${y1}`,
+    `L ${width} ${y2}`,
+    `A ${radius} ${radius} 0 0 1 ${x2} ${height}`,
+    `L ${x1} ${height}`,
+    `A ${radius} ${radius} 0 0 1 0 ${y2}`,
+    `L 0 ${y1}`,
+    `A ${radius} ${radius} 0 0 1 ${x1} 0`,
+    `Z`,
+  ].join(' ');
+};
 
 export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
   state,
@@ -54,7 +105,8 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
 }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [barWidth, setBarWidth] = useState(0);
+  const initialWidth = Dimensions.get('window').width - 32;
+  const [barWidth, setBarWidth] = useState(initialWidth > 0 ? initialWidth : 360);
 
   // Determine current active route name
   const currentRoute = state.routes[state.index];
@@ -69,94 +121,72 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
 
   const activeTabConfig = TABS[activeSlot] || TABS[0];
 
-  // Tab width based on measured bar width
-  const tabWidth = barWidth > 0 ? barWidth / 5 : 0;
-  const rawX = tabWidth > 0 ? tabWidth * (activeSlot + 0.5) - SCOOP_WIDTH / 2 : 0;
-  const targetX = barWidth > 0 ? Math.max(0, Math.min(barWidth - SCOOP_WIDTH, rawX)) : 0;
+  // Tab width based on measured bar width minus horizontal padding
+  const availableWidth = barWidth > 0 ? barWidth - 2 * PAD_X : 0;
+  const tabWidth = availableWidth > 0 ? availableWidth / 5 : 0;
+  const cx = barWidth > 0 ? PAD_X + tabWidth * (activeSlot + 0.5) : 0;
 
-  // Animation values
-  const translateXAnim = useRef(new Animated.Value(targetX)).current;
+  // Animation values for the elevated active badge
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (tabWidth <= 0) return;
-
-    const raw = tabWidth * (activeSlot + 0.5) - SCOOP_WIDTH / 2;
-    const toValue = Math.max(0, Math.min(barWidth - SCOOP_WIDTH, raw));
-
-    if (!hasInitialized.current) {
-      translateXAnim.setValue(toValue);
-      hasInitialized.current = true;
-      return;
-    }
-
     scaleAnim.setValue(0.72);
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 5,
+      tension: 130,
+      useNativeDriver: true,
+    }).start();
+  }, [activeSlot, scaleAnim]);
 
-    Animated.parallel([
-      Animated.spring(translateXAnim, {
-        toValue,
-        damping: 20,
-        stiffness: 180,
-        mass: 0.8,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 5,
-        tension: 130,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [activeSlot, tabWidth, barWidth, translateXAnim, scaleAnim]);
+  // Compute SVG cutout bar path whenever barWidth or cx updates
+  const pathD = useMemo(() => {
+    if (barWidth <= 0 || cx <= 0) return '';
+    return getCutoutBarPath(barWidth, BAR_HEIGHT, BAR_RADIUS, cx);
+  }, [barWidth, cx]);
 
   const bottomInset = Math.max(insets.bottom, Platform.OS === 'android' ? 16 : 10);
 
   return (
     <View style={[styles.outerWrapper, { bottom: bottomInset }]} pointerEvents="box-none">
       <View
-        style={styles.barContainer}
+        style={[styles.barContainer, { width: barWidth > 0 ? barWidth : '100%' }]}
         onLayout={(e) => {
           const w = e.nativeEvent.layout.width;
-          if (w > 0 && w !== barWidth) {
+          if (w > 0 && Math.abs(w - barWidth) > 1) {
             setBarWidth(w);
           }
         }}
       >
-        {/* Sliding Scoop & Floating Circle Layer */}
-        {tabWidth > 0 && (
+        {/* Background SVG with True Native Transparent Cutout */}
+        {barWidth > 0 && pathD !== '' && (
+          <Svg
+            width={barWidth}
+            height={BAR_HEIGHT}
+            style={styles.svgBackground}
+            pointerEvents="none"
+          >
+            <Path d={pathD} fill="#0F172A" />
+          </Svg>
+        )}
+
+        {/* Elevated Vibrant Emerald Circular Badge */}
+        {barWidth > 0 && cx > 0 && (
           <Animated.View
             style={[
-              styles.slidingScoopWrapper,
+              styles.activeCircleBadge,
               {
-                transform: [{ translateX: translateXAnim }],
+                left: cx - CIRCLE_SIZE / 2,
+                transform: [{ scale: scaleAnim }],
               },
             ]}
             pointerEvents="none"
           >
-            {/* Pure Mathematical Concentric Circular Scoop SVG (Exact 7px halo gap everywhere) */}
-            <Svg width={SCOOP_WIDTH} height={SCOOP_HEIGHT} viewBox="0 0 75 28">
-              <Path
-                d="M 0 0 A 10 10 0 0 1 9.5 6.9 A 29 29 0 0 0 64.7 6.9 A 10 10 0 0 1 74.2 0 Z"
-                fill={M3Colors.surface}
-              />
-            </Svg>
-
-            {/* Elevated Vibrant Emerald Circular Badge with equal 7px distance on all sides */}
-            <Animated.View
-              style={[
-                styles.activeCircleBadge,
-                {
-                  transform: [{ scale: scaleAnim }],
-                },
-              ]}
-            >
-              <MaterialCommunityIcons
-                name={activeTabConfig.activeIcon}
-                size={23}
-                color="#FFFFFF"
-              />
-            </Animated.View>
+            <MaterialCommunityIcons
+              name={activeTabConfig.activeIcon}
+              size={22}
+              color="#FFFFFF"
+            />
           </Animated.View>
         )}
 
@@ -166,7 +196,7 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
             const isTabActive = idx === activeSlot;
 
             if (tab.isSpecial) {
-              // Center '+' Add Transaction Button (Raised above bar)
+              // Center '+' Add Transaction Button (Raised 20px above bar, Soft Lavender / Indigo Purple)
               return (
                 <TouchableOpacity
                   key={tab.name}
@@ -180,7 +210,7 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
                   accessibilityRole="button"
                 >
                   <View style={styles.centerPlusCircle}>
-                    <MaterialCommunityIcons name="plus" size={26} color="#10B981" />
+                    <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
                   </View>
                 </TouchableOpacity>
               );
@@ -236,31 +266,25 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   barContainer: {
-    width: '100%',
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#0F172A', // Jet Black / Dark Slate
-    flexDirection: 'row',
+    height: BAR_HEIGHT,
     alignItems: 'center',
+    justifyContent: 'center',
     elevation: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 14,
   },
-  slidingScoopWrapper: {
+  svgBackground: {
     position: 'absolute',
-    top: -1, // Sits seamlessly over the bar top edge, eliminating any seam line
+    top: 0,
     left: 0,
-    width: SCOOP_WIDTH,
-    height: SCOOP_HEIGHT,
-    alignItems: 'center',
-    zIndex: 10,
+    right: 0,
+    bottom: 0,
   },
   activeCircleBadge: {
     position: 'absolute',
-    top: -24, // Sits with an exact 7px equal concentric halo gap all the way around
-    left: (SCOOP_WIDTH - CIRCLE_SIZE) / 2, // Centered perfectly within the 75px concentric scoop
+    top: -23, // 42px diameter, center at y = -2, so top = -2 - 21 = -23
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
@@ -272,12 +296,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.45,
     shadowRadius: 8,
+    zIndex: 15,
   },
   tabsRow: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     height: '100%',
+    paddingHorizontal: PAD_X,
     zIndex: 20,
   },
   tabSlot: {
@@ -287,19 +313,19 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   centerPlusCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#1E293B',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#818CF8', // Soft Lavender / Indigo Purple
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#334155',
-    top: -16, // Raised 16px above the bar top
-    elevation: 8,
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
+    borderColor: '#6366F1',
+    top: -20, // Raised 20px above the bar top line
+    elevation: 10,
+    shadowColor: '#818CF8',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
   },
 });
