@@ -44,7 +44,7 @@ export interface PhoneLoginResult {
 
 const USERS_COLLECTION = 'users';
 
-function createMockFirebaseUser(uid: string, email: string, displayName: string): User {
+export function createMockFirebaseUser(uid: string, email: string, displayName: string): User {
   return {
     uid,
     email,
@@ -60,7 +60,16 @@ function createMockFirebaseUser(uid: string, email: string, displayName: string)
     getIdToken: async () => '',
     getIdTokenResult: async () => ({} as any),
     reload: async () => {},
-    toJSON: () => ({}),
+    toJSON: () => ({
+      uid,
+      email,
+      displayName,
+      photoURL: null,
+      emailVerified: true,
+      isAnonymous: false,
+      phoneNumber: null,
+      providerId: 'password',
+    }),
     phoneNumber: null,
     providerId: 'password',
   };
@@ -129,7 +138,40 @@ export async function signInWithEmail(email: string, pass: string): Promise<User
   if (isFirebaseConfigured) {
     try {
       const credential = await signInWithEmailAndPassword(auth, emailAddr, pass);
-      await setLocalCurrentUser(null);
+      const userToSave = createMockFirebaseUser(
+        credential.user.uid,
+        credential.user.email || emailAddr,
+        credential.user.displayName || emailAddr.split('@')[0]
+      );
+      await setLocalCurrentUser(userToSave);
+
+      // Cache profile locally if available in Firestore
+      let profile = await getLocalUserProfile(credential.user.uid);
+      if (!profile) {
+        try {
+          const snap = await getDoc(doc(db, USERS_COLLECTION, credential.user.uid));
+          if (snap.exists()) {
+            profile = snap.data() as UserProfile;
+          }
+        } catch (e) {
+          console.warn('Firestore profile fetch on sign in notice:', e);
+        }
+      }
+      if (!profile) {
+        profile = {
+          id: credential.user.uid,
+          email: credential.user.email || emailAddr,
+          fullName: credential.user.displayName || emailAddr.split('@')[0],
+          country: 'India',
+          defaultCurrency: 'INR',
+          preferredLanguage: 'English',
+          isProfileComplete: true,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+      }
+      await saveLocalUserProfile(profile);
+
       return credential.user;
     } catch (err: any) {
       if (err.code === 'auth/api-key-not-valid') {
@@ -275,14 +317,18 @@ export function subscribeAuthState(callback: (user: User | null) => void) {
 
   // 1. Initial check of local user
   getLocalCurrentUser().then((localUser) => {
-    if (!isUnsubscribed && localUser) {
-      callback(localUser);
+    if (!isUnsubscribed) {
+      if (localUser) {
+        callback(localUser);
+      } else if (!isFirebaseConfigured) {
+        callback(null);
+      }
     }
   });
 
   // 2. Subscribe to local auth state changes
   const localUnsub = subscribeLocalAuth((localUser) => {
-    if (!isUnsubscribed && localUser) {
+    if (!isUnsubscribed) {
       callback(localUser);
     }
   });
@@ -292,6 +338,12 @@ export function subscribeAuthState(callback: (user: User | null) => void) {
     firebaseUnsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!isUnsubscribed) {
         if (user) {
+          const userToSave = createMockFirebaseUser(
+            user.uid,
+            user.email || '',
+            user.displayName || 'Member'
+          );
+          await setLocalCurrentUser(userToSave);
           callback(user);
         } else {
           const localUser = await getLocalCurrentUser();

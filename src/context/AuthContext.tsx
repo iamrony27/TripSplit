@@ -11,7 +11,12 @@ import {
   subscribeAuthState,
   loginWithPhoneNumber,
   PhoneLoginResult,
+  createMockFirebaseUser,
 } from '../services/firebase/authService';
+import {
+  getLocalCurrentUser,
+  saveLocalUserProfile,
+} from '../services/storage/localDatabase';
 import { updateMemberUpiInTrips } from '../services/firebase/tripService';
 import { UserProfile, SetupWizardData } from '../types/user';
 
@@ -37,51 +42,97 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const refreshProfile = async () => {
-    if (!firebaseUser) {
+  const loadUserProfile = async (targetUser: User | null): Promise<UserProfile | null> => {
+    if (!targetUser) {
       setUser(null);
-      return;
+      return null;
     }
-    const profile = await fetchUserProfile(firebaseUser.uid);
-    if (profile) {
+
+    try {
+      let profile = await fetchUserProfile(targetUser.uid);
+      if (!profile) {
+        // Fallback profile if document doesn't exist yet
+        profile = {
+          id: targetUser.uid,
+          email: targetUser.email || '',
+          fullName: targetUser.displayName || 'Member',
+          country: 'India',
+          defaultCurrency: 'INR',
+          preferredLanguage: 'English',
+          isProfileComplete: true,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        await saveLocalUserProfile(profile);
+      }
       setUser(profile);
+      return profile;
+    } catch (err) {
+      console.warn('loadUserProfile error:', err);
+      return null;
+    }
+  };
+
+  const refreshProfile = async () => {
+    const active = firebaseUser || (await getLocalCurrentUser());
+    if (active) {
+      await loadUserProfile(active);
     } else {
-      // Create fallback profile if document doesn't exist yet
-      const fallback: UserProfile = {
-        id: firebaseUser.uid,
-        email: firebaseUser.email || '',
-        fullName: firebaseUser.displayName || 'Member',
-        country: 'India',
-        defaultCurrency: 'INR',
-        preferredLanguage: 'English',
-        isProfileComplete: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-      setUser(fallback);
+      setUser(null);
     }
   };
 
   useEffect(() => {
+    let mounted = true;
+
+    // 1. Immediately restore cached user session from local storage without waiting
+    (async () => {
+      try {
+        const cachedLocalUser = await getLocalCurrentUser();
+        if (mounted && cachedLocalUser) {
+          setFirebaseUser(cachedLocalUser);
+          await loadUserProfile(cachedLocalUser);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.warn('Failed to restore initial local session:', err);
+      }
+    })();
+
+    // 2. Subscribe to auth state updates (Firebase + Local)
     const unsubscribe = subscribeAuthState(async (currentUser) => {
-      setFirebaseUser(currentUser);
+      if (!mounted) return;
       if (currentUser) {
-        await refreshProfile();
+        setFirebaseUser(currentUser);
+        await loadUserProfile(currentUser);
       } else {
-        setUser(null);
+        const local = await getLocalCurrentUser();
+        if (local) {
+          setFirebaseUser(local);
+          await loadUserProfile(local);
+        } else {
+          setFirebaseUser(null);
+          setUser(null);
+        }
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const handleSignIn = async (email: string, pass: string) => {
     setLoading(true);
     try {
       const u = await signInWithEmail(email, pass);
-      const profile = await fetchUserProfile(u.uid);
-      setUser(profile);
+      setFirebaseUser(u);
+      const profile = await loadUserProfile(u);
+      if (profile) {
+        setUser(profile);
+      }
     } finally {
       setLoading(false);
     }
@@ -91,6 +142,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const profile = await signUpWithEmail(email, pass, fullName);
+      const mockUser = createMockFirebaseUser(profile.id, profile.email, profile.fullName);
+      setFirebaseUser(mockUser);
       setUser(profile);
     } finally {
       setLoading(false);
@@ -102,6 +155,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const result = await loginWithPhoneNumber(phoneNumber);
       if (result.success && result.profile) {
+        const mockUser = createMockFirebaseUser(
+          result.profile.id,
+          result.profile.email,
+          result.profile.fullName
+        );
+        setFirebaseUser(mockUser);
         setUser(result.profile);
       }
       return result;

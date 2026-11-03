@@ -36,16 +36,33 @@ const authListeners = new Set<Listener<any | null>>();
 
 export async function getLocalCurrentUser(): Promise<any | null> {
   const json = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-  return json ? JSON.parse(json) : null;
+  if (!json) return null;
+  try {
+    const parsed = JSON.parse(json);
+    if (!parsed || !parsed.uid) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 export async function setLocalCurrentUser(user: any | null): Promise<void> {
-  if (user) {
-    await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+  if (user && user.uid) {
+    const serializable = {
+      uid: user.uid,
+      email: user.email || '',
+      displayName: user.displayName || '',
+      photoURL: user.photoURL || null,
+      emailVerified: !!user.emailVerified,
+      isAnonymous: !!user.isAnonymous,
+      phoneNumber: user.phoneNumber || null,
+    };
+    await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(serializable));
+    authListeners.forEach((cb) => cb(serializable));
   } else {
     await AsyncStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    authListeners.forEach((cb) => cb(null));
   }
-  authListeners.forEach((cb) => cb(user));
 }
 
 export function subscribeLocalAuth(callback: (user: any | null) => void): () => void {
