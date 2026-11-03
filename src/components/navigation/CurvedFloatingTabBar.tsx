@@ -6,12 +6,12 @@ import {
   Animated,
   Platform,
   Vibration,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
-import { M3Colors } from '../../theme/colors';
 
 export interface BottomTabBarProps {
   state: {
@@ -44,9 +44,10 @@ const TABS: TabConfig[] = [
 ];
 
 const SCOOP_WIDTH = 64;
-const SCOOP_HEIGHT = 26;
 const CIRCLE_SIZE = 42;
-const PAD_X = 16;
+const PAD_X = 26;
+const BAR_HEIGHT = 60;
+const BAR_RADIUS = 24;
 
 export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
   state,
@@ -55,7 +56,8 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
 }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [barWidth, setBarWidth] = useState(0);
+  const initialWidth = Dimensions.get('window').width - 32;
+  const [barWidth, setBarWidth] = useState(initialWidth > 0 ? initialWidth : 360);
 
   // Determine current active route name
   const currentRoute = state.routes[state.index];
@@ -122,12 +124,56 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
     ]).start();
   }, [activeSlot, tabWidth, barWidth, translateXAnim, scaleAnim]);
 
+  // Pure Mathematical Cutout Path for the Dark Navy Capsule Bar
+  // Guarantees 100% true native transparency in the scoop notch so background cards/avatars show through completely!
+  const barCutoutPath = useMemo(() => {
+    if (barWidth <= 0 || tabWidth <= 0) return '';
+    const cx = PAD_X + tabWidth * (activeSlot + 0.5);
+    const circleCy = -2;
+    const scoopR = 27;
+    const earR = 6;
+    const d = scoopR + earR; // 33
+    const deltaY = earR - circleCy; // 8
+    const deltaX = Math.sqrt(d * d - deltaY * deltaY); // ~32.0156
+    const contactDeltaX = scoopR * (deltaX / d); // ~26.195
+    const contactDeltaY = scoopR * (deltaY / d); // ~6.545
+    const contactY = circleCy + contactDeltaY; // ~4.55
+
+    const leftStart = Math.max(BAR_RADIUS, Number((cx - deltaX).toFixed(2)));
+    const rightEnd = Math.min(barWidth - BAR_RADIUS, Number((cx + deltaX).toFixed(2)));
+    const contactLeftX = Number((cx - contactDeltaX).toFixed(2));
+    const contactRightX = Number((cx + contactDeltaX).toFixed(2));
+    const contactYFixed = Number(contactY.toFixed(2));
+
+    const x1 = BAR_RADIUS;
+    const x2 = barWidth - BAR_RADIUS;
+    const y1 = BAR_RADIUS;
+    const y2 = BAR_HEIGHT - BAR_RADIUS;
+
+    return [
+      `M ${x1} 0`,
+      `L ${leftStart} 0`,
+      `A ${earR} ${earR} 0 0 1 ${contactLeftX} ${contactYFixed}`,
+      `A ${scoopR} ${scoopR} 0 0 0 ${contactRightX} ${contactYFixed}`,
+      `A ${earR} ${earR} 0 0 1 ${rightEnd} 0`,
+      `L ${x2} 0`,
+      `A ${BAR_RADIUS} ${BAR_RADIUS} 0 0 1 ${barWidth} ${y1}`,
+      `L ${barWidth} ${y2}`,
+      `A ${BAR_RADIUS} ${BAR_RADIUS} 0 0 1 ${x2} ${BAR_HEIGHT}`,
+      `L ${x1} ${BAR_HEIGHT}`,
+      `A ${BAR_RADIUS} ${BAR_RADIUS} 0 0 1 0 ${y2}`,
+      `L 0 ${y1}`,
+      `A ${BAR_RADIUS} ${BAR_RADIUS} 0 0 1 ${x1} 0`,
+      'Z',
+    ].join(' ');
+  }, [barWidth, tabWidth, activeSlot]);
+
   const bottomInset = Math.max(insets.bottom, Platform.OS === 'android' ? 16 : 10);
 
   return (
     <View style={[styles.outerWrapper, { bottom: bottomInset }]} pointerEvents="box-none">
       <View
-        style={styles.barContainer}
+        style={[styles.barContainer, { width: barWidth > 0 ? barWidth : '100%' }]}
         onLayout={(e) => {
           const w = e.nativeEvent.layout.width;
           if (w > 0 && Math.abs(w - barWidth) > 1) {
@@ -135,26 +181,29 @@ export const CurvedFloatingTabBar: React.FC<BottomTabBarProps> = ({
           }
         }}
       >
-        {/* Unified Sliding Scoop & Floating Circle Layer (100% Synchronized, Zero Lag) */}
+        {/* Dark Navy Capsule Bar with Mathematical Cutout Notch (100% True Native Transparency) */}
+        {barWidth > 0 && (
+          <Svg
+            width={barWidth}
+            height={BAR_HEIGHT}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          >
+            <Path d={barCutoutPath} fill="#0F172A" />
+          </Svg>
+        )}
+
+        {/* Sliding Elevated Floating Circle Badge (Zero Opaque Layers, True Transparency) */}
         {tabWidth > 0 && (
           <Animated.View
             style={[
-              styles.slidingScoopWrapper,
+              styles.slidingBadgeWrapper,
               {
                 transform: [{ translateX: translateXAnim }],
               },
             ]}
             pointerEvents="none"
           >
-            {/* Pure Mathematical Concentric Circular Scoop SVG (Exact 6px halo gap everywhere) */}
-            <Svg width={SCOOP_WIDTH} height={SCOOP_HEIGHT} viewBox="0 0 64 26">
-              <Path
-                d="M 0 0 A 6 6 0 0 1 5.82 4.55 A 27 27 0 0 0 58.21 4.55 A 6 6 0 0 1 64.03 0 Z"
-                fill={M3Colors.surface}
-              />
-            </Svg>
-
-            {/* Elevated Vibrant Emerald Circular Badge (Physically glued to the scoop, never desyncs) */}
             <Animated.View
               style={[
                 styles.activeCircleBadge,
@@ -248,10 +297,9 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   barContainer: {
-    width: '100%',
-    height: 60,
-    borderRadius: 30, // Smooth capsule pill (not squarish!)
-    backgroundColor: '#0F172A', // Jet Black / Dark Slate
+    height: BAR_HEIGHT,
+    borderRadius: BAR_RADIUS,
+    backgroundColor: 'transparent',
     flexDirection: 'row',
     alignItems: 'center',
     elevation: 12,
@@ -260,12 +308,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 14,
   },
-  slidingScoopWrapper: {
+  slidingBadgeWrapper: {
     position: 'absolute',
-    top: -1, // Sits seamlessly over the bar top edge, eliminating any seam line
+    top: 0,
     left: 0,
     width: SCOOP_WIDTH,
-    height: SCOOP_HEIGHT,
+    height: BAR_HEIGHT,
     alignItems: 'center',
     zIndex: 10,
   },
