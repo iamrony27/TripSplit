@@ -9,6 +9,9 @@ web-build/
 .env*.local
 *.jks
 *.keystore
+*.apk
+/android
+/ios
 google-services.json
 GoogleService-Info.plist
 firebase-debug.log*
