@@ -23,6 +23,7 @@ import { M3Shapes } from '../../src/theme/shapes';
 import { formatCurrency } from '../../src/services/currency/exchangeRateService';
 import { isValidUpiId } from '../../src/services/upi/upiParser';
 import { safeGoBack } from '../../src/utils/navigation';
+import { UpiScannerModal } from '../../src/components/common/UpiScannerModal';
 
 export default function TripDetailsScreen() {
   const router = useRouter();
@@ -56,6 +57,7 @@ export default function TripDetailsScreen() {
   const [newMemberUpi, setNewMemberUpi] = useState('');
   const [addingMember, setAddingMember] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [scannerVisible, setScannerVisible] = useState(false);
 
   const tripApprovedPayments = payments.filter(
     (p) =>
@@ -419,7 +421,23 @@ export default function TripDetailsScreen() {
               mode="outlined"
               outlineColor={M3Colors.outlineVariant}
               activeOutlineColor={M3Colors.primary}
+              right={
+                <TextInput.Icon
+                  icon="qrcode-scan"
+                  color={M3Colors.primary}
+                  onPress={() => setScannerVisible(true)}
+                />
+              }
             />
+
+            <TouchableOpacity
+              style={styles.scanQuickBtn}
+              onPress={() => setScannerVisible(true)}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons name="qrcode-scan" size={18} color={M3Colors.primary} />
+              <Text style={styles.scanQuickText}>Scan Friend's UPI QR Code</Text>
+            </TouchableOpacity>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setAddMemberDialogVisible(false)} textColor={M3Colors.onSurfaceVariant}>
@@ -436,6 +454,20 @@ export default function TripDetailsScreen() {
           </Dialog.Actions>
         </Dialog>
       </Portal>
+
+      {/* UPI QR Scanner Modal */}
+      <UpiScannerModal
+        visible={scannerVisible}
+        onClose={() => setScannerVisible(false)}
+        friendName={newMemberName}
+        onScanned={(scannedUpi, payeeName) => {
+          setNewMemberUpi(scannedUpi);
+          if (!newMemberName.trim() && payeeName) {
+            setNewMemberName(payeeName);
+          }
+          setScannerVisible(false);
+        }}
+      />
 
     </View>
   );
@@ -722,5 +754,21 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 9,
     fontWeight: '800',
+  },
+  scanQuickBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: M3Colors.primaryContainer,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: M3Shapes.small,
+    marginTop: 8,
+  },
+  scanQuickText: {
+    ...M3Typography.labelMedium,
+    color: M3Colors.onPrimaryContainer,
+    fontWeight: '700',
   },
 });

@@ -21,6 +21,7 @@ import { M3Shapes } from '../../src/theme/shapes';
 import { formatCurrency } from '../../src/services/currency/exchangeRateService';
 import { isValidUpiId } from '../../src/services/upi/upiParser';
 import { safeGoBack } from '../../src/utils/navigation';
+import { UpiScannerModal } from '../../src/components/common/UpiScannerModal';
 
 export default function TripMembersScreen() {
   const router = useRouter();
@@ -49,6 +50,9 @@ export default function TripMembersScreen() {
   const [editUpiText, setEditUpiText] = useState('');
   const [savingUpi, setSavingUpi] = useState(false);
   const [upiError, setUpiError] = useState('');
+
+  // QR Scanner Modal State
+  const [scannerMode, setScannerMode] = useState<'add' | 'edit' | null>(null);
 
   if (!trip) {
     return (
@@ -344,7 +348,23 @@ export default function TripMembersScreen() {
               placeholder="e.g. rahul@oksbi"
               autoCapitalize="none"
               autoCorrect={false}
+              right={
+                <TextInput.Icon
+                  icon="qrcode-scan"
+                  color={M3Colors.primary}
+                  onPress={() => setScannerMode('add')}
+                />
+              }
             />
+
+            <TouchableOpacity
+              style={styles.scanQuickBtn}
+              onPress={() => setScannerMode('add')}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons name="qrcode-scan" size={18} color={M3Colors.primary} />
+              <Text style={styles.scanQuickText}>Scan Friend's UPI QR Code</Text>
+            </TouchableOpacity>
 
             {addError ? (
               <Text style={styles.dialogErrorText}>{addError}</Text>
@@ -395,7 +415,25 @@ export default function TripMembersScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               autoFocus
+              right={
+                <TextInput.Icon
+                  icon="qrcode-scan"
+                  color={M3Colors.primary}
+                  onPress={() => setScannerMode('edit')}
+                />
+              }
             />
+
+            <TouchableOpacity
+              style={styles.scanQuickBtn}
+              onPress={() => setScannerMode('edit')}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons name="qrcode-scan" size={18} color={M3Colors.primary} />
+              <Text style={styles.scanQuickText}>
+                Scan {editUpiMember?.name || 'Friend'}'s UPI QR Code
+              </Text>
+            </TouchableOpacity>
 
             {upiError ? (
               <Text style={styles.dialogErrorText}>{upiError}</Text>
@@ -424,6 +462,29 @@ export default function TripMembersScreen() {
           </Dialog.Actions>
         </Dialog>
       </Portal>
+
+      {/* UPI QR Scanner Modal */}
+      <UpiScannerModal
+        visible={Boolean(scannerMode)}
+        onClose={() => setScannerMode(null)}
+        title={
+          scannerMode === 'edit'
+            ? `Scan ${editUpiMember?.name || 'Friend'}'s UPI QR`
+            : "Scan Friend's UPI QR"
+        }
+        friendName={scannerMode === 'edit' ? editUpiMember?.name : newMemberName}
+        onScanned={(scannedUpi, payeeName) => {
+          if (scannerMode === 'add') {
+            setNewMemberUpi(scannedUpi);
+            if (!newMemberName.trim() && payeeName) {
+              setNewMemberName(payeeName);
+            }
+          } else if (scannerMode === 'edit') {
+            setEditUpiText(scannedUpi);
+          }
+          setScannerMode(null);
+        }}
+      />
     </View>
   );
 }
@@ -655,5 +716,21 @@ const styles = StyleSheet.create({
     ...M3Typography.bodySmall,
     color: M3Colors.onSurfaceVariant,
     fontSize: 12,
+  },
+  scanQuickBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: M3Colors.primaryContainer,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: M3Shapes.small,
+    marginTop: 2,
+  },
+  scanQuickText: {
+    ...M3Typography.labelMedium,
+    color: M3Colors.onPrimaryContainer,
+    fontWeight: '700',
   },
 });
