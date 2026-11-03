@@ -31,19 +31,15 @@
 
 ## 📱 Screenshots Showcase
 
-<p align="center">
-  <img src="docs/screenshots/01_add_expense_screen.png" width="30%" alt="Smart Add Expense" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/02_home_dashboard.png" width="30%" alt="Home Dashboard" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/03_settlement_balances.png" width="30%" alt="Settlements & Debt Simplification" />
-</p>
+| 💡 **Smart Add Expense** | 🏠 **Modern Dashboard** |
+|:---:|:---:|
+| <img src="docs/screenshots/01_add_expense_screen.png" width="300" alt="Smart Add Expense" /> | <img src="docs/screenshots/02_home_dashboard.png" width="300" alt="Home Dashboard" /> |
+| *Auto-categorization & flexible splits* | *Real-time balances & transparent cutout navbar* |
 
-<p align="center">
-  <img src="docs/screenshots/04_trip_details.png" width="45%" alt="Trip Details & Audit Log" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/05_members_management.png" width="45%" alt="Member Management" />
-</p>
+| ⚡ **NPCI UPI Settlements** | 📜 **Recent Expenses Feed** |
+|:---:|:---:|
+| <img src="docs/screenshots/03_settlement_balances.png" width="300" alt="Settlements & Debt Simplification" /> | <img src="docs/screenshots/04_recent_expenses.png" width="300" alt="Recent Expenses" /> |
+| *Greedy algorithm & instant UPI QR payment* | *Interactive transaction cards & custom tab bar* |
 
 ---
 
