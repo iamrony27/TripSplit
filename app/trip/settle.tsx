@@ -23,6 +23,7 @@ import { PaymentRecord, SettlementSuggestion } from '../../src/types/settlement'
 import { calculateReductionPercentage } from '../../src/engine/debtSimplifier';
 import { formatCurrency } from '../../src/services/currency/exchangeRateService';
 import { launchUpiPayment } from '../../src/services/upi/upiLauncher';
+import { isValidUpiId } from '../../src/services/upi/upiParser';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
@@ -108,9 +109,16 @@ export default function SmartSettlementScreen() {
 
   // Action: Launch UPI Payment
   const handlePayViaUpi = (suggestion: SettlementSuggestion) => {
-    const upiId = suggestion.toUpiId || `${suggestion.toName.toLowerCase().replace(/\s+/g, '')}@okaxis`;
+    const rawUpi = suggestion.toUpiId?.trim() || '';
+    if (!rawUpi || !isValidUpiId(rawUpi)) {
+      Alert.alert(
+        'No UPI ID',
+        `${suggestion.toName} has not added a UPI ID. Ask them to add their UPI ID in group members to enable direct UPI payments.`
+      );
+      return;
+    }
     launchUpiPayment({
-      upiId,
+      upiId: rawUpi,
       payeeName: suggestion.toName,
       amount: suggestion.amount,
       currency: suggestion.currency || baseCurrency,
@@ -267,6 +275,14 @@ export default function SmartSettlementScreen() {
   };
 
   const handleOpenQr = (suggestion: SettlementSuggestion) => {
+    const rawUpi = suggestion.toUpiId?.trim() || '';
+    if (!rawUpi || !isValidUpiId(rawUpi)) {
+      Alert.alert(
+        'No UPI ID',
+        `${suggestion.toName} has not added a UPI ID. QR code cannot be generated until a valid UPI ID is provided.`
+      );
+      return;
+    }
     setSelectedSuggestionForQr(suggestion);
     setQrModalVisible(true);
   };
@@ -685,20 +701,19 @@ export default function SmartSettlementScreen() {
       </ScrollView>
 
       {/* Enlarged QR Modal */}
-      {selectedSuggestionForQr && (
-        <UpiQrModal
-          visible={qrModalVisible}
-          onClose={() => setQrModalVisible(false)}
-          payeeName={selectedSuggestionForQr.toName}
-          upiId={
-            selectedSuggestionForQr.toUpiId ||
-            `${selectedSuggestionForQr.toName.toLowerCase()}@okaxis`
-          }
-          amount={selectedSuggestionForQr.amount}
-          note={`TripSplit ${activeTrip.title}`}
-          onMarkAsPaid={() => handleConfirmPaid(selectedSuggestionForQr)}
-        />
-      )}
+      {selectedSuggestionForQr &&
+        selectedSuggestionForQr.toUpiId &&
+        isValidUpiId(selectedSuggestionForQr.toUpiId.trim()) && (
+          <UpiQrModal
+            visible={qrModalVisible}
+            onClose={() => setQrModalVisible(false)}
+            payeeName={selectedSuggestionForQr.toName}
+            upiId={selectedSuggestionForQr.toUpiId.trim()}
+            amount={selectedSuggestionForQr.amount}
+            note={`TripSplit ${activeTrip.title}`}
+            onMarkAsPaid={() => handleConfirmPaid(selectedSuggestionForQr)}
+          />
+        )}
 
       {/* Payment Declaration Modal (I HAVE PAID) */}
       {selectedSuggestionForDeclaration && (

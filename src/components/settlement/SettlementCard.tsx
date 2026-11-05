@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { PaymentRecord, SettlementSuggestion } from '../../types/settlement';
@@ -8,6 +8,7 @@ import { M3Typography } from '../../theme/typography';
 import { M3Shapes } from '../../theme/shapes';
 import { formatCurrency } from '../../services/currency/exchangeRateService';
 import { generateUpiPaymentUri, launchUpiPayment } from '../../services/upi/upiLauncher';
+import { isValidUpiId } from '../../services/upi/upiParser';
 
 interface SettlementCardProps {
   suggestion: SettlementSuggestion;
@@ -47,16 +48,27 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
     (currentUserId && suggestion.toMemberId.includes(currentUserId))
   );
 
-  const upiId = suggestion.toUpiId || `${suggestion.toName.toLowerCase().replace(/\s+/g, '')}@okaxis`;
-  const upiUri = generateUpiPaymentUri({
-    upiId,
-    payeeName: suggestion.toName,
-    amount: suggestion.amount,
-    currency: suggestion.currency || 'INR',
-    note: `TripSplit to ${suggestion.toName}`,
-  });
+  const rawUpi = suggestion.toUpiId?.trim() || '';
+  const hasUpiId = Boolean(rawUpi && isValidUpiId(rawUpi));
+  const upiId = hasUpiId ? rawUpi : '';
+  const upiUri = hasUpiId
+    ? generateUpiPaymentUri({
+        upiId,
+        payeeName: suggestion.toName,
+        amount: suggestion.amount,
+        currency: suggestion.currency || 'INR',
+        note: `TripSplit to ${suggestion.toName}`,
+      })
+    : '';
 
   const handleLaunchUpi = () => {
+    if (!hasUpiId) {
+      Alert.alert(
+        'No UPI ID',
+        `${suggestion.toName} has not added a UPI ID yet. Ask them to add their UPI ID in group members to enable direct UPI payments.`
+      );
+      return;
+    }
     if (onPayViaUpi) {
       onPayViaUpi(suggestion);
     } else {
@@ -236,50 +248,68 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
         </View>
       )}
 
-      {/* 4. Payee UPI Info & QR Code Drawer */}
-      <TouchableOpacity
-        style={styles.qrDrawer}
-        onPress={() => onOpenQrModal && onOpenQrModal(suggestion)}
-        activeOpacity={0.8}
-      >
-        <View style={styles.qrWrapper}>
-          <QRCode
-            value={upiUri}
-            size={74}
-            color={M3Colors.onSurface}
-            backgroundColor={M3Colors.surfaceContainerLowest}
-          />
-        </View>
-        <View style={styles.qrTextCol}>
-          <View style={styles.qrTitleRow}>
-            <MaterialCommunityIcons name="qrcode-scan" size={15} color={M3Colors.primary} />
-            <Text style={styles.qrTitle}>
-              {isReceiver ? 'Your UPI QR Code' : `Pay ${suggestion.toName} via UPI`}
+      {/* 4. Payee UPI Info & QR Code Drawer (ONLY when UPI ID is valid) */}
+      {hasUpiId ? (
+        <TouchableOpacity
+          style={styles.qrDrawer}
+          onPress={() => onOpenQrModal && onOpenQrModal(suggestion)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.qrWrapper}>
+            <QRCode
+              value={upiUri}
+              size={74}
+              color={M3Colors.onSurface}
+              backgroundColor={M3Colors.surfaceContainerLowest}
+            />
+          </View>
+          <View style={styles.qrTextCol}>
+            <View style={styles.qrTitleRow}>
+              <MaterialCommunityIcons name="qrcode-scan" size={15} color={M3Colors.primary} />
+              <Text style={styles.qrTitle}>
+                {isReceiver ? 'Your UPI QR Code' : `Pay ${suggestion.toName} via UPI`}
+              </Text>
+            </View>
+            <Text style={styles.upiIdDisplay} numberOfLines={1}>
+              UPI ID: {upiId}
+            </Text>
+            <Text style={styles.qrSubtitle}>
+              {isReceiver
+                ? `Show to ${suggestion.fromName} to collect money`
+                : 'Scan with GPay, PhonePe, Paytm or BHIM'}
             </Text>
           </View>
-          <Text style={styles.upiIdDisplay} numberOfLines={1}>
-            UPI ID: {upiId}
-          </Text>
-          <Text style={styles.qrSubtitle}>
-            {isReceiver
-              ? `Show to ${suggestion.fromName} to collect money`
-              : 'Scan with GPay, PhonePe, Paytm or BHIM'}
-          </Text>
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.noUpiBanner}>
+          <MaterialCommunityIcons name="shield-alert-outline" size={20} color={M3Colors.outline} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.noUpiTitle}>
+              {isReceiver ? 'No UPI ID Added' : `${suggestion.toName} has no UPI ID`}
+            </Text>
+            <Text style={styles.noUpiText}>
+              {isReceiver
+                ? 'Link your UPI ID in Group Members to enable QR code and receive instant payments.'
+                : 'QR code and UPI quick-pay are disabled until this member adds their UPI ID.'}
+            </Text>
+          </View>
         </View>
-      </TouchableOpacity>
+      )}
 
       {/* 5. UPI Actions & I HAVE PAID Declaration (for Payer) */}
       {isPayer && (
         <View style={styles.actionsContainer}>
-          {/* Main PAY VIA UPI Button */}
-          <TouchableOpacity
-            style={styles.payViaUpiBtn}
-            onPress={handleLaunchUpi}
-            activeOpacity={0.85}
-          >
-            <MaterialCommunityIcons name="lightning-bolt" size={18} color="#FFFFFF" />
-            <Text style={styles.payViaUpiText}>PAY VIA UPI</Text>
-          </TouchableOpacity>
+          {/* Main PAY VIA UPI Button (only if UPI ID is configured) */}
+          {hasUpiId && (
+            <TouchableOpacity
+              style={styles.payViaUpiBtn}
+              onPress={handleLaunchUpi}
+              activeOpacity={0.85}
+            >
+              <MaterialCommunityIcons name="lightning-bolt" size={18} color="#FFFFFF" />
+              <Text style={styles.payViaUpiText}>PAY VIA UPI</Text>
+            </TouchableOpacity>
+          )}
 
           {/* I HAVE PAID / Pending state button */}
           {!pendingDeclaration ? (
@@ -298,48 +328,50 @@ export const SettlementCard: React.FC<SettlementCardProps> = ({
             </View>
           )}
 
-          {/* Quick Launchers */}
-          <View style={styles.launchersRow}>
-            <TouchableOpacity
-              style={styles.gpayBtn}
-              onPress={() =>
-                launchUpiPayment(
-                  {
-                    upiId,
-                    payeeName: suggestion.toName,
-                    amount: suggestion.amount,
-                    currency: suggestion.currency || 'INR',
-                    note: `TripSplit to ${suggestion.toName}`,
-                  },
-                  'GPAY'
-                )
-              }
-            >
-              <MaterialCommunityIcons name="google" size={16} color="#4285F4" />
-              <Text style={styles.launcherBtnText}>Google Pay</Text>
-            </TouchableOpacity>
+          {/* Quick Launchers (only if UPI ID is configured) */}
+          {hasUpiId && (
+            <View style={styles.launchersRow}>
+              <TouchableOpacity
+                style={styles.gpayBtn}
+                onPress={() =>
+                  launchUpiPayment(
+                    {
+                      upiId,
+                      payeeName: suggestion.toName,
+                      amount: suggestion.amount,
+                      currency: suggestion.currency || 'INR',
+                      note: `TripSplit to ${suggestion.toName}`,
+                    },
+                    'GPAY'
+                  )
+                }
+              >
+                <MaterialCommunityIcons name="google" size={16} color="#4285F4" />
+                <Text style={styles.launcherBtnText}>Google Pay</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.phonepeBtn}
-              onPress={() =>
-                launchUpiPayment(
-                  {
-                    upiId,
-                    payeeName: suggestion.toName,
-                    amount: suggestion.amount,
-                    currency: suggestion.currency || 'INR',
-                    note: `TripSplit to ${suggestion.toName}`,
-                  },
-                  'PHONEPE'
-                )
-              }
-            >
-              <MaterialCommunityIcons name="cellphone" size={16} color={M3Colors.onSecondaryFixed} />
-              <Text style={[styles.launcherBtnText, { color: M3Colors.onSecondaryFixed }]}>
-                PhonePe
-              </Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={styles.phonepeBtn}
+                onPress={() =>
+                  launchUpiPayment(
+                    {
+                      upiId,
+                      payeeName: suggestion.toName,
+                      amount: suggestion.amount,
+                      currency: suggestion.currency || 'INR',
+                      note: `TripSplit to ${suggestion.toName}`,
+                    },
+                    'PHONEPE'
+                  )
+                }
+              >
+                <MaterialCommunityIcons name="cellphone" size={16} color={M3Colors.onSecondaryFixed} />
+                <Text style={[styles.launcherBtnText, { color: M3Colors.onSecondaryFixed }]}>
+                  PhonePe
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       )}
 
@@ -539,6 +571,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: M3Colors.surfaceContainerHigh,
     marginBottom: M3Shapes.spacing.sm,
+  },
+  noUpiBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: M3Shapes.spacing.md,
+    backgroundColor: M3Colors.surfaceContainerHigh,
+    borderRadius: M3Shapes.cardMedium,
+    marginBottom: M3Shapes.spacing.sm,
+    borderWidth: 1,
+    borderColor: M3Colors.outlineVariant,
+  },
+  noUpiTitle: {
+    ...M3Typography.titleSm,
+    color: M3Colors.onSurface,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  noUpiText: {
+    ...M3Typography.bodySm,
+    color: M3Colors.onSurfaceVariant,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 2,
   },
   qrWrapper: {
     padding: 3,

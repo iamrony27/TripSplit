@@ -2,7 +2,7 @@
   "expo": {
     "name": "TripSplit",
     "slug": "tripsplit",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "tripsplit",
@@ -17,7 +17,7 @@
     },
     "android": {
       "package": "com.tripsplit.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#f3fcf4",

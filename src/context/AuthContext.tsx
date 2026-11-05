@@ -125,48 +125,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const handleSignIn = async (email: string, pass: string) => {
-    setLoading(true);
-    try {
-      const u = await signInWithEmail(email, pass);
-      setFirebaseUser(u);
-      const profile = await loadUserProfile(u);
-      if (profile) {
-        setUser(profile);
-      }
-    } finally {
-      setLoading(false);
+    const u = await signInWithEmail(email, pass);
+    setFirebaseUser(u);
+    const profile = await loadUserProfile(u);
+    if (profile) {
+      setUser(profile);
     }
   };
 
   const handleSignUp = async (email: string, pass: string, fullName: string) => {
-    setLoading(true);
-    try {
-      const profile = await signUpWithEmail(email, pass, fullName);
-      const mockUser = createMockFirebaseUser(profile.id, profile.email, profile.fullName);
-      setFirebaseUser(mockUser);
-      setUser(profile);
-    } finally {
-      setLoading(false);
-    }
+    const profile = await signUpWithEmail(email, pass, fullName);
+    const mockUser = createMockFirebaseUser(profile.id, profile.email, profile.fullName);
+    setFirebaseUser(mockUser);
+    setUser(profile);
   };
 
   const handleSignInWithPhone = async (phoneNumber: string): Promise<PhoneLoginResult> => {
-    setLoading(true);
-    try {
-      const result = await loginWithPhoneNumber(phoneNumber);
-      if (result.success && result.profile) {
-        const mockUser = createMockFirebaseUser(
-          result.profile.id,
-          result.profile.email,
-          result.profile.fullName
-        );
-        setFirebaseUser(mockUser);
-        setUser(result.profile);
-      }
-      return result;
-    } finally {
-      setLoading(false);
+    const result = await loginWithPhoneNumber(phoneNumber);
+    if (result.success && result.profile) {
+      const mockUser = createMockFirebaseUser(
+        result.profile.id,
+        result.profile.email,
+        result.profile.fullName
+      );
+      setFirebaseUser(mockUser);
+      setUser(result.profile);
     }
+    return result;
   };
 
   const handleSignOut = async () => {

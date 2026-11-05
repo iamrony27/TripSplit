@@ -34,11 +34,9 @@ export default function NotificationsScreen() {
   } = useTrips();
 
   const [soundOn, setSoundOn] = useState<boolean>(true);
-  const [deviceNotifGranted, setDeviceNotifGranted] = useState<boolean>(true);
 
   useEffect(() => {
     isSoundEnabled().then((enabled) => setSoundOn(enabled));
-    checkNotificationPermissions().then((granted) => setDeviceNotifGranted(granted));
   }, []);
 
   const handleToggleSound = async () => {
@@ -48,26 +46,6 @@ export default function NotificationsScreen() {
     if (next) {
       playNotificationSound();
     }
-  };
-
-  const handleRequestPhonePermissions = async () => {
-    const granted = await requestNotificationPermissions();
-    setDeviceNotifGranted(granted);
-    if (granted) {
-      await sendPhoneNotification({
-        title: 'TripSplit Alerts Enabled',
-        body: 'You will now receive instant phone notifications with default sound.',
-      });
-      playNotificationSound().catch(() => {});
-    }
-  };
-
-  const handleSendTestPhoneNotification = async () => {
-    await sendPhoneNotification({
-      title: 'TripSplit Settlement Alert',
-      body: 'This is a test notification with phone system sound!',
-    });
-    playNotificationSound().catch(() => {});
   };
 
   const getNotificationIcon = (type: NotificationType) => {
@@ -126,13 +104,6 @@ export default function NotificationsScreen() {
                 <Text style={styles.markAllText}>Mark read</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity
-              onPress={() => playNotificationSound()}
-              style={styles.soundTestIconBtn}
-              accessibilityLabel="Test notification sound"
-            >
-              <MaterialCommunityIcons name="bell-ring-outline" size={20} color={M3Colors.primary} />
-            </TouchableOpacity>
           </View>
         }
       />
@@ -162,17 +133,6 @@ export default function NotificationsScreen() {
           </View>
 
           <View style={styles.soundCardRight}>
-            {soundOn && (
-              <TouchableOpacity
-                onPress={() => playNotificationSound()}
-                style={styles.testChimeBtn}
-                activeOpacity={0.7}
-                accessibilityLabel="Play chime preview"
-              >
-                <MaterialCommunityIcons name="play" size={14} color={M3Colors.primary} />
-                <Text style={styles.testChimeText}>Test</Text>
-              </TouchableOpacity>
-            )}
             <TouchableOpacity
               onPress={handleToggleSound}
               style={[styles.toggleBtn, soundOn && styles.toggleBtnActive]}
@@ -182,44 +142,6 @@ export default function NotificationsScreen() {
               <Text style={[styles.toggleBtnText, soundOn && styles.toggleBtnTextActive]}>
                 {soundOn ? 'ON' : 'OFF'}
               </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Device Haptic & Tactile Feedback Card */}
-        <View style={styles.soundCard}>
-          <View style={styles.soundCardLeft}>
-            <View
-              style={[
-                styles.soundCardIconCircle,
-                { backgroundColor: deviceNotifGranted ? '#E8F5E9' : '#FFF3E0' },
-              ]}
-            >
-              <MaterialCommunityIcons
-                name={deviceNotifGranted ? 'vibrate' : 'vibrate-off'}
-                size={22}
-                color={deviceNotifGranted ? '#2E7D32' : '#E65100'}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.soundCardTitle}>Haptic & Tactile Feedback</Text>
-              <Text style={styles.soundCardSubtitle}>
-                {deviceNotifGranted
-                  ? 'Active: Provides subtle tactile feedback on actions'
-                  : 'Disabled: Enable access for device vibration alerts'}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.soundCardRight}>
-            <TouchableOpacity
-              onPress={handleSendTestPhoneNotification}
-              style={styles.testChimeBtn}
-              activeOpacity={0.7}
-              accessibilityLabel="Test tactile feedback"
-            >
-              <MaterialCommunityIcons name="vibrate" size={14} color={M3Colors.primary} />
-              <Text style={styles.testChimeText}>Test</Text>
             </TouchableOpacity>
           </View>
         </View>

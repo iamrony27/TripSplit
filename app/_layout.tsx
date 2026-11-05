@@ -68,7 +68,7 @@ function RootNavigation() {
           </View>
         </View>
         <View style={styles.splashFooter}>
-          <Text style={styles.splashFooterText}>v1.0.1 • Fast, Secure & Offline-First</Text>
+          <Text style={styles.splashFooterText}>v1.0.2 • Fast, Secure & Offline-First</Text>
         </View>
       </View>
     );

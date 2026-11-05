@@ -19,6 +19,7 @@ import { useTrips } from '../../src/context/TripContext';
 import { useAuth } from '../../src/context/AuthContext';
 import { TopAppBar } from '../../src/components/common/TopAppBar';
 import { CategoryPicker } from '../../src/components/expense/CategoryPicker';
+import { DatePickerField } from '../../src/components/common/DatePickerModal';
 import { SegmentedPills } from '../../src/components/common/SegmentedPills';
 import { SplitMode, ParticipantSplit } from '../../src/types/expense';
 import { SUPPORTED_CURRENCIES, formatCurrency } from '../../src/services/currency/exchangeRateService';
@@ -461,16 +462,11 @@ export default function AddExpenseScreen() {
 
         {/* Date & Optional Metadata Card */}
         <View style={styles.card}>
-          <TextInput
-            label="Expense Date (YYYY-MM-DD)"
+          <DatePickerField
+            label="Expense Date"
             value={expenseDate}
-            onChangeText={setExpenseDate}
-            onFocus={() => setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 150)}
-            mode="outlined"
+            onChange={setExpenseDate}
             style={styles.input}
-            outlineColor={M3Colors.outlineVariant}
-            activeOutlineColor={M3Colors.primary}
-            left={<TextInput.Icon icon="calendar" />}
           />
 
           <TextInput

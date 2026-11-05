@@ -430,14 +430,6 @@ export default function TripDetailsScreen() {
               }
             />
 
-            <TouchableOpacity
-              style={styles.scanQuickBtn}
-              onPress={() => setScannerVisible(true)}
-              activeOpacity={0.7}
-            >
-              <MaterialCommunityIcons name="qrcode-scan" size={18} color={M3Colors.primary} />
-              <Text style={styles.scanQuickText}>Scan Friend's UPI QR Code</Text>
-            </TouchableOpacity>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setAddMemberDialogVisible(false)} textColor={M3Colors.onSurfaceVariant}>

@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/context/AuthContext';
+import { useToast } from '../../src/context/ToastContext';
 import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
@@ -28,6 +29,7 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { mode: initialModeParam } = useLocalSearchParams<{ mode?: string }>();
   const { signIn, signUp } = useAuth();
+  const { showToast } = useToast();
   const scrollViewRef = useRef<any>(null);
 
   const [authMode, setAuthMode] = useState<AuthMode>(
@@ -119,16 +121,28 @@ export default function LoginScreen() {
         message.includes('invalid-credential') ||
         message.includes('wrong-password')
       ) {
-        setPasswordError('Incorrect password');
-        setErrorMsg('Incorrect email or password. Please verify and try again.');
+        setPasswordError('Wrong password or incorrect email');
+        setErrorMsg('Wrong password or incorrect email. Please check your credentials.');
         setErrorType('CREDENTIALS');
+        showToast({
+          title: 'Login Failed',
+          message: 'Wrong password or incorrect email. Please check your credentials.',
+          type: 'error',
+          duration: 4000,
+        });
       } else if (
         code === 'auth/user-not-found' ||
         message.includes('user-not-found')
       ) {
         setEmailError('No account found with this email.');
-        setErrorMsg('No user found for this email address. Please sign up first.');
+        setErrorMsg('Wrong password or incorrect email. No user found for this email address.');
         setErrorType('NOT_FOUND');
+        showToast({
+          title: 'Account Not Found',
+          message: 'Wrong password or incorrect email. No user found for this email address.',
+          type: 'error',
+          duration: 4000,
+        });
       } else if (
         code === 'auth/invalid-email' ||
         message.includes('invalid-email')
@@ -136,21 +150,46 @@ export default function LoginScreen() {
         setEmailError('Invalid email format.');
         setErrorMsg('The email address entered is not properly formatted.');
         setErrorType('VALIDATION');
+        showToast({
+          title: 'Invalid Email',
+          message: 'The email address entered is not properly formatted.',
+          type: 'error',
+          duration: 4000,
+        });
       } else if (
         code === 'auth/too-many-requests' ||
         message.includes('too-many-requests')
       ) {
         setErrorMsg('Too many unsuccessful attempts. Account temporarily locked. Please reset your password or try again later.');
         setErrorType('TOO_MANY_REQUESTS');
+        showToast({
+          title: 'Too Many Attempts',
+          message: 'Account temporarily locked. Please try again later.',
+          type: 'error',
+          duration: 5000,
+        });
       } else if (
         code === 'auth/network-request-failed' ||
         message.includes('network')
       ) {
         setErrorMsg('Network error. Please check your internet connection.');
         setErrorType('NETWORK');
+        showToast({
+          title: 'Connection Error',
+          message: 'Network error. Please check your internet connection.',
+          type: 'error',
+          duration: 4000,
+        });
       } else {
-        setErrorMsg(err.message || 'Login failed. Please verify your credentials.');
+        const fallBackMsg = err.message || 'Wrong password or incorrect email. Please verify your credentials.';
+        setErrorMsg(fallBackMsg);
         setErrorType('GENERAL');
+        showToast({
+          title: 'Login Failed',
+          message: fallBackMsg,
+          type: 'error',
+          duration: 4000,
+        });
       }
     } finally {
       setLoading(false);
@@ -223,13 +262,32 @@ export default function LoginScreen() {
         setEmailError('This email is already registered.');
         setErrorMsg('An account already exists with this email. Switch to Log In.');
         setErrorType('VALIDATION');
+        showToast({
+          title: 'Email In Use',
+          message: 'An account already exists with this email. Switch to Log In.',
+          type: 'error',
+          duration: 4000,
+        });
       } else if (code === 'auth/weak-password' || message.includes('weak-password')) {
         setPasswordError('Password is too weak (use 6+ characters).');
         setErrorMsg('Password should be at least 6 characters.');
         setErrorType('VALIDATION');
+        showToast({
+          title: 'Weak Password',
+          message: 'Password must be at least 6 characters.',
+          type: 'error',
+          duration: 4000,
+        });
       } else {
-        setErrorMsg(err.message || 'Registration failed. Please try again.');
+        const fallBack = err.message || 'Registration failed. Please try again.';
+        setErrorMsg(fallBack);
         setErrorType('GENERAL');
+        showToast({
+          title: 'Sign Up Failed',
+          message: fallBack,
+          type: 'error',
+          duration: 4000,
+        });
       }
     } finally {
       setLoading(false);

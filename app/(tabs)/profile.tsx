@@ -383,7 +383,7 @@ export default function ProfileScreen() {
           <Text style={styles.logoutText}>Log Out of TripSplit</Text>
         </TouchableOpacity>
 
-        <Text style={styles.versionText}>TripSplit v1.0.0 • Material 3 Design System</Text>
+        <Text style={styles.versionText}>TripSplit v1.0.2 • Material 3 Design System</Text>
       </ScrollView>
 
       {/* Edit UPI Dialog */}

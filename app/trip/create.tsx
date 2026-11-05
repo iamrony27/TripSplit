@@ -21,6 +21,7 @@ import { M3Colors } from '../../src/theme/colors';
 import { M3Typography } from '../../src/theme/typography';
 import { M3Shapes } from '../../src/theme/shapes';
 import { isValidUpiId } from '../../src/services/upi/upiParser';
+import { DatePickerField } from '../../src/components/common/DatePickerModal';
 import { useKeyboardBottomInset } from '../../src/hooks/useKeyboardBottomInset';
 import { safeGoBack } from '../../src/utils/navigation';
 import { UpiScannerModal } from '../../src/components/common/UpiScannerModal';
@@ -39,11 +40,8 @@ export default function CreateTripScreen() {
   const [currencyMenuVisible, setCurrencyMenuVisible] = useState(false);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // Initial Members (Organizer is always 1st)
-  const [members, setMembers] = useState<Array<{ name: string; upiId: string }>>([
-    { name: 'Alex', upiId: '' },
-    { name: 'Priya', upiId: '' },
-  ]);
+  // Initial Members (Organizer is always 1st, extra friends start empty)
+  const [members, setMembers] = useState<Array<{ name: string; upiId: string }>>([]);
 
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberUpi, setNewMemberUpi] = useState('');
@@ -191,14 +189,10 @@ export default function CreateTripScreen() {
             ))}
           </Menu>
 
-          <TextInput
-            label="Start Date"
+          <DatePickerField
+            label="Trip Start Date"
             value={startDate}
-            onChangeText={setStartDate}
-            mode="outlined"
-            outlineColor={M3Colors.outlineVariant}
-            activeOutlineColor={M3Colors.primary}
-            left={<TextInput.Icon icon="calendar" />}
+            onChange={setStartDate}
           />
         </View>
 
@@ -275,14 +269,6 @@ export default function CreateTripScreen() {
               }
             />
 
-            <TouchableOpacity
-              style={styles.scanQuickBtn}
-              onPress={() => setScannerVisible(true)}
-              activeOpacity={0.7}
-            >
-              <MaterialCommunityIcons name="qrcode-scan" size={18} color={M3Colors.primary} />
-              <Text style={styles.scanQuickText}>Scan Friend's UPI QR Code</Text>
-            </TouchableOpacity>
 
             <Button
               mode="outlined"

@@ -72,15 +72,23 @@ export const UpiQrModal: React.FC<UpiQrModalProps> = ({
 
           {/* Dynamic Vector QR Matrix */}
           <View style={styles.qrContainer}>
-            <QRCode
-              value={upiUri}
-              size={180}
-              color={M3Colors.onSurface}
-              backgroundColor={M3Colors.surfaceContainerLowest}
-            />
-            <Text style={styles.qrHint}>
-              Scan using any UPI app (Google Pay, PhonePe, Paytm, BHIM)
-            </Text>
+            {upiUri ? (
+              <>
+                <QRCode
+                  value={upiUri}
+                  size={180}
+                  color={M3Colors.onSurface}
+                  backgroundColor={M3Colors.surfaceContainerLowest}
+                />
+                <Text style={styles.qrHint}>
+                  Scan using any UPI app (Google Pay, PhonePe, Paytm, BHIM)
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.qrHint}>
+                No valid UPI ID provided for this member.
+              </Text>
+            )}
           </View>
 
           {/* Quick UPI Intent Launchers */}

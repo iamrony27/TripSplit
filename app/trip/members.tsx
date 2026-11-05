@@ -357,14 +357,6 @@ export default function TripMembersScreen() {
               }
             />
 
-            <TouchableOpacity
-              style={styles.scanQuickBtn}
-              onPress={() => setScannerMode('add')}
-              activeOpacity={0.7}
-            >
-              <MaterialCommunityIcons name="qrcode-scan" size={18} color={M3Colors.primary} />
-              <Text style={styles.scanQuickText}>Scan Friend's UPI QR Code</Text>
-            </TouchableOpacity>
 
             {addError ? (
               <Text style={styles.dialogErrorText}>{addError}</Text>
@@ -424,16 +416,6 @@ export default function TripMembersScreen() {
               }
             />
 
-            <TouchableOpacity
-              style={styles.scanQuickBtn}
-              onPress={() => setScannerMode('edit')}
-              activeOpacity={0.7}
-            >
-              <MaterialCommunityIcons name="qrcode-scan" size={18} color={M3Colors.primary} />
-              <Text style={styles.scanQuickText}>
-                Scan {editUpiMember?.name || 'Friend'}'s UPI QR Code
-              </Text>
-            </TouchableOpacity>
 
             {upiError ? (
               <Text style={styles.dialogErrorText}>{upiError}</Text>

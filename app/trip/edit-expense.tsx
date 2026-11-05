@@ -17,6 +17,7 @@ import { useTrips } from '../../src/context/TripContext';
 import { useAuth } from '../../src/context/AuthContext';
 import { TopAppBar } from '../../src/components/common/TopAppBar';
 import { CategoryPicker } from '../../src/components/expense/CategoryPicker';
+import { DatePickerField } from '../../src/components/common/DatePickerModal';
 import { SegmentedPills } from '../../src/components/common/SegmentedPills';
 import { SplitMode, ParticipantSplit } from '../../src/types/expense';
 import { TransactionEditRecord } from '../../src/types/editHistory';
@@ -338,14 +339,11 @@ export default function EditExpenseScreen() {
             <CategoryPicker selectedCategoryId={categoryId} onSelectCategory={setCategoryId} />
           </View>
 
-          <TextInput
-            label="Date (YYYY-MM-DD)"
+          <DatePickerField
+            label="Expense Date"
             value={expenseDate}
-            onChangeText={setExpenseDate}
-            mode="outlined"
+            onChange={setExpenseDate}
             style={styles.input}
-            outlineColor={M3Colors.outlineVariant}
-            activeOutlineColor={M3Colors.primary}
           />
 
           <TextInput
